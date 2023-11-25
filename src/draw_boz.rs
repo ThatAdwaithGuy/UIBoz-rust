@@ -41,20 +41,6 @@ fn format(istring: &str, column: usize) -> String {
     let fstring = binding.as_str();
     format!("{}{}", fstring, istring)
 }
-/*
-fn make_list_equal_length<'a>(list1: &'a str, list2: &'a str) -> [&'a str] {
-    let output_list1 = format!(
-        "{}{}",
-        list1,
-        vec![list1; list2.len() - list1.len()].as_str()
-    );
-    let output_list2 = format!(
-        "{}{}",
-        list2,
-        vec![list2; list1.len() - list2.len()].as_str()
-    );
-}
-*/
 
 pub fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
     let formated_list1 = list1
@@ -71,32 +57,20 @@ pub fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>
     output
 }
 
-pub fn overlay_2_str(string1: &str, string2: &str) -> String {
-    let (smaller_string, bigger_string, lead_spaces) = if string1.len() > string2.len() {
-        (string1, string2, string1.len())
-    } else if string1.len() < string2.len() {
-        (string2, string1, string2.len())
+fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> &str {
+    let (bigger_str, smaler_str) = if str1.len() > str2.len() {
+        (str1, str2)
+    } else if str1.len() < str2.len() {
+        (str2, str1)
     } else {
-        (string1, string2, 0)
+        (str1, str2)
     };
 
-    let mut smaller_list: Vec<char> = smaller_string.chars().collect();
-    let mut bigger_list: Vec<char> = bigger_string.chars().collect();
-    let mut output_list: Vec<char> = Vec::new();
+    let mut bigger_list: Vec<char> = bigger_str.chars().collect::<Vec<char>>();
+    let mut smaler_list: Vec<char> = smaler_str.chars().collect::<Vec<char>>();
+    (bigger_list, smaler_list) = make_lists_equal_length(bigger_list.clone(), smaler_list.clone());
 
-    for i in 0..bigger_list.len() {
-        if bigger_list[i] == ' ' && smaller_list[i] == ' ' {
-            continue;
-        } else if bigger_list[i] != ' ' && smaller_list[i] == ' ' {
-            continue;
-        } else if bigger_list[i] == ' ' && smaller_list[i] != ' ' {
-            continue;
-        } else if bigger_list[i] != ' ' && smaller_list[i] != ' ' {
-            smaller_list.insert(0, ' ');
-        }
-    }
-
-    let (smaler_list, bigger_list) = make_lists_equal_length(smaller_list, bigger_list);
+    let mut output_list: Vec<char> = vec![];
 
     for i in 0..bigger_list.len() {
         if bigger_list[i] == ' ' && smaler_list[i] == ' ' {
@@ -105,21 +79,14 @@ pub fn overlay_2_str(string1: &str, string2: &str) -> String {
             output_list.push(bigger_list[i]);
         } else if bigger_list[i] == ' ' && smaler_list[i] != ' ' {
             output_list.push(smaler_list[i]);
+        } else if bigger_list[i] != ' ' && smaler_list[i] != ' ' {
+            output_list.push(bigger_list[i]);
         }
     }
 
-    output_list.iter().collect()
+    output_list.iter().collect().as_str()
 }
 
-fn overlay_2_string(str1: &str, str2: &str) {
-    let mut smaler_string: &str = "";
-    let mut bigger_string: &str = "";
-
-    if str1.len() >= str2.len() {
-        smaler_string == str2;
-        bigger_string == str1;
-    }
-}
 fn overlay() {}
 
 pub struct Text<'a> {
@@ -159,9 +126,5 @@ impl<'a> Boz<'a> {
         let mut complete_vec: Vec<Option<PrivateText>> = vec![None; self.height];
         let mut all_values: Vec<PrivateText> = vec![];
         let mut duplicate_values: Vec<Vec<PrivateText<'_>>> = get_duplicates(all_values);
-
-        // Error Handling
-
-        // Ok(output_string)
     }
 }
