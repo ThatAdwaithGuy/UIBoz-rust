@@ -56,6 +56,21 @@ fn make_list_equal_length<'a>(list1: &'a str, list2: &'a str) -> [&'a str] {
 }
 */
 
+pub fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
+    let formated_list1 = list1
+        .iter()
+        .cloned()
+        .chain(std::iter::repeat(' ').take(list2.len() - list1.len()))
+        .collect();
+    let formated_list2 = list2
+        .iter()
+        .cloned()
+        .chain(std::iter::repeat(' ').take(list1.len() - list2.len()))
+        .collect();
+    let output = (formated_list1, formated_list2);
+    output
+}
+
 pub fn overlay_2_str(string1: &str, string2: &str) -> String {
     let (smaller_string, bigger_string, lead_spaces) = if string1.len() > string2.len() {
         (string1, string2, string1.len())
@@ -63,21 +78,6 @@ pub fn overlay_2_str(string1: &str, string2: &str) -> String {
         (string2, string1, string2.len())
     } else {
         (string1, string2, 0)
-    };
-
-    let make_lists_equal_length = |list1: Vec<char>, list2: Vec<char>| -> (Vec<char>, Vec<char>) {
-        (
-            list1
-                .iter()
-                .cloned()
-                .chain(std::iter::repeat(' ').take(list2.len() - list1.len()))
-                .collect(),
-            list2
-                .iter()
-                .cloned()
-                .chain(std::iter::repeat(' ').take(list1.len() - list2.len()))
-                .collect(),
-        )
     };
 
     let mut smaller_list: Vec<char> = smaller_string.chars().collect();

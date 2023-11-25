@@ -1,10 +1,29 @@
-mod draw_boz;
+// mod draw_boz;
+
+pub fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
+    let mut bigger_list: Vec<char> = vec![];
+    let mut smaler_list: Vec<char> = vec![];
+
+    if list1.len() > list2.len() {
+        smaler_list = list2.clone();
+        bigger_list = list1.clone();
+    } else if list1.len() < list2.len() {
+        smaler_list = list1.clone();
+        bigger_list = list2.clone();
+    }
+
+    let padding: usize = bigger_list.len() - smaler_list.len();
+    let add_pad: Vec<char> = vec![' '; padding];
+    let output = (bigger_list, smaler_list.extend(add_pad));
+    output
+}
 
 fn main() {
-    println!(
-        "{}",
-        draw_boz::overlay_2_str("             hello", "  hello")
-    )
+    let (string1, string2) = make_lists_equal_length(
+        "             hello".chars().collect(),
+        "  hello".chars().collect(),
+    );
+    println!("str1 = {:?}, str2 = {:?}", string1, string2);
 }
 /* println!(
     "{:?}",
