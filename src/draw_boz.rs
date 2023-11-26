@@ -1,4 +1,11 @@
 use std::collections::HashMap;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum TextError {
+    #[error("Looks Like {0} and {1} are on top of each other.")]
+    TextOverlayed(String, String),
+}
 
 #[derive(Clone)]
 struct PrivateText<'a> {
@@ -42,22 +49,24 @@ fn format(istring: &str, column: usize) -> String {
     format!("{}{}", fstring, istring)
 }
 
-pub fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
-    let formated_list1 = list1
-        .iter()
-        .cloned()
-        .chain(std::iter::repeat(' ').take(list2.len() - list1.len()))
-        .collect();
-    let formated_list2 = list2
-        .iter()
-        .cloned()
-        .chain(std::iter::repeat(' ').take(list1.len() - list2.len()))
-        .collect();
-    let output = (formated_list1, formated_list2);
+fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
+    let (bigger_list, mut smaler_list) = if list1.len() > list2.len() {
+        (list1, list2)
+    } else if list1.len() < list2.len() {
+        (list2, list1)
+    } else {
+        (list1, list2)
+    };
+
+    let padding = bigger_list.len() - smaler_list.len();
+    let add_pad = vec![' '; padding];
+    smaler_list.extend(add_pad.iter());
+
+    let output = (bigger_list, smaler_list);
     output
 }
 
-fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> &str {
+pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextError> {
     let (bigger_str, smaler_str) = if str1.len() > str2.len() {
         (str1, str2)
     } else if str1.len() < str2.len() {
@@ -68,9 +77,19 @@ fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> &str {
 
     let mut bigger_list: Vec<char> = bigger_str.chars().collect::<Vec<char>>();
     let mut smaler_list: Vec<char> = smaler_str.chars().collect::<Vec<char>>();
+
     (bigger_list, smaler_list) = make_lists_equal_length(bigger_list.clone(), smaler_list.clone());
 
     let mut output_list: Vec<char> = vec![];
+
+    for i in 0..bigger_list.len() {
+        if bigger_list[i] != ' ' && smaler_list[i] != ' ' {
+            return Err(TextError::TextOverlayed(
+                bigger_str.to_owned(),
+                smaler_str.to_owned(),
+            ));
+        }
+    }
 
     for i in 0..bigger_list.len() {
         if bigger_list[i] == ' ' && smaler_list[i] == ' ' {
@@ -84,10 +103,29 @@ fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> &str {
         }
     }
 
-    output_list.iter().collect().as_str()
+    let from_iter = String::from_iter(output_list);
+    Ok(from_iter)
 }
 
-fn overlay() {}
+pub fn apply_func(lst: Vec<String>) -> Result<String, TextError> {
+    let mut temp = vec!["".to_string()];
+
+    while lst.len() > 1 {
+        let mut temp_lst: Vec<String> = Vec::new();
+        for i in (0..lst.len()).step_by(2) {
+            if i + 1 < lst.len() {
+                let buffer = overlay_2_str(lst[1].as_str(), lst[i + 1].as_str())?;
+                println!("{}", buffer);
+                temp_lst.push(buffer);
+            } else {
+                let buff = &lst[i];
+                temp_lst.push(buff.to_string());
+            }
+        }
+        temp = temp_lst;
+    }
+    Ok(temp[0].to_owned())
+}
 
 pub struct Text<'a> {
     id: i32,

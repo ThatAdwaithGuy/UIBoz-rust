@@ -1,5 +1,8 @@
-// mod draw_boz;
+mod draw_boz;
 
+// The Idea is to have
+
+/*
 fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
     let (bigger_list, mut smaler_list) = if list1.len() > list2.len() {
         (list1, list2)
@@ -17,7 +20,7 @@ fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Ve
     output
 }
 
-pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Vec<char> {
+pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextError> {
     let (bigger_str, smaler_str) = if str1.len() > str2.len() {
         (str1, str2)
     } else if str1.len() < str2.len() {
@@ -33,6 +36,15 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Vec<char> {
     let mut output_list: Vec<char> = vec![];
 
     for i in 0..bigger_list.len() {
+        if bigger_list[i] != ' ' && smaler_list[i] != ' ' {
+            return Err(TextError::TextOverlayed(
+                bigger_str.to_owned(),
+                smaler_str.to_owned(),
+            ));
+        }
+    }
+
+    for i in 0..bigger_list.len() {
         if bigger_list[i] == ' ' && smaler_list[i] == ' ' {
             output_list.push(' ');
         } else if bigger_list[i] != ' ' && smaler_list[i] == ' ' {
@@ -44,24 +56,19 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Vec<char> {
         }
     }
 
-    output_list
+    Ok(String::from_iter(output_list))
 }
+*/
 
 fn main() {
-    let str1 = "        Hello";
-    let str2 = "     hello";
+    let str1 = "                                          Hello".to_string();
+    let str2 = "                  hello".to_string();
+    // let str3 = "  hello".to_string();
 
-    let list1 = vec![
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'H', 'e', 'l', 'l', 'o',
-    ];
+    let str_vec = vec![str1, str2];
 
-    let list2 = vec![' ', ' ', ' ', ' ', ' ', 'h', 'e', 'l', 'l', 'o'];
-
-    let ls1 = overlay_2_str(str1, str2);
-
-    println!("{}", str1);
-    println!("{}", str2);
-
-    println!();
-    println!("{:?}", ls1);
+    match draw_boz::apply_func(str_vec) {
+        Ok(val) => println!("{}", val),
+        Err(err) => println!("{}", err),
+    }
 }
