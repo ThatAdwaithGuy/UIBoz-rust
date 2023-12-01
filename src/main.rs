@@ -1,7 +1,8 @@
 use draw_boz::opts;
-
+mod animations;
 mod draw_boz;
-
+mod errors;
+mod event_loop;
 // The Idea is to have
 
 /*
