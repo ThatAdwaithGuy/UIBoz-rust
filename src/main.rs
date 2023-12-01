@@ -1,3 +1,5 @@
+use draw_boz::opts;
+
 mod draw_boz;
 
 // The Idea is to have
@@ -44,7 +46,7 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextErr
         }
     }
 
-    for i in 0..bigger_list.len() {
+    for i in 0  ..bigger_list.len() {
         if bigger_list[i] == ' ' && smaler_list[i] == ' ' {
             output_list.push(' ');
         } else if bigger_list[i] != ' ' && smaler_list[i] == ' ' {
@@ -60,15 +62,32 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextErr
 }
 */
 
-fn main() {
-    let str1 = "                                          Hello".to_string();
-    let str2 = "                  hello".to_string();
-    // let str3 = "  hello".to_string();
+fn func(a: i32, b: i32) -> i32 {
+    let result = a + b;
+    result
+}
 
-    let str_vec = vec![str1, str2];
-
-    match draw_boz::apply_func(str_vec) {
-        Ok(val) => println!("{}", val),
-        Err(err) => println!("{}", err),
+fn overlay(lst: Vec<&str>) -> Result<String, draw_boz::TextError> {
+    let mut last_element = lst[0].to_string();
+    for i in 1..lst.len() {
+        last_element = draw_boz::overlay_2_str(&last_element, lst[i])?;
     }
+    Ok(last_element.to_owned())
+}
+
+fn main() -> Result<(), draw_boz::TextError> {
+    let lst = vec![opts::Opts::Bold(true)];
+    let mut lol = "".to_string();
+    match draw_boz::test(lst) {
+        Ok(val) => {
+            lol = val;
+        }
+        Err(err) => {
+            panic!("{}", err);
+        }
+    }
+
+    println!(r#"{}"#, lol);
+
+    Ok(())
 }
