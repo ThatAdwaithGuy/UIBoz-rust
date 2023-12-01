@@ -62,32 +62,35 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextErr
 }
 */
 
-fn func(a: i32, b: i32) -> i32 {
-    let result = a + b;
-    result
-}
-
-fn overlay(lst: Vec<&str>) -> Result<String, draw_boz::TextError> {
-    let mut last_element = lst[0].to_string();
-    for i in 1..lst.len() {
-        last_element = draw_boz::overlay_2_str(&last_element, lst[i])?;
-    }
-    Ok(last_element.to_owned())
-}
-
 fn main() -> Result<(), draw_boz::TextError> {
-    let lst = vec![opts::Opts::Bold(true)];
-    let mut lol = "".to_string();
-    match draw_boz::test(lst) {
+    let lst1 = vec![opts::Opts::Blink(Some(true))];
+    let lst2 = vec![
+        opts::Opts::ForeColor(Some(opts::Colors::Red)),
+        opts::Opts::BackGroundColor(Some(opts::Colors::Blue)),
+    ];
+
+    let mut str1 = "".to_string();
+    let mut str2 = "".to_string();
+
+    match draw_boz::test(lst1) {
         Ok(val) => {
-            lol = val;
+            str1 = val;
         }
         Err(err) => {
             panic!("{}", err);
         }
     }
 
-    println!(r#"{}"#, lol);
+    match draw_boz::test(lst2) {
+        Ok(val) => {
+            str2 = val;
+        }
+        Err(err) => {
+            panic!("{}", err);
+        }
+    }
 
+    println!("{:?}", str1.len());
+    println!("{:?}", str2.len());
     Ok(())
 }
