@@ -1,4 +1,4 @@
-use draw_boz::opts;
+use draw_boz::opts::{self, Opts};
 mod animations;
 mod draw_boz;
 mod errors;
@@ -63,35 +63,20 @@ pub fn overlay_2_str<'a>(str1: &'a str, str2: &'a str) -> Result<String, TextErr
 }
 */
 
-fn main() -> Result<(), draw_boz::TextError> {
-    let lst1 = vec![opts::Opts::Blink(Some(true))];
-    let lst2 = vec![
-        opts::Opts::ForeColor(Some(opts::Colors::Red)),
-        opts::Opts::BackGroundColor(Some(opts::Colors::Blue)),
-    ];
+fn main() -> Result<(), errors::UIBozErrors> {
+    let a = draw_boz::Boz::new(
+        vec![draw_boz::Text {
+            text: "hello",
+            line_number: 5,
+            column: 10,
+            opts: vec![Opts::Bold(Some(true))],
+        }],
+        true,
+        16,
+        52,
+    );
 
-    let mut str1 = "".to_string();
-    let mut str2 = "".to_string();
+    a.render_string();
 
-    match draw_boz::test(lst1) {
-        Ok(val) => {
-            str1 = val;
-        }
-        Err(err) => {
-            panic!("{}", err);
-        }
-    }
-
-    match draw_boz::test(lst2) {
-        Ok(val) => {
-            str2 = val;
-        }
-        Err(err) => {
-            panic!("{}", err);
-        }
-    }
-
-    println!("{:?}", str1.len());
-    println!("{:?}", str2.len());
     Ok(())
 }
