@@ -1,0 +1,23 @@
+
+
+git commit rules:
+  flag:
+    feat: Feature
+    bfix: Bug Fix
+    dses: Debug Session
+  
+  heading:
+    must be conise and NO JOKES
+  
+  description:
+    everything is ok
+    but must have what happened
+
+  
+TODOS:
+  Render String,
+  Make Opts More conise,
+
+
+BUG FIXES:
+  get_duplicate function not ready for Hashmaps. 
