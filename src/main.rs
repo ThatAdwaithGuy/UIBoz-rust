@@ -163,13 +163,15 @@ fn main() {
     //     },
     // );
     //
+    //println!(
+    //    "{:#?}",
+    //    draw_boz::get_duplicates(&draw_boz::generate_all_values(&text_data))
+    //);
+
     println!(
         "{:#?}",
-        draw_boz::get_duplicates(&draw_boz::generate_all_values(&text_data))
+        draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data))
     );
-
-    let abc = "\x1b[0m";
-    println!("{}", abc.len());
 
     let a = draw_boz::Boz::new(text_data, true, 16, 52);
     // let av = match a.render_string() {

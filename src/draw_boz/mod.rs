@@ -67,7 +67,8 @@ pub fn get_duplicates(input_hashmap: &HashMap<i32, PrivateText>) -> Vec<HashMap<
 }
 
 fn format_column(string: &str, column: i32) -> String {
-    let binding = " ".repeat(column.try_into().unwrap());
+    let n = column as usize;
+    let binding = " ".repeat(n);
     let fstring = binding.as_str();
     format!("{}{}", fstring, string)
 }
@@ -183,28 +184,64 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
     all_values
 }
 // Forgive me SOILD, I let you down 😔
-pub fn handle_duplicates_and_ansi_codes(all_values: &HashMap<i32, PrivateText>) {
+pub fn handle_duplicates_and_ansi_codes(
+    all_values: &HashMap<i32, PrivateText>,
+) -> Result<Vec<PrivateText>, TextError> {
     let mut output: Vec<PrivateText> = vec![];
     for i in get_duplicates(all_values) {
         if i.len() == 1 {
             let val = i.keys().next().and_then(|key| i.get(key)).unwrap();
+
             output.push(PrivateText {
                 text: format_column(val.text.as_str(), val.column),
                 line_number: val.line_number,
                 column: val.column,
             })
         } else if i.len() > 1 {
-            println!(
-                "{:#?}",
-                overlay(vec![
-                    i.get(&0).unwrap().text.as_str(),
-                    i.get(&1).unwrap().text.as_str()
-                ])
-                .unwrap()
-            );
+            let mut last = 0;
+            let values: Vec<PrivateText> = i.values().cloned().collect();
+            let strings: Vec<String> = values
+                .iter()
+                .map(|a| {
+                    if last == a.text.len() as i32 + a.column {
+                        last += a.text.len() as i32 + a.column;
+                        format_column(a.text.as_str(), a.column)
+                    } else if last != a.text.len() as i32 + a.column {
+                        let buff = format_column(a.text.as_str(), a.column + last);
+                        last += a.text.len() as i32 + a.column;
+                        buff
+                    } else {
+                        "".to_string()
+                    }
+                })
+                .collect();
+            let strs: Vec<&str> = strings.iter().map(|string| string.as_str()).collect();
+            let processed_string = overlay(strs)?;
+            output.push(PrivateText {
+                text: processed_string,
+                line_number: i
+                    .keys()
+                    .next()
+                    .and_then(|key| i.get(key))
+                    .unwrap()
+                    .line_number,
+                column: 100000 + i.len() as i32, // i encoded how many times does the line have
+                                                 // text. 100000 + how many times.
+            })
         }
     }
+    // println!("Output: {:#?}", output);
+    Ok(output)
 }
+// Future adwaith, The problem is the text is added at the start and not after the
+// end of the last text. so i added a buffer called lat at line 201 and implement
+// to format_column.
+
+// Add 92
+//                     \u{1b}[001m\u{1b}[0000000000000022m\u{1b}[0000000000000022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022mhello\u{1b}[0m
+//           \u{1b}[001m\u{1b}[0000000000000022m\u{1b}[0000000000000022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022mhello\u{1b}[0m
+
+//
 
 // Implementations
 impl<'a> Boz<'a> {
