@@ -1,4 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+
+use crate::draw_boz;
 
 use super::errors::TextError;
 
@@ -24,7 +26,17 @@ for i, v in dict.items():
         current_group[i] = v
 return groups*/
 
-pub fn get_duplicates(input_array: &HashMap<i32, PrivateText>) -> Vec<HashMap<i32, PrivateText>> {
+pub fn get_duplicates(input_hashmap: &HashMap<i32, PrivateText>) -> Vec<HashMap<i32, PrivateText>> {
+    // let mut values: Vec<PrivateText> = input_hashmap.values().cloned().collect();
+    // values.sort_by_key(|text| text.line_number);
+    // let input_array: HashMap<_, _> = values
+    //     .into_iter()
+    //     .map(|text| (text.line_number, text))
+    //    .collect();
+    let deref_input = input_hashmap.clone();
+    let input_array: BTreeMap<i32, PrivateText> =
+        deref_input.into_iter().collect::<BTreeMap<_, _>>();
+
     let mut frequency_dict = HashMap::new();
     for data in input_array.values() {
         if frequency_dict.contains_key(&data.line_number) {
@@ -42,7 +54,6 @@ pub fn get_duplicates(input_array: &HashMap<i32, PrivateText>) -> Vec<HashMap<i3
         // Use entry method to get or create key-value pairs in seen_values
         let entry = seen_values.entry(&data.line_number).or_insert(0);
         *entry += 1;
-
         if *entry != frequency_dict[&data.line_number] {
             current_group.insert(*id, data.clone());
         } else {
@@ -148,6 +159,7 @@ pub struct Boz<'a> {
 pub struct PrivateText {
     pub text: String,
     pub line_number: i32,
+    pub column: i32,
 }
 
 pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, PrivateText> {
@@ -162,15 +174,36 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
         all_values.insert(
             i.try_into().unwrap(),
             PrivateText {
-                text: format_column(
-                    format!("{}{}\x1b[0m", formatted_opts, v.text.to_string()).as_str(),
-                    v.column,
-                ),
+                text: format!("{}{}\x1b[0m", formatted_opts, v.text),
                 line_number: v.line_number,
+                column: v.column,
             },
         );
     }
     all_values
+}
+// Forgive me SOILD, I let you down 😔
+pub fn handle_duplicates_and_ansi_codes(all_values: &HashMap<i32, PrivateText>) {
+    let mut output: Vec<PrivateText> = vec![];
+    for i in get_duplicates(all_values) {
+        if i.len() == 1 {
+            let val = i.keys().next().and_then(|key| i.get(key)).unwrap();
+            output.push(PrivateText {
+                text: format_column(val.text.as_str(), val.column),
+                line_number: val.line_number,
+                column: val.column,
+            })
+        } else if i.len() > 1 {
+            println!(
+                "{:#?}",
+                overlay(vec![
+                    i.get(&0).unwrap().text.as_str(),
+                    i.get(&1).unwrap().text.as_str()
+                ])
+                .unwrap()
+            );
+        }
+    }
 }
 
 // Implementations
@@ -185,6 +218,13 @@ impl<'a> Boz<'a> {
     }
 
     pub fn render_string(&'a self) -> Result<HashMap<i32, PrivateText>, TextError> {
+        let real_width = self.width * 88;
+        let _output_string: &str = "";
+        let _complete_vec: Vec<Option<PrivateText>> = vec![None; self.height.try_into().unwrap()];
+
+        let all_values = generate_all_values(&self.text_data);
+        let duplicate_values = get_duplicates(&all_values);
+
         // <Error handling>
         let mut seen_pairs = HashSet::new();
         for i in &self.text_data {
@@ -198,17 +238,11 @@ impl<'a> Boz<'a> {
         for i in &self.text_data {
             // Length of the text (without ASNI) + column and 88 because of ANSI, compared to width
             // times 88 because of ANSI
-            if i.text.len() as i32 + i.column + 88 >= 88 * self.width {
+            if (i.text.len() as i32 - 123) + i.column >= self.width {
                 return Err(TextError::LeftBounds(i.text.to_string()));
             }
         }
         // <\Error handling>
-
-        let _output_string: &str = "";
-        let _complete_vec: Vec<Option<PrivateText>> = vec![None; self.height.try_into().unwrap()];
-
-        let all_values = generate_all_values(&self.text_data);
-        let duplicate_values = get_duplicates(&all_values);
 
         Ok(all_values)
     }
