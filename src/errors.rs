@@ -1,5 +1,3 @@
-use crate::draw_boz::opts::Opts;
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]

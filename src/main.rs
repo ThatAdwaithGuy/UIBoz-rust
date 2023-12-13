@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use draw_boz::{
-    opts::{self, Opts},
+    opts::{self, TextOpts},
     PrivateText,
 };
 use errors::TextError;
 
-use crate::draw_boz::opts::{parse_opts, Colors};
+use crate::draw_boz::opts::{parse_text_opts, Colors};
 mod animations;
 mod draw_boz;
 mod errors;
@@ -86,38 +86,43 @@ fn main() -> Result<(), TextError> {
             text: "hellow",
             line_number: 5,
             column: 1,
-            opts: vec![Opts::Bold(Some(true))],
+            opts: vec![TextOpts::Bold(true)],
         },
         draw_boz::Text {
             text: "hell",
             line_number: 10,
             column: 10,
             opts: vec![
-                Opts::ForeColor(Some(Colors::Red)),
-                Opts::ForeColor(Some(Colors::Black)),
+                TextOpts::ForeColor(Colors::Red),
+                TextOpts::ForeColor(Colors::Black),
             ],
         },
         draw_boz::Text {
             text: "hellog",
             line_number: 5,
             column: 10,
-            opts: vec![Opts::Bold(Some(true))],
+            opts: vec![TextOpts::Bold(true)],
         },
         draw_boz::Text {
             text: "hell",
             line_number: 5,
             column: 30,
             opts: vec![
-                Opts::ForeColor(Some(Colors::Red)),
-                Opts::ForeColor(Some(Colors::Black)),
+                TextOpts::ForeColor(Colors::Red),
+                TextOpts::ForeColor(Colors::Black),
             ],
         },
     ];
 
-    let new =
-        draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data))?;
+    let boz = draw_boz::Boz::new(
+        text_data,
+        true,
+        10,
+        1000,
+        draw_boz::TypeOfBorder::CurvedBorders,
+    );
 
-    println!("new:\n{:#?}", new);
+    boz.render_string();
 
     let mut all_values_test: HashMap<i32, PrivateText> = HashMap::new();
     all_values_test.insert(

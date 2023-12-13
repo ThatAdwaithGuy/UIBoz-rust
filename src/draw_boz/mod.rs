@@ -5,7 +5,7 @@ use crate::draw_boz;
 use super::errors::TextError;
 
 pub mod opts;
-use opts::Opts;
+use opts::TextOpts;
 /*def get_duplicates(dict: dict[int, PrivateText]):
 frequency_dict = {}
 for i in dict.values():
@@ -141,35 +141,13 @@ fn overlay<'a>(lst: Vec<&str>) -> Result<String, TextError> {
     Ok(last_element.to_owned())
 }
 
-#[derive(Debug, Clone)]
-pub struct Text<'a> {
-    pub text: &'a str,
-    pub line_number: i32,
-    pub column: i32,
-    pub opts: Vec<Opts>,
-}
-
-pub struct Boz<'a> {
-    pub text_data: Vec<Text<'a>>,
-    pub borders: bool,
-    pub height: i32,
-    pub width: i32,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct PrivateText {
-    pub text: String,
-    pub line_number: i32,
-    pub column: i32,
-}
-
 pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, PrivateText> {
     let mut sorted_text_data = text_data.clone();
     sorted_text_data.sort_by_key(|a| a.line_number);
 
     let mut all_values: HashMap<i32, PrivateText> = HashMap::new();
     for (i, v) in sorted_text_data.iter().enumerate() {
-        let formatted_opts = opts::parse_opts(v.opts.clone());
+        let formatted_opts = opts::parse_text_opts(v.opts.clone());
 
         all_values.insert(
             i.try_into().unwrap(),
@@ -183,6 +161,7 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
     all_values
 }
 
+// Forgive me SOILD, I let you down 😔
 pub fn handle_duplicates_and_ansi_codes(
     all_values: &HashMap<i32, PrivateText>,
 ) -> Result<Vec<PrivateText>, TextError> {
@@ -245,91 +224,89 @@ pub fn handle_duplicates_and_ansi_codes(
 
     Ok(output)
 }
-/*
-// Forgive me SOILD, I let you down 😔
-pub fn old_handle_duplicates_and_ansi_codes(
-    all_values: &HashMap<i32, PrivateText>,
-) -> Result<Vec<PrivateText>, TextError> {
-    let mut output: Vec<PrivateText> = vec![];
-    for i in get_duplicates(all_values) {
-        if i.len() == 1 {
-            let val = i.keys().next().and_then(|key| i.get(key)).unwrap();
 
-            output.push(PrivateText {
-                text: format_column(val.text.as_str(), val.column),
-                line_number: val.line_number,
-                column: val.column,
-            })
-        } else if i.len() > 1 {
-            let mut last = "".to_string();
-            let mut last_column = 0;
-            let values: Vec<PrivateText> = i.values().cloned().collect();
-            let strings: Vec<String> = values
-                .iter()
-                .map(|a| {
-                    if last == "" {
-                        last.push_str(format_column(a.text.as_str(), a.column).as_str());
-                        last_column = a.column;
-                        format_column(a.text.as_str(), a.column)
-                    } else if last != "" {
-                        let buff = format_column(a.text.as_str(), a.column + last.len() as i32);
-                        last += &buff.clone();
-                        last_column = a.column;
-                        println!("{:#?}", last_column);
-
-                        buff
-                    } else {
-                        "".to_string()
-                    }
-                })
-                .collect();
-            let strs: Vec<&str> = strings.iter().map(|string| string.as_str()).collect();
-            let processed_string = overlay(strs)?;
-            output.push(PrivateText {
-                text: processed_string,
-                line_number: i
-                    .keys()
-                    .next()
-                    .and_then(|key| i.get(key))
-                    .unwrap()
-                    .line_number,
-                column: 100000 + i.len() as i32, // i encoded how many times does the line have
-                                                 // text. 100000 + how many times.
-            })
-        }
-    }
-    // println!("Output: {:#?}", output);
-    Ok(output)
+#[derive(Debug, Clone)]
+pub struct Text<'a> {
+    pub text: &'a str,
+    pub line_number: i32,
+    pub column: i32,
+    pub opts: Vec<TextOpts>,
 }
-*/
-// Future adwaith, The problem is the text is added at the start and not after the
-// end of the last text. so i added a buffer called lat at line 201 and implement
-// to format_column.
 
-// Add 92
-//                     \u{1b}[001m\u{1b}[0000000000000022m\u{1b}[0000000000000022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022mhello\u{1b}[0m
-//           \u{1b}[001m\u{1b}[0000000000000022m\u{1b}[0000000000000022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022m\u{1b}[022mhello\u{1b}[0m
+pub enum TypeOfBorder {
+    NoBorders,
+    CurvedBorders,
+    SquareBorders,
+}
 
-//
+pub struct Boz<'a> {
+    pub text_data: Vec<Text<'a>>,
+    pub height: i32,
+    pub width: i32,
+    pub type_of_border: TypeOfBorder,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PrivateText {
+    pub text: String,
+    pub line_number: i32,
+    pub column: i32,
+}
+fn replace_none_with_line_numbers(
+    vec_with_none: Vec<Option<PrivateText>>,
+    vec_with_struct: Vec<PrivateText>,
+) -> Vec<Option<PrivateText>> {
+    vec_with_none
+        .into_iter()
+        .enumerate()
+        .map(|(index, value)| {
+            if let Some(private_text) = value {
+                Some(private_text)
+            } else {
+                vec_with_struct
+                    .iter()
+                    .find(|pt| pt.line_number == (index + 1) as i32)
+                    .cloned()
+                    .map(Some)
+                    .unwrap_or(None)
+            }
+        })
+        .collect()
+}
 
 // Implementations
 impl<'a> Boz<'a> {
-    pub fn new(text_data: Vec<Text<'a>>, borders: bool, height: i32, width: i32) -> Boz<'a> {
+    pub fn new(
+        text_data: Vec<Text<'a>>,
+        borders: bool,
+        height: i32,
+        width: i32,
+        type_of_border: TypeOfBorder,
+    ) -> Boz<'a> {
         Boz {
             text_data,
-            borders,
             height,
             width,
+            type_of_border,
         }
     }
 
-    pub fn render_string(&'a self) -> Result<HashMap<i32, PrivateText>, TextError> {
-        let real_width = self.width * 88;
-        let _output_string: &str = "";
-        let _complete_vec: Vec<Option<PrivateText>> = vec![None; self.height.try_into().unwrap()];
+    pub fn render_string(&'a self) -> Result<String, TextError> {
+        let mut output_string: String = "".to_string();
 
-        let all_values = generate_all_values(&self.text_data);
-        let duplicate_values = get_duplicates(&all_values);
+        match self.type_of_border {
+            TypeOfBorder::NoBorders => output_string.push_str("\n"),
+            TypeOfBorder::CurvedBorders => {
+                output_string.push_str(format!("╭{}╮\n", "─".repeat(self.width as usize)).as_str())
+            }
+            TypeOfBorder::SquareBorders => {
+                output_string.push_str(format!("┌{}┐\n", "─".repeat(self.width as usize)).as_str())
+            }
+        }
+
+        let complete_vec: Vec<Option<PrivateText>> = vec![None; self.height.try_into().unwrap()];
+
+        let all_values = handle_duplicates_and_ansi_codes(&generate_all_values(&self.text_data))?;
 
         // <Error handling>
         let mut seen_pairs = HashSet::new();
@@ -349,7 +326,11 @@ impl<'a> Boz<'a> {
             }
         }
         // <\Error handling>
+        println!(
+            "{:#?}",
+            replace_none_with_line_numbers(complete_vec, all_values)
+        );
 
-        Ok(all_values)
+        Ok(output_string)
     }
 }
