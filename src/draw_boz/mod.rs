@@ -156,7 +156,7 @@ pub struct Boz<'a> {
     pub width: i32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PrivateText {
     pub text: String,
     pub line_number: i32,
@@ -165,8 +165,7 @@ pub struct PrivateText {
 
 pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, PrivateText> {
     let mut sorted_text_data = text_data.clone();
-
-    sorted_text_data.sort_by_key(|text| text.line_number);
+    sorted_text_data.sort_by_key(|a| a.line_number);
 
     let mut all_values: HashMap<i32, PrivateText> = HashMap::new();
     for (i, v) in sorted_text_data.iter().enumerate() {
@@ -183,8 +182,72 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
     }
     all_values
 }
-// Forgive me SOILD, I let you down 😔
+
 pub fn handle_duplicates_and_ansi_codes(
+    all_values: &HashMap<i32, PrivateText>,
+) -> Result<Vec<PrivateText>, TextError> {
+    let mut output: Vec<PrivateText> = vec![];
+    let mut sorted_vals: Vec<_> = get_duplicates(all_values)
+        .iter()
+        .map(|a| a.values().cloned().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    for i in &mut sorted_vals {
+        i.sort_by_key(|key| key.column);
+    }
+    let mut sorted_values = sorted_vals;
+
+    for i in &mut sorted_values {
+        if i.len() == 1 {
+            continue;
+        } else if i.len() != 1 {
+            let mut sum = 0;
+            for j in i.iter_mut() {
+                j.column -= sum;
+                sum += j.column;
+            }
+        }
+    }
+
+    for i in &sorted_values {
+        // If the line has only one Text.
+        if i.len() == 1 {
+            let val = &i[0];
+            output.push(PrivateText {
+                text: format_column(val.text.as_str(), val.column),
+                line_number: val.line_number,
+                column: val.column,
+            });
+        } else if i.len() != 1 {
+            let mut result = "".to_string();
+            let mut count = 0;
+            for j in i {
+                let mut last = "".to_string();
+                if last == "" {
+                    last.push_str(format_column(j.text.as_str(), j.column).as_str());
+                    result.push_str(format_column(j.text.as_str(), j.column).as_str());
+                    count += 1;
+                } else if last != "" {
+                    let format_column =
+                        format_column(j.text.as_str(), j.column + last.len() as i32);
+                    last.push_str(format_column.as_str());
+                    result.push_str(format_column.as_str());
+                    count += 1;
+                }
+            }
+
+            output.push(PrivateText {
+                text: result,
+                line_number: i[0].clone().line_number,
+                column: 100000 + count,
+            });
+        }
+    }
+
+    Ok(output)
+}
+/*
+// Forgive me SOILD, I let you down 😔
+pub fn old_handle_duplicates_and_ansi_codes(
     all_values: &HashMap<i32, PrivateText>,
 ) -> Result<Vec<PrivateText>, TextError> {
     let mut output: Vec<PrivateText> = vec![];
@@ -198,17 +261,22 @@ pub fn handle_duplicates_and_ansi_codes(
                 column: val.column,
             })
         } else if i.len() > 1 {
-            let mut last = 0;
+            let mut last = "".to_string();
+            let mut last_column = 0;
             let values: Vec<PrivateText> = i.values().cloned().collect();
             let strings: Vec<String> = values
                 .iter()
                 .map(|a| {
-                    if last == a.text.len() as i32 + a.column {
-                        last += a.text.len() as i32 + a.column;
+                    if last == "" {
+                        last.push_str(format_column(a.text.as_str(), a.column).as_str());
+                        last_column = a.column;
                         format_column(a.text.as_str(), a.column)
-                    } else if last != a.text.len() as i32 + a.column {
-                        let buff = format_column(a.text.as_str(), a.column + last);
-                        last += a.text.len() as i32 + a.column;
+                    } else if last != "" {
+                        let buff = format_column(a.text.as_str(), a.column + last.len() as i32);
+                        last += &buff.clone();
+                        last_column = a.column;
+                        println!("{:#?}", last_column);
+
                         buff
                     } else {
                         "".to_string()
@@ -233,6 +301,7 @@ pub fn handle_duplicates_and_ansi_codes(
     // println!("Output: {:#?}", output);
     Ok(output)
 }
+*/
 // Future adwaith, The problem is the text is added at the start and not after the
 // end of the last text. so i added a buffer called lat at line 201 and implement
 // to format_column.

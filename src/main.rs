@@ -4,6 +4,7 @@ use draw_boz::{
     opts::{self, Opts},
     PrivateText,
 };
+use errors::TextError;
 
 use crate::draw_boz::opts::{parse_opts, Colors};
 mod animations;
@@ -79,12 +80,12 @@ duplicate_values:
 
 */
 
-fn main() {
+fn main() -> Result<(), TextError> {
     let text_data = vec![
         draw_boz::Text {
-            text: "hello",
+            text: "hellow",
             line_number: 5,
-            column: 20,
+            column: 1,
             opts: vec![Opts::Bold(Some(true))],
         },
         draw_boz::Text {
@@ -97,27 +98,26 @@ fn main() {
             ],
         },
         draw_boz::Text {
-            text: "hello",
+            text: "hellog",
             line_number: 5,
             column: 10,
             opts: vec![Opts::Bold(Some(true))],
         },
         draw_boz::Text {
             text: "hell",
-            line_number: 10,
+            line_number: 5,
             column: 30,
             opts: vec![
                 Opts::ForeColor(Some(Colors::Red)),
                 Opts::ForeColor(Some(Colors::Black)),
             ],
         },
-        draw_boz::Text {
-            text: "this is hell",
-            line_number: 15,
-            column: 10,
-            opts: vec![],
-        },
     ];
+
+    let new =
+        draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data))?;
+
+    println!("new:\n{:#?}", new);
 
     let mut all_values_test: HashMap<i32, PrivateText> = HashMap::new();
     all_values_test.insert(
@@ -166,18 +166,20 @@ fn main() {
     //println!(
     //    "{:#?}",
     //    draw_boz::get_duplicates(&draw_boz::generate_all_values(&text_data))
-    //);
+    //)
 
-    println!(
-        "{:#?}",
-        draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data))
-    );
+    //match draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data)) {
+    //    Ok(val) => println!("{:#?}", val),
+    //    Err(err) => panic!("{}", err),
+    //}
 
-    let a = draw_boz::Boz::new(text_data, true, 16, 52);
+    //let a = draw_boz::Boz::new(text_data, true, 16, 52);
     // let av = match a.render_string() {
     //     Ok(val) => println!("{:#?}", draw_boz::get_duplicates(&val)),
     //     Err(err) => {
     //         panic!("{:?}", err)
     //     }
     // };
+
+    Ok(())
 }
