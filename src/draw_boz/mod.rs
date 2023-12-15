@@ -161,6 +161,29 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
     all_values
 }
 
+fn replace_none_with_line_numbers(
+    width_of_line: i32,
+    vec_with_struct: Vec<PrivateText>,
+) -> Vec<TextTypes> {
+    let result: Vec<TextTypes> = (0..width_of_line)
+        .map(|index| {
+            vec_with_struct
+                .iter()
+                .find(|pt| pt.line_number == (index + 1))
+                .map(|private_text| {
+                    if private_text.column < 9999 {
+                        TextTypes::SingleText(private_text.clone())
+                    } else {
+                        TextTypes::MultiText(private_text.clone())
+                    }
+                })
+                .unwrap_or(TextTypes::Empty)
+        })
+        .collect();
+
+    result
+}
+
 // Forgive me SOILD, I let you down 😔
 pub fn handle_duplicates_and_ansi_codes(
     all_values: &HashMap<i32, PrivateText>,
@@ -252,26 +275,13 @@ pub struct PrivateText {
     pub line_number: i32,
     pub column: i32,
 }
-fn replace_none_with_line_numbers(
-    vec_with_none: Vec<Option<PrivateText>>,
-    vec_with_struct: Vec<PrivateText>,
-) -> Vec<Option<PrivateText>> {
-    vec_with_none
-        .into_iter()
-        .enumerate()
-        .map(|(index, value)| {
-            if let Some(private_text) = value {
-                Some(private_text)
-            } else {
-                vec_with_struct
-                    .iter()
-                    .find(|pt| pt.line_number == (index + 1) as i32)
-                    .cloned()
-                    .map(Some)
-                    .unwrap_or(None)
-            }
-        })
-        .collect()
+
+#[derive(Clone)]
+enum TextTypes {
+    Empty,
+    SingleText(PrivateText),
+    // the data is for how many text are there in the line
+    MultiText(PrivateText),
 }
 
 // Implementations
@@ -304,9 +314,9 @@ impl<'a> Boz<'a> {
             }
         }
 
-        let complete_vec: Vec<Option<PrivateText>> = vec![None; self.height.try_into().unwrap()];
-
         let all_values = handle_duplicates_and_ansi_codes(&generate_all_values(&self.text_data))?;
+
+        let complete_vec: Vec<TextTypes> = replace_none_with_line_numbers(self.height, all_values);
 
         // <Error handling>
         let mut seen_pairs = HashSet::new();
@@ -326,10 +336,63 @@ impl<'a> Boz<'a> {
             }
         }
         // <\Error handling>
-        println!(
-            "{:#?}",
-            replace_none_with_line_numbers(complete_vec, all_values)
-        );
+
+        for i in complete_vec {
+            match i {
+                TextTypes::SingleText(val) => match self.type_of_border {
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
+                        .push_str(
+                            format!(
+                                "│{}{}│\n",
+                                val.text,
+                                " ".repeat((self.width - (val.text.len() as i32 - 78)) as usize)
+                            )
+                            .as_str(),
+                        ),
+
+                    TypeOfBorder::NoBorders => {
+                        output_string.push_str(format!("{}\n", val.text).as_str())
+                    }
+                },
+                TextTypes::MultiText(val) => match self.type_of_border {
+                    TypeOfBorder::SquareBorders | TypeOfBorder::CurvedBorders => output_string
+                        .push_str(
+                            format!(
+                                "│{}{}│\n",
+                                val.text,
+                                " ".repeat(
+                                    (self.width
+                                        - val.text.len() as i32
+                                        - ((100000 - val.column) * 78))
+                                        as usize
+                                )
+                                .as_str()
+                            )
+                            .as_str(),
+                        ),
+                    TypeOfBorder::NoBorders => {
+                        output_string.push_str(format!("{}\n", val.text).as_str())
+                    }
+                },
+                TextTypes::Empty => match self.type_of_border {
+                    TypeOfBorder::NoBorders => output_string.push_str("\n"),
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
+                        .push_str(
+                            format!("│{}│\n", " ".repeat(self.width as usize).as_str()).as_str(),
+                        ),
+                },
+            }
+        }
+
+        match self.type_of_border {
+            TypeOfBorder::NoBorders => output_string.push_str("\n"),
+            TypeOfBorder::CurvedBorders => {
+                output_string.push_str(format!("╰{}╯\n", "─".repeat(self.width as usize)).as_str())
+            }
+            TypeOfBorder::SquareBorders => {
+                output_string.push_str(format!("└{}┘\n", "─".repeat(self.width as usize)).as_str())
+            }
+        }
 
         Ok(output_string)
     }

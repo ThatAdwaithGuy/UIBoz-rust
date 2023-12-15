@@ -83,46 +83,46 @@ duplicate_values:
 fn main() -> Result<(), TextError> {
     let text_data = vec![
         draw_boz::Text {
+            text: "hello",
+            line_number: 5,
+            column: 30,
+            opts: vec![],
+        },
+        draw_boz::Text {
+            text: "hellow",
+            line_number: 5,
+            column: 10,
+            opts: vec![],
+        },
+        draw_boz::Text {
             text: "hellow",
             line_number: 5,
             column: 1,
-            opts: vec![TextOpts::Bold(true)],
+            opts: vec![],
         },
         draw_boz::Text {
-            text: "hell",
-            line_number: 10,
-            column: 10,
-            opts: vec![
-                TextOpts::ForeColor(Colors::Red),
-                TextOpts::ForeColor(Colors::Black),
-            ],
-        },
-        draw_boz::Text {
-            text: "hellog",
-            line_number: 5,
-            column: 10,
-            opts: vec![TextOpts::Bold(true)],
-        },
-        draw_boz::Text {
-            text: "hell",
-            line_number: 5,
+            text: "hello",
+            line_number: 4,
             column: 30,
-            opts: vec![
-                TextOpts::ForeColor(Colors::Red),
-                TextOpts::ForeColor(Colors::Black),
-            ],
+            opts: vec![],
+        },
+        draw_boz::Text {
+            text: "hellow",
+            line_number: 4,
+            column: 10,
+            opts: vec![],
+        },
+        draw_boz::Text {
+            text: "hellow",
+            line_number: 4,
+            column: 1,
+            opts: vec![],
         },
     ];
 
-    let boz = draw_boz::Boz::new(
-        text_data,
-        true,
-        10,
-        1000,
-        draw_boz::TypeOfBorder::CurvedBorders,
-    );
+    let boz = draw_boz::Boz::new(text_data, true, 10, 52, draw_boz::TypeOfBorder::NoBorders);
 
-    boz.render_string();
+    println!("{}", boz.render_string()?);
 
     let mut all_values_test: HashMap<i32, PrivateText> = HashMap::new();
     all_values_test.insert(
