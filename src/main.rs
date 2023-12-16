@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+mod components;
 use draw_boz::{
     opts::{self, TextOpts},
     PrivateText,
@@ -11,6 +11,8 @@ mod animations;
 mod draw_boz;
 mod errors;
 mod event_loop;
+
+struct Jello;
 
 /*
 all_values:
