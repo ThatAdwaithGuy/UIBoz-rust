@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
-    ops::Deref,
+    ops::{Deref, RangeInclusive},
 };
 
 use crate::draw_boz;
@@ -197,10 +197,10 @@ pub fn render_string_unpacked<'a>(
     match type_of_border {
         TypeOfBorder::NoBorders => output_string.push_str("\n"),
         TypeOfBorder::CurvedBorders => {
-            output_string.push_str(format!("{}\n", "".repeat(width as usize)).as_str())
+            output_string.push_str(format!("╭{}╮\n", "─".repeat(width as usize)).as_str())
         }
         TypeOfBorder::SquareBorders => {
-            output_string.push_str(format!("{}\n", "─".repeat(width as usize)).as_str())
+            output_string.push_str(format!("┌{}┐\n", "─".repeat(width as usize)).as_str())
         }
     }
 
@@ -286,6 +286,24 @@ pub fn render_string_unpacked<'a>(
 pub fn parse_boz_to_text<'a>(text: &Vec<TextType<'a>>) -> Result<Vec<Text<'a>>, TextError> {
     let output: Vec<Text<'a>> = vec![];
 
+    let mut occupied_ranges: Vec<RangeInclusive<i32>> = vec![];
+    let mut text_in_range: Vec<&Text> = vec![];
+    for i in text {
+        if let TextType::Text(data) = i {
+            println!("Im text in BOZ: {:#?}", data);
+            for i in &occupied_ranges {
+                if i.contains(&data.line_number) {
+                    text_in_range.push(data);
+                }
+            }
+        } else if let TextType::Boz(data) = i {
+            println!("Im text in BOZ: {:#?}", data);
+            occupied_ranges
+                .push(data.start_line_number..=data.start_line_number + data.boz.height + 1);
+        }
+    }
+    println!("{:#?}", text_in_range);
+
     let nested_boz: Vec<_> = text
         .iter()
         .filter(|boz| matches!(boz, TextType::Boz(_)))
@@ -308,86 +326,24 @@ pub fn parse_boz_to_text<'a>(text: &Vec<TextType<'a>>) -> Result<Vec<Text<'a>>, 
                         }
                     })
                     .collect::<Vec<Text<'a>>>();
-                println!(
-                    "TEST: {:#?}",
-                    handle_duplicates_and_ansi_codes(&generate_all_values(&unpacked_text_data))
-                );
+
+                let rendered_string = render_string_unpacked(
+                    &unpacked_text_data,
+                    data.boz.height,
+                    data.boz.width,
+                    data.boz.type_of_border.clone(),
+                )?;
+
+                let split_rendered_string: Vec<&str> = rendered_string.lines().collect();
+
+                println!("HELOO: {:#?}", split_rendered_string);
+
                 for (i, v) in unpacked_text_data.iter_mut().enumerate() {
                     println!("{}", data.start_line_number);
                     v.line_number += data.start_line_number + (i as i32);
                     v.column += data.column;
                 }
-                /*
-                let curved_border_top_border = format!("╭{}╮", border_lines);
-                let square_borders_top_border = format!("┌{}┐", border_lines);
-                match data.boz.type_of_border {
-                    TypeOfBorder::NoBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: "",
-                            line_number: data.start_line_number,
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                    TypeOfBorder::CurvedBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: curved_border_top_border.as_str(),
-                            line_number: data.start_line_number,
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                    TypeOfBorder::SquareBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: square_borders_top_border.as_str(),
-                            line_number: data.start_line_number,
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                }
 
-                let curved_border_bottom_border = format!("╰{}╯", border_lines);
-                let square_borders_bottom_border = format!("┌{}┐", border_lines);
-                match data.boz.type_of_border {
-                    TypeOfBorder::NoBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: "",
-                            line_number: data.start_line_number
-                                - data.boz.text_data.len() as i32
-                                - 1,
-
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                    TypeOfBorder::CurvedBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: curved_border_bottom_border.as_str(),
-                            line_number: data.start_line_number
-                                - data.boz.text_data.len() as i32
-                                - 1,
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                    TypeOfBorder::SquareBorders => unpacked_text_data.insert(
-                        0,
-                        Text {
-                            text: square_borders_bottom_border.as_str(),
-                            line_number: data.start_line_number
-                                - data.boz.text_data.len() as i32
-                                - 1,
-                            column: data.column,
-                            opts: vec![],
-                        },
-                    ),
-                }*/
                 println!("A: {:#?}", unpacked_text_data);
 
                 Ok(Text {
