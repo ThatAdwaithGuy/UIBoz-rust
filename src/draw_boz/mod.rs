@@ -1,4 +1,7 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    ops::Deref,
+};
 
 use crate::draw_boz;
 
@@ -164,24 +167,252 @@ pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<i32, Privat
 fn replace_none_with_line_numbers(
     width_of_line: i32,
     vec_with_struct: Vec<PrivateText>,
-) -> Vec<TextTypes> {
-    let result: Vec<TextTypes> = (0..width_of_line)
+) -> Vec<LineTypes> {
+    let result: Vec<LineTypes> = (0..width_of_line)
         .map(|index| {
             vec_with_struct
                 .iter()
                 .find(|pt| pt.line_number == (index + 1))
                 .map(|private_text| {
                     if private_text.column < 9999 {
-                        TextTypes::SingleText(private_text.clone())
+                        LineTypes::SingleText(private_text.clone())
                     } else {
-                        TextTypes::MultiText(private_text.clone())
+                        LineTypes::MultiText(private_text.clone())
                     }
                 })
-                .unwrap_or(TextTypes::Empty)
+                .unwrap_or(LineTypes::Empty)
         })
         .collect();
 
     result
+}
+
+pub fn render_string_unpacked<'a>(
+    text_data: &Vec<Text<'a>>,
+    height: i32,
+    width: i32,
+    type_of_border: TypeOfBorder,
+) -> Result<String, TextError> {
+    let mut output_string: String = "".to_string();
+    match type_of_border {
+        TypeOfBorder::NoBorders => output_string.push_str("\n"),
+        TypeOfBorder::CurvedBorders => {
+            output_string.push_str(format!("{}\n", "".repeat(width as usize)).as_str())
+        }
+        TypeOfBorder::SquareBorders => {
+            output_string.push_str(format!("{}\n", "─".repeat(width as usize)).as_str())
+        }
+    }
+
+    let all_values = handle_duplicates_and_ansi_codes(&generate_all_values(&text_data))?;
+
+    let complete_vec: Vec<LineTypes> = replace_none_with_line_numbers(height, all_values);
+
+    // <Error handling>
+    let mut seen_pairs = HashSet::new();
+    for i in text_data {
+        let pair = (i.line_number, i.column);
+        if seen_pairs.contains(&pair) {
+            return Err(TextError::DuplicateText(i.text.to_string()));
+        }
+        seen_pairs.insert(pair);
+    }
+
+    for i in text_data {
+        // Length of the text (without ASNI) + column and 88 because of ANSI, compared to width
+        // times 88 because of ANSI
+        if (i.text.len() as i32 - 123) + i.column >= width {
+            return Err(TextError::LeftBounds(i.text.to_string()));
+        }
+    }
+    // <\Error handling>
+
+    for i in complete_vec {
+        match i {
+            LineTypes::SingleText(val) => match type_of_border {
+                TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
+                    .push_str(
+                        format!(
+                            "│{}{}│\n",
+                            val.text,
+                            " ".repeat((width - (val.text.len() as i32 - 78)) as usize)
+                        )
+                        .as_str(),
+                    ),
+
+                TypeOfBorder::NoBorders => {
+                    output_string.push_str(format!("{}\n", val.text).as_str())
+                }
+            },
+            LineTypes::MultiText(val) => match type_of_border {
+                TypeOfBorder::SquareBorders | TypeOfBorder::CurvedBorders => output_string
+                    .push_str(
+                        format!(
+                            "│{}{}│\n",
+                            val.text,
+                            " ".repeat(
+                                (width - val.text.len() as i32 - ((100000 - val.column) * 78))
+                                    as usize
+                            )
+                            .as_str()
+                        )
+                        .as_str(),
+                    ),
+                TypeOfBorder::NoBorders => {
+                    output_string.push_str(format!("{}\n", val.text).as_str())
+                }
+            },
+            LineTypes::Empty => match type_of_border {
+                TypeOfBorder::NoBorders => output_string.push_str("\n"),
+                TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
+                    .push_str(format!("│{}│\n", " ".repeat(width as usize).as_str()).as_str()),
+            },
+        }
+    }
+
+    match type_of_border {
+        TypeOfBorder::NoBorders => output_string.push_str("\n"),
+        TypeOfBorder::CurvedBorders => {
+            output_string.push_str(format!("╰{}╯\n", "─".repeat(width as usize)).as_str())
+        }
+        TypeOfBorder::SquareBorders => {
+            output_string.push_str(format!("└{}┘\n", "─".repeat(width as usize)).as_str())
+        }
+    }
+
+    Ok(output_string)
+}
+
+pub fn parse_boz_to_text<'a>(text: &Vec<TextType<'a>>) -> Result<Vec<Text<'a>>, TextError> {
+    let output: Vec<Text<'a>> = vec![];
+
+    let nested_boz: Vec<_> = text
+        .iter()
+        .filter(|boz| matches!(boz, TextType::Boz(_)))
+        .map(|x| -> Result<Text, TextError> {
+            if let TextType::Boz(data) = x {
+                let mut unpacked_text_data: Vec<Text<'_>> = data
+                    .boz
+                    .text_data
+                    .iter()
+                    .map(|y| {
+                        if let TextType::Text(text) = y {
+                            text.to_owned()
+                        } else {
+                            Text {
+                                text: "",
+                                line_number: 10,
+                                column: 10,
+                                opts: vec![],
+                            }
+                        }
+                    })
+                    .collect::<Vec<Text<'a>>>();
+                println!(
+                    "TEST: {:#?}",
+                    handle_duplicates_and_ansi_codes(&generate_all_values(&unpacked_text_data))
+                );
+                for (i, v) in unpacked_text_data.iter_mut().enumerate() {
+                    println!("{}", data.start_line_number);
+                    v.line_number += data.start_line_number + (i as i32);
+                    v.column += data.column;
+                }
+                /*
+                let curved_border_top_border = format!("╭{}╮", border_lines);
+                let square_borders_top_border = format!("┌{}┐", border_lines);
+                match data.boz.type_of_border {
+                    TypeOfBorder::NoBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: "",
+                            line_number: data.start_line_number,
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                    TypeOfBorder::CurvedBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: curved_border_top_border.as_str(),
+                            line_number: data.start_line_number,
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                    TypeOfBorder::SquareBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: square_borders_top_border.as_str(),
+                            line_number: data.start_line_number,
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                }
+
+                let curved_border_bottom_border = format!("╰{}╯", border_lines);
+                let square_borders_bottom_border = format!("┌{}┐", border_lines);
+                match data.boz.type_of_border {
+                    TypeOfBorder::NoBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: "",
+                            line_number: data.start_line_number
+                                - data.boz.text_data.len() as i32
+                                - 1,
+
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                    TypeOfBorder::CurvedBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: curved_border_bottom_border.as_str(),
+                            line_number: data.start_line_number
+                                - data.boz.text_data.len() as i32
+                                - 1,
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                    TypeOfBorder::SquareBorders => unpacked_text_data.insert(
+                        0,
+                        Text {
+                            text: square_borders_bottom_border.as_str(),
+                            line_number: data.start_line_number
+                                - data.boz.text_data.len() as i32
+                                - 1,
+                            column: data.column,
+                            opts: vec![],
+                        },
+                    ),
+                }*/
+                println!("A: {:#?}", unpacked_text_data);
+
+                Ok(Text {
+                    text: "PLACEHOLDER",
+                    line_number: 10,
+                    column: 10,
+                    opts: vec![],
+                })
+            } else {
+                if let TextType::Text(data) = x {
+                    Ok(data.to_owned())
+                } else {
+                    let text = Text {
+                        text: "Looks like I HAVE A STUPID ERROR",
+                        line_number: 10,
+                        column: 10,
+                        opts: vec![],
+                    };
+                    Ok(text)
+                }
+            }
+        })
+        .collect();
+    println!("nested {:#?}", nested_boz);
+    Ok(output)
 }
 
 // Forgive me SOILD, I let you down 😔
@@ -256,14 +487,28 @@ pub struct Text<'a> {
     pub opts: Vec<TextOpts>,
 }
 
+#[derive(Debug, Clone)]
 pub enum TypeOfBorder {
     NoBorders,
     CurvedBorders,
     SquareBorders,
 }
 
+#[derive(Debug, Clone)]
+pub enum TextType<'a> {
+    Text(Text<'a>),
+    Boz(NestedBoz<'a>),
+}
+
+#[derive(Debug, Clone)]
+pub struct NestedBoz<'a> {
+    pub boz: Boz<'a>,
+    pub start_line_number: i32,
+    pub column: i32,
+}
+#[derive(Debug, Clone)]
 pub struct Boz<'a> {
-    pub text_data: Vec<Text<'a>>,
+    pub text_data: Vec<TextType<'a>>,
     pub height: i32,
     pub width: i32,
     pub type_of_border: TypeOfBorder,
@@ -277,7 +522,7 @@ pub struct PrivateText {
 }
 
 #[derive(Clone)]
-enum TextTypes {
+enum LineTypes {
     Empty,
     SingleText(PrivateText),
     // the data is for how many text are there in the line
@@ -287,8 +532,7 @@ enum TextTypes {
 // Implementations
 impl<'a> Boz<'a> {
     pub fn new(
-        text_data: Vec<Text<'a>>,
-        borders: bool,
+        text_data: Vec<TextType<'a>>,
         height: i32,
         width: i32,
         type_of_border: TypeOfBorder,
@@ -302,8 +546,8 @@ impl<'a> Boz<'a> {
     }
 
     pub fn render_string(&'a self) -> Result<String, TextError> {
+        let textized_text_data = parse_boz_to_text(&self.text_data)?;
         let mut output_string: String = "".to_string();
-
         match self.type_of_border {
             TypeOfBorder::NoBorders => output_string.push_str("\n"),
             TypeOfBorder::CurvedBorders => {
@@ -314,13 +558,14 @@ impl<'a> Boz<'a> {
             }
         }
 
-        let all_values = handle_duplicates_and_ansi_codes(&generate_all_values(&self.text_data))?;
+        let all_values =
+            handle_duplicates_and_ansi_codes(&generate_all_values(&textized_text_data))?;
 
-        let complete_vec: Vec<TextTypes> = replace_none_with_line_numbers(self.height, all_values);
+        let complete_vec: Vec<LineTypes> = replace_none_with_line_numbers(self.height, all_values);
 
         // <Error handling>
         let mut seen_pairs = HashSet::new();
-        for i in &self.text_data {
+        for i in &textized_text_data {
             let pair = (i.line_number, i.column);
             if seen_pairs.contains(&pair) {
                 return Err(TextError::DuplicateText(i.text.to_string()));
@@ -328,7 +573,7 @@ impl<'a> Boz<'a> {
             seen_pairs.insert(pair);
         }
 
-        for i in &self.text_data {
+        for i in &textized_text_data {
             // Length of the text (without ASNI) + column and 88 because of ANSI, compared to width
             // times 88 because of ANSI
             if (i.text.len() as i32 - 123) + i.column >= self.width {
@@ -339,7 +584,7 @@ impl<'a> Boz<'a> {
 
         for i in complete_vec {
             match i {
-                TextTypes::SingleText(val) => match self.type_of_border {
+                LineTypes::SingleText(val) => match self.type_of_border {
                     TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
                         .push_str(
                             format!(
@@ -354,7 +599,7 @@ impl<'a> Boz<'a> {
                         output_string.push_str(format!("{}\n", val.text).as_str())
                     }
                 },
-                TextTypes::MultiText(val) => match self.type_of_border {
+                LineTypes::MultiText(val) => match self.type_of_border {
                     TypeOfBorder::SquareBorders | TypeOfBorder::CurvedBorders => output_string
                         .push_str(
                             format!(
@@ -374,7 +619,7 @@ impl<'a> Boz<'a> {
                         output_string.push_str(format!("{}\n", val.text).as_str())
                     }
                 },
-                TextTypes::Empty => match self.type_of_border {
+                LineTypes::Empty => match self.type_of_border {
                     TypeOfBorder::NoBorders => output_string.push_str("\n"),
                     TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
                         .push_str(

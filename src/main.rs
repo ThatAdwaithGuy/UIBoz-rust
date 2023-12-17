@@ -84,109 +84,30 @@ duplicate_values:
 
 fn main() -> Result<(), TextError> {
     let text_data = vec![
-        draw_boz::Text {
+        draw_boz::TextType::Text(draw_boz::Text {
             text: "hello",
-            line_number: 5,
-            column: 30,
+            line_number: 1,
+            column: 5,
             opts: vec![],
-        },
-        draw_boz::Text {
-            text: "hellow",
-            line_number: 5,
+        }),
+        draw_boz::TextType::Boz(draw_boz::NestedBoz {
+            boz: draw_boz::Boz {
+                text_data: vec![draw_boz::TextType::Text(draw_boz::Text {
+                    text: "im in a BOZ",
+                    line_number: 1,
+                    column: 4,
+                    opts: vec![],
+                })],
+                height: 1,
+                width: 52,
+                type_of_border: draw_boz::TypeOfBorder::CurvedBorders,
+            },
+            start_line_number: 5,
             column: 10,
-            opts: vec![],
-        },
-        draw_boz::Text {
-            text: "hellow",
-            line_number: 5,
-            column: 1,
-            opts: vec![],
-        },
-        draw_boz::Text {
-            text: "hello",
-            line_number: 4,
-            column: 30,
-            opts: vec![],
-        },
-        draw_boz::Text {
-            text: "hellow",
-            line_number: 4,
-            column: 10,
-            opts: vec![],
-        },
-        draw_boz::Text {
-            text: "hellow",
-            line_number: 4,
-            column: 1,
-            opts: vec![],
-        },
+        }),
     ];
 
-    let boz = draw_boz::Boz::new(text_data, true, 10, 52, draw_boz::TypeOfBorder::NoBorders);
-
-    println!("{}", boz.render_string()?);
-
-    let mut all_values_test: HashMap<i32, PrivateText> = HashMap::new();
-    all_values_test.insert(
-        3,
-        PrivateText {
-            text: "            hell".to_string(),
-            line_number: 10,
-            column: 30,
-        },
-    );
-
-    all_values_test.insert(
-        0,
-        PrivateText {
-            text: "hello".to_string(),
-            line_number: 5,
-            column: 20,
-        },
-    );
-
-    all_values_test.insert(
-        4,
-        PrivateText {
-            text: "this is hell".to_string(),
-            line_number: 15,
-            column: 10,
-        },
-    );
-    all_values_test.insert(
-        2,
-        PrivateText {
-            text: "hell".to_string(),
-            line_number: 10,
-            column: 10,
-        },
-    );
-    // all_values_test.insert(
-    //     1,
-    //     PrivateText {
-    //         text: "hello".to_string(),
-    //         line_number: 5,
-    //         column: 10,
-    //     },
-    // );
-    //
-    //println!(
-    //    "{:#?}",
-    //    draw_boz::get_duplicates(&draw_boz::generate_all_values(&text_data))
-    //)
-
-    //match draw_boz::handle_duplicates_and_ansi_codes(&draw_boz::generate_all_values(&text_data)) {
-    //    Ok(val) => println!("{:#?}", val),
-    //    Err(err) => panic!("{}", err),
-    //}
-
-    //let a = draw_boz::Boz::new(text_data, true, 16, 52);
-    // let av = match a.render_string() {
-    //     Ok(val) => println!("{:#?}", draw_boz::get_duplicates(&val)),
-    //     Err(err) => {
-    //         panic!("{:?}", err)
-    //     }
-    // };
+    println!("{:#?}", draw_boz::parse_boz_to_text(&text_data));
 
     Ok(())
 }

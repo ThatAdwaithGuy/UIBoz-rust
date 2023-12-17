@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, std::marker::Copy, PartialEq, Eq, Hash)]
 pub enum Colors {
     Blank,
     Red,
