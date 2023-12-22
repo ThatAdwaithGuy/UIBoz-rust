@@ -24,12 +24,46 @@ fn main() -> Result<(), TextError> {
         }),
         draw_boz::TextType::Boz(draw_boz::NestedBoz {
             boz: draw_boz::Boz {
-                text_data: vec![draw_boz::TextType::Text(draw_boz::Text {
-                    text: "im in a BOZ",
-                    line_number: 1,
-                    column: 4,
-                    opts: vec![],
-                })],
+                text_data: vec![
+                    draw_boz::TextType::Text(draw_boz::Text {
+                        text: "im in a BOZ",
+                        line_number: 1,
+                        column: 4,
+                        opts: vec![],
+                    }),
+                    draw_boz::TextType::Boz(draw_boz::NestedBoz {
+                        boz: draw_boz::Boz {
+                            text_data: vec![
+                                draw_boz::TextType::Text(draw_boz::Text {
+                                    text: "im in a BOZ",
+                                    line_number: 1,
+                                    column: 4,
+                                    opts: vec![],
+                                }),
+                                draw_boz::TextType::Boz(draw_boz::NestedBoz {
+                                    boz: draw_boz::Boz {
+                                        text_data: vec![draw_boz::TextType::Text(draw_boz::Text {
+                                            text: "im in a BOZ",
+                                            line_number: 1,
+                                            column: 4,
+                                            opts: vec![],
+                                        })],
+                                        height: 1,
+                                        width: 52,
+                                        type_of_border: draw_boz::TypeOfBorder::CurvedBorders,
+                                    },
+                                    start_line_number: 5,
+                                    column: 10,
+                                }),
+                            ],
+                            height: 1,
+                            width: 52,
+                            type_of_border: draw_boz::TypeOfBorder::CurvedBorders,
+                        },
+                        start_line_number: 5,
+                        column: 10,
+                    }),
+                ],
                 height: 1,
                 width: 52,
                 type_of_border: draw_boz::TypeOfBorder::CurvedBorders,
@@ -39,7 +73,7 @@ fn main() -> Result<(), TextError> {
         }),
     ];
 
-    println!("{:#?}", draw_boz::parse_boz_to_text(&text_data));
+    println!("{:#?}", draw_boz::convert_boz_to_text(&text_data));
 
     Ok(())
 }
