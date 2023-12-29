@@ -1,7 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet, VecDeque},
-    fmt::format,
-    io::{self, BufRead},
+    collections::{BTreeMap, HashMap, HashSet},
     ops::{Deref, RangeInclusive},
     usize,
 };
@@ -9,7 +7,7 @@ use std::{
 use crate::draw_boz;
 
 use super::errors::TextError;
-/*
+
 pub mod opts;
 use opts::TextOpts;
 /*def get_duplicates(dict: dict[int, PrivateText]):
@@ -33,6 +31,12 @@ for i, v in dict.items():
 return groups*/
 
 pub fn get_duplicates(input_hashmap: &HashMap<u32, PrivateText>) -> Vec<HashMap<u32, PrivateText>> {
+    // let mut values: Vec<PrivateText> = input_hashmap.values().cloned().collect();
+    // values.sort_by_key(|text| text.line_number);
+    // let input_array: HashMap<_, _> = values
+    //     .into_iter()
+    //     .map(|text| (text.line_number, text))
+    //    .collect();
     let deref_input = input_hashmap.clone();
     let input_array: BTreeMap<u32, PrivateText> =
         deref_input.into_iter().collect::<BTreeMap<_, _>>();
@@ -51,6 +55,7 @@ pub fn get_duplicates(input_hashmap: &HashMap<u32, PrivateText>) -> Vec<HashMap<
     let mut current_group = HashMap::new();
 
     for (id, data) in input_array.iter() {
+        // Use entry method to get or create key-value pairs in seen_values
         let entry = seen_values.entry(&data.line_number).or_insert(0);
         *entry += 1;
         if *entry != frequency_dict[&data.line_number] {
@@ -140,7 +145,7 @@ fn overlay<'a>(lst: Vec<&str>) -> Result<String, TextError> {
     Ok(last_element.to_owned())
 }
 
-pub fn generate_all_values<'a>(text_data: &Vec<Texttt>) -> HashMap<u32, PrivateText> {
+pub fn generate_all_values<'a>(text_data: &Vec<Text<'a>>) -> HashMap<u32, PrivateText> {
     let mut sorted_text_data = text_data.clone();
     sorted_text_data.sort_by_key(|a| a.line_number);
 
@@ -154,7 +159,6 @@ pub fn generate_all_values<'a>(text_data: &Vec<Texttt>) -> HashMap<u32, PrivateT
                 text: format!("{}{}\x1b[0m", formatted_opts, v.text),
                 line_number: v.line_number,
                 column: v.column,
-                no_of_ansi_codes: 1,
             },
         );
     }
@@ -165,13 +169,13 @@ fn replace_none_with_line_numbers(
     width_of_line: u32,
     vec_with_struct: Vec<PrivateText>,
 ) -> Vec<LineTypes> {
-    (0..width_of_line)
+    let result: Vec<LineTypes> = (0..width_of_line)
         .map(|index| {
             vec_with_struct
                 .iter()
                 .find(|pt| pt.line_number == (index + 1))
                 .map(|private_text| {
-                    if private_text.no_of_ansi_codes <= 1 {
+                    if private_text.column < 9999 {
                         LineTypes::SingleText(private_text.clone())
                     } else {
                         LineTypes::MultiText(private_text.clone())
@@ -179,23 +183,167 @@ fn replace_none_with_line_numbers(
                 })
                 .unwrap_or(LineTypes::Empty)
         })
-        .collect()
+        .collect();
+
+    result
 }
+
+pub fn convert_boz_to_text<'a>(
+    text_data: &Vec<TextType<'a>>,
+) -> Result</*Vec<Text<'a>>*/ (), TextError> {
+    let hashmap_text_data: HashMap<usize, &TextType<'a>> = text_data.iter().enumerate().collect();
+
+    let bozes: HashMap<&usize, &NestedBoz<'a>> = hashmap_text_data
+        .iter()
+        .filter_map(|(index, text)| {
+            if let TextType::Boz(data) = text {
+                Some((index, data))
+            } else {
+                None
+            }
+        })
+        .collect();
+    let text: HashMap<&usize, &Text<'a>> = hashmap_text_data
+        .iter()
+        .filter_map(|(index, text)| {
+            if let TextType::Text(data) = text {
+                Some((index, data))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let conflict_ranges: HashMap<&usize, RangeInclusive<u32>> = bozes
+        .iter()
+        .map(|(i, v)| {
+            (
+                i.to_owned(),
+                v.start_line_number..=v.start_line_number + v.boz.height + 1,
+            )
+        })
+        .collect();
+    let mut text_boz_conflicts: HashMap<&usize, &usize> = HashMap::new();
+    for (i, v) in &text {
+        for (i1, v1) in &conflict_ranges {
+            if v1.contains(&v.column) {
+                text_boz_conflicts.insert(i, i1);
+            }
+        }
+    }
+    let boz_boz_conflicts: HashMap<&usize, &usize> = HashMap::new();
+    let text_text_conflicts: HashMap<&usize, &usize> = HashMap::new();
+    println!("{:#?}", conflict_ranges);
+    println!("{:#?}", bozes);
+    //println!("{:#?}", text);
+    Ok(())
+}
+
+/*
+pub fn parse_boz_to_text<'a>(text: &Vec<TextType<'a>>) -> Result<Vec<Text<'a>>, TextError> {
+    let output: Vec<Text<'a>> = vec![];
+    let mut overlaying_boz: HashMap<Text, NestedBoz> = HashMap::new();
+    let mut ranges = vec![];
+
+
+    let mut occupied_ranges: Vec<RangeInclusive<i32>> = vec![];
+    let mut text_in_range: Vec<&Text> = vec![];
+    for i in text {
+        if let TextType::Text(data) = i {
+            println!("Im text in BOZ: {:#?}", data);
+            for i in &occupied_ranges {
+                if i.contains(&data.line_number) {
+                    text_in_range.push(data);
+                }
+            }
+        } else if let TextType::Boz(data) = i {
+            println!("Im text in BOZ: {:#?}", data);
+            occupied_ranges
+                .push(data.start_line_number..=data.start_line_number + data.boz.height + 1);
+        }
+    }
+    println!("{:#?}", text_in_range);
+
+    let nested_boz: Vec<_> = text
+        .iter()
+        .filter(|boz| matches!(boz, TextType::Boz(_)))
+        .map(|x| -> Result<Text, TextError> {
+            if let TextType::Boz(data) = x {
+                let mut unpacked_text_data: Vec<Text<'_>> = data
+                    .boz
+                    .text_data
+                    .iter()
+                    .map(|y| {
+                        if let TextType::Text(text) = y {
+                            text.to_owned()
+                        } else {
+                            Text {
+                                text: "",
+                                line_number: 10,
+                                column: 10,
+                                opts: vec![],
+                            }
+                        }
+                    })
+                    .collect::<Vec<Text<'a>>>();
+
+                let rendered_string = render_string_unpacked(
+                    &unpacked_text_data,
+                    data.boz.height,
+                    data.boz.width,
+                    data.boz.type_of_border.clone(),
+                )?;
+
+                let split_rendered_string: Vec<&str> = rendered_string.lines().collect();
+
+                println!("HELOO: {:#?}", split_rendered_string);
+
+                for (i, v) in unpacked_text_data.iter_mut().enumerate() {
+                    println!("{}", data.start_line_number);
+                    v.line_number += data.start_line_number + (i as i32);
+                    v.column += data.column;
+                }
+
+                println!("A: {:#?}", unpacked_text_data);
+
+                Ok(Text {
+                    text: "PLACEHOLDER",
+                    line_number: 10,
+                    column: 10,
+                    opts: vec![],
+                })
+            } else {
+                if let TextType::Text(data) = x {
+                    Ok(data.to_owned())
+                } else {
+                    let text = Text {
+                        text: "Looks like I HAVE A STUPID ERROR",
+                        line_number: 10,
+                        column: 10,
+                        opts: vec![],
+                    };
+                    Ok(text)
+                }
+            }
+        })
+        .collect();
+    println!("nested {:#?}", nested_boz);
+    Ok(output)
+}*/
 
 // Forgive me SOILD, I let you down 😔
 pub fn handle_duplicates_and_ansi_codes(
     all_values: &HashMap<u32, PrivateText>,
 ) -> Result<Vec<PrivateText>, TextError> {
     let mut output: Vec<PrivateText> = vec![];
-
-    let mut sorted_values: Vec<_> = get_duplicates(all_values)
+    let mut sorted_vals: Vec<_> = get_duplicates(all_values)
         .iter()
         .map(|a| a.values().cloned().collect::<Vec<_>>())
         .collect::<Vec<_>>();
-
-    for i in &mut sorted_values {
+    for i in &mut sorted_vals {
         i.sort_by_key(|key| key.column);
     }
+    let mut sorted_values = sorted_vals;
 
     for i in &mut sorted_values {
         if i.len() == 1 {
@@ -209,8 +357,6 @@ pub fn handle_duplicates_and_ansi_codes(
         }
     }
 
-    println!("values: {:#?}", sorted_values);
-
     for i in &sorted_values {
         // If the line has only one Text.
         if i.len() == 1 {
@@ -219,7 +365,6 @@ pub fn handle_duplicates_and_ansi_codes(
                 text: format_column(val.text.as_str(), val.column),
                 line_number: val.line_number,
                 column: val.column,
-                no_of_ansi_codes: 1,
             });
         } else if i.len() != 1 {
             let mut result = "".to_string();
@@ -238,13 +383,11 @@ pub fn handle_duplicates_and_ansi_codes(
                     count += 1;
                 }
             }
-            println!("count: {}", count);
 
             output.push(PrivateText {
                 text: result,
                 line_number: i[0].clone().line_number,
-                column: 0,
-                no_of_ansi_codes: count,
+                column: 100000 + count,
             });
         }
     }
@@ -252,219 +395,12 @@ pub fn handle_duplicates_and_ansi_codes(
     Ok(output)
 }
 
-fn splitlines<'a, T: std::io::BufRead>(reader: &mut T) -> Vec<String> {
-    let mut lines = Vec::new();
-
-    for line in reader.lines() {
-        if let Ok(line) = line {
-            lines.push(line);
-        }
-    }
-
-    lines
-}
-
-pub fn convert_one_boz_to_text<'a>(boz: NestedBoz) -> Result<Vec<Texttt>, TextError> {
-    let mut text_data = vec![];
-    for i in &boz.boz.text_data {
-        match i {
-            TextType::Boz(_) => return Err(TextError::InternalConvertOneBozToTextError()),
-            TextType::Text(val) => {
-                text_data.push(val.to_owned());
-            }
-        }
-    }
-
-    let lines: Vec<String> = splitlines(&mut io::Cursor::new(unpacked_render_string(
-        &text_data,
-        boz.boz.width,
-        boz.boz.height,
-        boz.boz.type_of_border,
-    )?));
-    let mut result: Vec<Texttt> = vec![];
-    for (i, v) in lines.into_iter().enumerate() {
-        let mut value = Texttt::new(
-            v.as_str(),
-            boz.start_line_number + i as u32,
-            boz.column,
-            vec![],
-        );
-        result.push(value);
-    }
-
-    Ok(result)
-}
-
-fn contains_boz(boz: &NestedBoz) -> bool {
-    boz.boz
-        .text_data
-        .iter()
-        .filter_map(|text_type| match text_type {
-            TextType::Boz(_) => Some(true),
-            TextType::Text(_) => None,
-        })
-        .any(|result| result)
-}
-
-pub fn compress_nested_boz(boz: NestedBoz) -> Result<Vec<Texttt>, TextError> {
-    let mut output = vec![];
-    for i in boz.boz.text_data {
-        match i {
-            TextType::Boz(val) => {
-                if contains_boz(&val) {
-                    output.extend(compress_nested_boz(val)?);
-                } else {
-                    output.extend(convert_one_boz_to_text(val)?);
-                }
-            }
-            TextType::Text(val) => {
-                output.push(val);
-            }
-        }
-    }
-
-    Ok(output)
-}
-
-pub fn unpacked_render_string<'a>(
-    text_data: &Vec<Texttt>,
-    width: u32,
-    height: u32,
-    type_of_border: TypeOfBorder,
-) -> Result<String, TextError> {
-    let mut output_string: String = "".to_string();
-
-    match type_of_border {
-        TypeOfBorder::NoBorders => output_string.push_str("\n"),
-        TypeOfBorder::CurvedBorders => {
-            output_string.push_str(format!("╭{}╮\n", "─".repeat(width as usize)).as_str())
-        }
-        TypeOfBorder::SquareBorders => {
-            output_string.push_str(format!("┌{}┐\n", "─".repeat(width as usize)).as_str())
-        }
-    }
-
-    let all_values = handle_duplicates_and_ansi_codes(&generate_all_values(&text_data))?;
-
-    // println!("{:#?}", all_values);
-
-    let complete_vec: Vec<LineTypes> = replace_none_with_line_numbers(height, all_values);
-
-    // <Error handling>
-    let mut seen_pairs = HashSet::new();
-    for i in text_data {
-        let pair = (i.line_number, i.column);
-        if seen_pairs.contains(&pair) {
-            return Err(TextError::DuplicateText(i.text.to_string()));
-        }
-        seen_pairs.insert(pair);
-    }
-    /*
-    for i in text_data {
-        // Length of the text (without ASNI) + column and 88 because of ANSI, compared to width
-        // times 88 because of ANSI
-        if (i.text.len() as u32 - 72) + i.column >= width {
-            return Err(TextError::LeftBounds(i.text.to_string()));
-        }
-    }*/
-    // <\Error handling>
-
-    for i in complete_vec {
-        match i {
-            LineTypes::SingleText(val) => match type_of_border {
-                TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
-                    let left_size = val.text.len() as u32 - (val.no_of_ansi_codes * 81);
-                    println!("si{}", left_size);
-                    output_string.push_str(
-                        format!(
-                            "│{}{}│\n",
-                            val.text,
-                            " ".repeat((width - left_size) as usize)
-                        )
-                        .as_str(),
-                    );
-                }
-
-                TypeOfBorder::NoBorders => {
-                    output_string.push_str(format!("{}\n", val.text).as_str())
-                }
-            },
-            LineTypes::MultiText(val) => match type_of_border {
-                TypeOfBorder::SquareBorders | TypeOfBorder::CurvedBorders => {
-                    let left_size = val.text.len() as u32 - (val.no_of_ansi_codes * 81);
-                    println!("sii{}", left_size);
-                    output_string.push_str(
-                        format!(
-                            "│{}{}│\n",
-                            val.text,
-                            " ".repeat((width - left_size) as usize).as_str()
-                        )
-                        .as_str(),
-                    )
-                }
-                TypeOfBorder::NoBorders => {
-                    output_string.push_str(format!("{}\n", val.text).as_str())
-                }
-            },
-            LineTypes::Empty => match type_of_border {
-                TypeOfBorder::NoBorders => output_string.push_str("\n"),
-                TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
-                    .push_str(format!("│{}│\n", " ".repeat(width as usize).as_str()).as_str()),
-            },
-        }
-    }
-
-    match type_of_border {
-        TypeOfBorder::NoBorders => output_string.push_str("\n"),
-        TypeOfBorder::CurvedBorders => {
-            output_string.push_str(format!("╰{}╯\n", "─".repeat(width as usize)).as_str())
-        }
-        TypeOfBorder::SquareBorders => {
-            output_string.push_str(format!("└{}┘\n", "─".repeat(width as usize)).as_str())
-        }
-    }
-
-    Ok(output_string)
-}
-
-pub fn convert_boz_to_text<'a>(
-    text_data: &'a Vec<TextType>,
-) -> Result</*Vec<Text>*/ (), TextError> {
-    let bozes: Vec<_> = text_data
-        .iter()
-        .filter(|text| match text {
-            TextType::Text(text) => false,
-            TextType::Boz(boz) => true,
-        })
-        .map(|text| {
-            if let TextType::Boz(data) = text {
-                data.to_owned()
-            } else {
-                NestedBoz {
-                    boz: Boz {
-                        text_data: vec![],
-                        height: 420,
-                        width: 69,
-                        type_of_border: TypeOfBorder::NoBorders,
-                    },
-                    start_line_number: 69,
-                    column: 420,
-                }
-            }
-        })
-        .collect();
-    println!("{:#?}", bozes);
-
-    Ok(())
-}
-
 #[derive(Debug, Clone)]
-pub struct Texttt {
-    pub text: String,
+pub struct Text<'a> {
+    pub text: &'a str,
     pub line_number: u32,
     pub column: u32,
     pub opts: Vec<TextOpts>,
-    no_of_ansi_codes: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -475,20 +411,20 @@ pub enum TypeOfBorder {
 }
 
 #[derive(Debug, Clone)]
-pub enum TextTypeeeee {
-    Text(Texttt),
-    Boz(NestedBoz),
+pub enum TextType<'a> {
+    Text(Text<'a>),
+    Boz(NestedBoz<'a>),
 }
 
 #[derive(Debug, Clone)]
-pub struct NestedBoz {
-    pub boz: Boz,
+pub struct NestedBoz<'a> {
+    pub boz: Boz<'a>,
     pub start_line_number: u32,
     pub column: u32,
 }
 #[derive(Debug, Clone)]
-pub struct Boz {
-    pub text_data: Vec<TextType>,
+pub struct Boz<'a> {
+    pub text_data: Vec<TextType<'a>>,
     pub height: u32,
     pub width: u32,
     pub type_of_border: TypeOfBorder,
@@ -499,7 +435,6 @@ pub struct PrivateText {
     pub text: String,
     pub line_number: u32,
     pub column: u32,
-    pub no_of_ansi_codes: u32,
 }
 
 #[derive(Clone)]
@@ -511,27 +446,13 @@ enum LineTypes {
 }
 
 // Implementations
-
-impl Texttt {
-    pub fn new(text: &str, line_number: u32, column: u32, opts: Vec<TextOpts>) -> Texttt {
-        Texttt {
-            text: text.to_string(),
-            line_number,
-            column,
-            opts,
-            no_of_ansi_codes: 1,
-        }
-    }
-}
-
-/*
-impl Boz {
+impl<'a> Boz<'a> {
     pub fn new(
-        text_data: Vec<TextType>,
+        text_data: Vec<TextType<'a>>,
         height: u32,
         width: u32,
         type_of_border: TypeOfBorder,
-    ) -> Boz {
+    ) -> Boz<'a> {
         Boz {
             text_data,
             height,
@@ -539,9 +460,10 @@ impl Boz {
             type_of_border,
         }
     }
-    pub fn render_string<'a>(&'a self) -> Result<String, TextError> {
+    /*
+    pub fn render_string(&'a self) -> Result<String, TextError> {
+        let textized_text_data = parse_boz_to_text(&self.text_data)?;
         let mut output_string: String = "".to_string();
-        let textized_text_data: Vec<Text> = convert_boz_to_text(&self.text_data)?;
         match self.type_of_border {
             TypeOfBorder::NoBorders => output_string.push_str("\n"),
             TypeOfBorder::CurvedBorders => {
@@ -572,7 +494,7 @@ impl Boz {
         for i in &textized_text_data {
             // Length of the text (without ASNI) + column and 88 because of ANSI, compared to width
             // times 88 because of ANSI
-            if (i.text.len() as u32 - 123) + i.column >= self.width {
+            if (i.text.len() as i32 - 123) + i.column >= self.width {
                 return Err(TextError::LeftBounds(i.text.to_string()));
             }
         }
@@ -586,7 +508,7 @@ impl Boz {
                             format!(
                                 "│{}{}│\n",
                                 val.text,
-                                " ".repeat((self.width - (val.text.len() as u32 - 78)) as usize)
+                                " ".repeat((self.width - (val.text.len() as i32 - 78)) as usize)
                             )
                             .as_str(),
                         ),
@@ -603,8 +525,8 @@ impl Boz {
                                 val.text,
                                 " ".repeat(
                                     (self.width
-                                        - val.text.len() as u32
-                                        - (val.no_of_ansi_codes * 78))
+                                        - val.text.len() as i32
+                                        - ((100000 - val.column) * 78))
                                         as usize
                                 )
                                 .as_str()
@@ -636,5 +558,5 @@ impl Boz {
         }
 
         Ok(output_string)
-    }
-}*/*/
+    }*/
+}
