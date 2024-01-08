@@ -168,7 +168,7 @@ pub fn parse_text_opts(lst: Vec<TextOpts>) -> String {
             }
             TextOpts::BackGroundColor(color) => {
                 match color {
-                    Colors::Red => output_string.push_str("\x1b[48;2;255;000;000"),
+                    Colors::Red => output_string.push_str("\x1b[48;2;255;000;000m"),
                     Colors::Green => output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
                     Colors::Blue => output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
                     Colors::Orange => output_string.push_str("\x1b[48;2;255;165;000m"), // Orange (true color background)
@@ -206,4 +206,48 @@ pub fn parse_text_opts(lst: Vec<TextOpts>) -> String {
         }
     }
     output_string
+}
+use rand::seq::SliceRandom;
+
+fn generate_random_text_opts() -> Vec<TextOpts> {
+    let colors = [
+        Colors::Blank,
+        Colors::Red,
+        Colors::Green,
+        Colors::Blue,
+        Colors::Orange,
+        Colors::Violet,
+        Colors::Black,
+        Colors::White,
+        Colors::Yellow,
+        Colors::Cyan,
+        Colors::Purple,
+        Colors::Grey,
+        Colors::Pink,
+        Colors::Brown,
+        Colors::Magenta,
+        Colors::Gold,
+        Colors::RGB {
+            red: 0,
+            green: 0,
+            blue: 0,
+        },
+    ];
+
+    let bool_options = [true, false];
+
+    let mut rng = rand::thread_rng();
+
+    let random_combination: Vec<TextOpts> = vec![
+        TextOpts::ForeColor(*colors.choose(&mut rng).unwrap()),
+        TextOpts::BackGroundColor(*colors.choose(&mut rng).unwrap()),
+        TextOpts::Bold(*bool_options.choose(&mut rng).unwrap()),
+        TextOpts::Dim(*bool_options.choose(&mut rng).unwrap()),
+        TextOpts::Underline(*bool_options.choose(&mut rng).unwrap()),
+        TextOpts::Blink(*bool_options.choose(&mut rng).unwrap()),
+        TextOpts::Reverse(*bool_options.choose(&mut rng).unwrap()),
+        TextOpts::Hide(*bool_options.choose(&mut rng).unwrap()),
+    ];
+
+    random_combination
 }

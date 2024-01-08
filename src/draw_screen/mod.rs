@@ -13,7 +13,11 @@ pub enum TypeOfBorder {
     SquareBorders,
 }
 
-// Just for user input, not be used in the processing
+enum LineType {
+    Text(Text),
+    EmptyLine,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Text {
     pub text: String,
@@ -21,35 +25,24 @@ pub struct Text {
     pub column: u32,
     pub opts: Vec<TextOpts>,
     no_of_ansi_codes: u32,
-    text_type: TextType,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-enum TextType {
-    // Start
-    Input,
-    // Middle
-    Formatted,
-    // End
-    UseInRenderString,
-}
-
-#[derive(Debug)]
-struct SubScreen {
-    subscreen: Screen,
-    start_line_number: u32,
-    column: u32,
-}
-
-#[derive(Debug)]
-enum LineType {
+#[derive(Debug, Clone)]
+pub enum TextType {
     Text(Text),
     SubScreen(SubScreen),
 }
 
-#[derive(Debug)]
-struct Screen {
-    pub texts: Vec<LineType>,
+#[derive(Debug, Clone)]
+pub struct SubScreen {
+    pub subscreen: Screen,
+    pub start_line_number: u32,
+    pub column: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct Screen {
+    pub texts: Vec<TextType>,
     pub width: u32,
     pub height: u32,
     pub type_of_border: TypeOfBorder,
@@ -67,36 +60,70 @@ impl Text {
             column,
             opts,
             no_of_ansi_codes: 1,
-            text_type: TextType::Input,
         }
     }
+    // Note, Text::new("", 0, 0, vec![]) is null
 }
 
-mod utils {
-
-    use std::{fmt::Result, process::Output, usize};
+pub mod utils {
 
     use super::{TextType, *};
+    use std::collections::VecDeque;
 
     /*
      * Used when you have a Vector of Texts which is in the same line
      * */
-    pub fn combine_texts(texts: Vec<Text>) -> std::result::Result<Text, TextError> {
-        // Some column shifting. Don't worry about this.
+    fn has_nested_subscreen(subscreen: &SubScreen) -> bool {
+        let mut queue = VecDeque::new();
+
+        // Initialize the queue with the initial SubScreen
+        queue.push_back(&subscreen.subscreen);
+
+        // Iterative check for nested SubScreen
+        while let Some(current_subscreen) = queue.pop_front() {
+            for text_type in &current_subscreen.texts {
+                match text_type {
+                    TextType::Text(_) => {}
+                    TextType::SubScreen(nested_subscreen) => {
+                        // Check if the current TextType::SubScreen contains nested SubScreen
+                        if !nested_subscreen.subscreen.texts.is_empty() {
+                            return true;
+                        }
+
+                        // If not, add the nested SubScreen to the queue for further checking
+                        queue.push_back(&nested_subscreen.subscreen);
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn combine_texts(texts: Vec<Text>) -> Result<Text, TextError> {
         let mut formatted_texts = texts;
         formatted_texts.sort_by(|a, b| a.column.cmp(&b.column));
-        let mut prev: Text = Text::new("", 111, 111, vec![]);
-        let mut buffer = vec![];
         // Column shifting.
+        let mut buffer = vec![];
+        let mut prev: Text = Text::new("", 0, 0, vec![]);
         for curr in &formatted_texts {
             // The start of the loop.
-            if prev == Text::new("", 111, 111, vec![]) {
+            if prev == Text::new("", 0, 0, vec![]) {
                 buffer.push(curr.to_owned());
             } else {
-                let diff = (curr.column - prev.column) - ((prev.text.len() - 78) as u32);
-                let mut text = Text::new(&curr.text, curr.line_number, diff, curr.opts.clone());
-                text.text_type = TextType::Formatted;
-                buffer.push(text);
+                println!("PREV: {:#?}\n", prev);
+                println!("CURR: {:#?}\n", curr);
+                let diff =
+                    match (curr.column - prev.column).checked_sub((prev.text.len() - 78) as u32) {
+                        Some(result) => result,
+                        None => return Err(TextError::LeftBounds(curr.text.clone())),
+                    };
+                buffer.push(Text::new(
+                    &curr.text,
+                    curr.line_number,
+                    diff,
+                    curr.opts.clone(),
+                ));
             }
             prev = curr.to_owned();
         }
@@ -106,15 +133,12 @@ mod utils {
         formatted_texts = formatted_texts
             .iter()
             .map(|text| {
-                let output_text = &format_column(&text.text, text.column);
-                let mut output = Text::new(
-                    output_text,
+                Text::new(
+                    &format_column(&text.text, text.column),
                     text.line_number,
                     text.column,
                     text.opts.clone(),
-                );
-                output.text_type = TextType::Formatted;
-                output
+                )
             })
             .collect();
 
@@ -122,10 +146,9 @@ mod utils {
             .iter()
             .map(|text| text.text.clone())
             .collect();
-        let output_string = push_strings(&extracted_text);
-        let mut output = Text::new(&output_string, formatted_texts[0].line_number, 0, vec![]);
+        let output_vec = push_strings(&extracted_text);
+        let mut output = Text::new(&output_vec, formatted_texts[0].line_number, 0, vec![]);
         output.no_of_ansi_codes = extracted_text.len() as u32;
-        output.text_type = TextType::UseInRenderString;
 
         Ok(output)
     }
@@ -134,9 +157,7 @@ mod utils {
         strings.iter().flat_map(|s| s.chars()).collect()
     }
 
-    pub fn handle_same_line_text_and_ansi(
-        texts: Vec<Text>,
-    ) -> std::result::Result<Vec<Text>, TextError> {
+    pub fn handle_same_line_text_and_ansi(texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
         let same_line_text = &get_duplicates(
             &texts
                 .iter()
@@ -148,7 +169,6 @@ mod utils {
                         v.column,
                         vec![],
                     );
-                    text.text_type = TextType::Formatted;
                     (i as u32, text)
                 })
                 .collect(),
@@ -194,27 +214,187 @@ mod utils {
         groups
     }
 
+    fn pad_text(texts: Vec<Text>, height: u32) -> Vec<LineType> {
+        (0..height)
+            .map(|index| {
+                texts
+                    .iter()
+                    .find(|pt| pt.line_number == (index + 1))
+                    .map(|text| LineType::Text(text.clone()))
+                    .unwrap_or(LineType::EmptyLine)
+            })
+            .collect()
+    }
+
+    pub fn unpacked_render_string(
+        texts: Vec<Text>,
+        width: u32,
+        height: u32,
+        type_of_border: TypeOfBorder,
+    ) -> Result<Vec<String>, TextError> {
+        let mut output_vec: Vec<String> = vec![];
+        match type_of_border {
+            TypeOfBorder::NoBorders => output_vec.push("".to_string()),
+            TypeOfBorder::CurvedBorders => {
+                output_vec.push(format!("╭{}╮", "─".repeat(width as usize)))
+            }
+            TypeOfBorder::SquareBorders => {
+                output_vec.push(format!("┌{}┐", "─".repeat(width as usize)))
+            }
+        }
+        let all_values = handle_same_line_text_and_ansi(texts)?;
+        pad_text(all_values, height)
+            .iter()
+            .for_each(|text| match text {
+                LineType::EmptyLine => match type_of_border {
+                    TypeOfBorder::NoBorders => output_vec.push("\n".to_string()),
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                        output_vec.push(format!("│{}│", " ".repeat(width as usize)))
+                    }
+                },
+                LineType::Text(text) => match type_of_border {
+                    TypeOfBorder::SquareBorders | TypeOfBorder::CurvedBorders => {
+                        output_vec.push(format!(
+                            "│{}{}│",
+                            text.text,
+                            " ".repeat(
+                                (width - ((text.text.len() as u32) - (text.no_of_ansi_codes * 78)))
+                                    as usize
+                            )
+                        ))
+                    }
+                    TypeOfBorder::NoBorders => output_vec.push(format!("{}", text.text)),
+                },
+            });
+        match type_of_border {
+            TypeOfBorder::NoBorders => output_vec.push("".to_string()),
+            TypeOfBorder::CurvedBorders => {
+                output_vec.push(format!("╰{}╯", "─".repeat(width as usize)))
+            }
+            TypeOfBorder::SquareBorders => {
+                output_vec.push(format!("└{}┘", "─".repeat(width as usize)))
+            }
+        }
+        Ok(output_vec)
+    }
+
+    pub fn convert_one_subscreen_to_texts(subscreen: &SubScreen) -> Result<Vec<Text>, TextError> {
+        let mut text_data = vec![];
+        for text in &subscreen.subscreen.texts {
+            match text {
+                TextType::Text(text) => text_data.push(text.to_owned()),
+                TextType::SubScreen(_) => {
+                    return Err(TextError::InternalConvertOneBozToTextError());
+                }
+            }
+        }
+
+        let unpacked_render_string = &unpacked_render_string(
+            text_data,
+            subscreen.subscreen.width,
+            subscreen.subscreen.height,
+            subscreen.subscreen.type_of_border.clone(),
+        )?;
+
+        let mut result: Vec<Text> = vec![];
+        for (index, text) in unpacked_render_string.iter().enumerate() {
+            result.push(Text::new(
+                text.as_str(),
+                subscreen.start_line_number + index as u32,
+                subscreen.column,
+                vec![],
+            ));
+        }
+
+        Ok(result)
+    }
+
     pub fn format_column(string: &str, column: u32) -> String {
         format!("{}{}", " ".repeat(column as usize).as_str(), string)
+    }
+
+    pub fn contains_boz(subscreen: SubScreen) -> bool {
+        for text in subscreen.subscreen.texts {
+            match text {
+                TextType::Text(_) => continue,
+                TextType::SubScreen(_) => return true,
+            }
+        }
+        false
+    }
+    //////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////// PRIVATE FUNCTION ///////////////////////////////////
+    // * Input: It takes a nested subscreen in the main Screen.
+    // * Return: It will return a Vector of texts which should be extended into the
+    // * text_data
+    //////////////////////////////////////////////////////////////////////////////////////
+    pub fn convert_subscreen_to_texts(subscreen: &SubScreen) -> Result<Vec<Text>, TextError> {
+        let mut mutable_subscreen = subscreen;
+
+        for (index, child) in mutable_subscreen.subscreen.texts.iter().enumerate() {
+            match child {
+                TextType::Text(text) => {
+                    continue;
+                }
+                TextType::SubScreen(sub_screen) => if !has_nested_subscreen(sub_screen) {},
+            }
+        }
+
+        Ok(convert_one_subscreen_to_texts(mutable_subscreen)?)
     }
 }
 #[cfg(test)]
 mod tests {
+    use core::panic;
+
     use super::*;
 
     #[test]
-    fn eq_test() {
-        let text_data = vec![
-            Text::new("stupid", 10, 30, vec![]),
-            Text::new("world", 10, 10, vec![]),
-            Text::new("hello", 10, 20, vec![]),
-            //Text::new("stupid", 11, 30, vec![]),
-            //Text::new("world", 11, 12, vec![]),
-            //Text::new("hello", 11, 15, vec![]),
-        ];
-        println!(
-            "{:#?}",
-            utils::handle_same_line_text_and_ansi(text_data).unwrap()
-        );
+    fn eq_test() -> Result<(), TextError> {
+        let text_data = SubScreen {
+            subscreen: Screen {
+                texts: vec![TextType::SubScreen(SubScreen {
+                    subscreen: Screen {
+                        texts: vec![TextType::SubScreen(SubScreen {
+                            subscreen: Screen {
+                                texts: vec![TextType::Text(Text::new("@", 1, 1, vec![]))],
+                                width: 10,
+                                height: 1,
+                                type_of_border: TypeOfBorder::CurvedBorders,
+                            },
+                            column: 1,
+                            start_line_number: 2,
+                        })],
+                        width: 10,
+                        height: 1,
+                        type_of_border: TypeOfBorder::CurvedBorders,
+                    },
+                    column: 1,
+                    start_line_number: 2,
+                })],
+                width: 52,
+                height: 12,
+                type_of_border: TypeOfBorder::CurvedBorders,
+            },
+            start_line_number: 5,
+            column: 1,
+        };
+        let rizz = utils::convert_subscreen_to_texts(&text_data)?
+            .iter()
+            .map(|text| TextType::Text(text.clone()))
+            .collect();
+        let subbby = SubScreen {
+            subscreen: Screen {
+                texts: rizz,
+                width: 20,
+                height: 10,
+                type_of_border: TypeOfBorder::CurvedBorders,
+            },
+            column: 10,
+            start_line_number: 20,
+        };
+        println!("input:\n{:#?}", &subbby);
+        println!("{:#?}", utils::convert_subscreen_to_texts(&subbby));
+        Ok(())
     }
 }

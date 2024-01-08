@@ -10,8 +10,8 @@ pub enum TextError {
     LeftBounds(String),
     #[error("\x1b[91mERROR\x1b[0m: {0:#?} is overlaping with a inner Boz")]
     OverlapBoz(draw_screen::Text),
-    //#[error("\x1b[91mERROR\x1b[0m: {0:#?} is nested 4 or more times which is the limit.")]
-    //OverNestedBoz(Vec<draw_screen::LineType>),
+    #[error("\x1b[91mERROR\x1b[0m: {0:#?} is nested 4 or more times which is the limit.")]
+    OverNestedBoz(draw_screen::SubScreen),
     #[error("\x1b[91mERROR\x1b[0m: This is a error with my internal function convert_one_boz_to_text. Please report this issue to the issue tab in \n the github reop")]
     InternalConvertOneBozToTextError(),
 }
