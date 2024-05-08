@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Colors {
     Blank,
@@ -32,7 +34,7 @@ pub enum TextOpts {
 
 // BOILERPLATE
 
-pub fn parse_text_opts(lst: Vec<TextOpts>) -> String {
+pub fn parse_text_opts(lst: Rc<[TextOpts]>) -> String {
     let mut copy_lst = lst.clone();
 
     let mut filter_lst: Vec<TextOpts> = Vec::new();
@@ -47,7 +49,7 @@ pub fn parse_text_opts(lst: Vec<TextOpts>) -> String {
     let mut is_reverse_seen: bool = false;
     let mut is_hide_seen: bool = false;
 
-    for i in &copy_lst {
+    for i in copy_lst.iter() {
         match i {
             TextOpts::ForeColor(_) => {
                 if is_fore_seen {
