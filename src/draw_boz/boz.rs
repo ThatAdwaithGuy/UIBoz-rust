@@ -1,5 +1,6 @@
 use crate::{draw_boz::opts, TextError};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::format;
 use std::rc::Rc;
 
 pub fn get_duplicates(input_hashmap: &HashMap<i32, PrivateText>) -> Vec<HashMap<i32, PrivateText>> {
@@ -123,6 +124,7 @@ pub fn generate_all_values(text_data: &Vec<Text>) -> HashMap<i32, PrivateText> {
                     text: format!("{}{}\x1b[0m", formatted_opts, v.text),
                     line_number: v.line_number,
                     column: v.column,
+                    ansi_code: v.ansi_code,
                 },
             );
         } else {
@@ -132,6 +134,7 @@ pub fn generate_all_values(text_data: &Vec<Text>) -> HashMap<i32, PrivateText> {
                     text: v.text.clone(),
                     line_number: v.line_number,
                     column: v.column,
+                    ansi_code: v.ansi_code,
                 },
             );
         }
@@ -195,6 +198,7 @@ pub fn handle_duplicates_and_ansi_codes(
                 text: format_column(val.text.as_str(), val.column),
                 line_number: val.line_number,
                 column: val.column,
+                ansi_code: val.ansi_code,
             });
         } else if i.len() != 1 {
             let mut result = "".to_string();
@@ -218,6 +222,7 @@ pub fn handle_duplicates_and_ansi_codes(
                 text: result,
                 line_number: i[0].clone().line_number,
                 column: 100000 + count,
+                ansi_code: false,
             });
         }
     }
@@ -268,6 +273,7 @@ pub struct PrivateText {
     pub text: String,
     pub line_number: i32,
     pub column: i32,
+    pub ansi_code: bool,
 }
 
 #[derive(Clone)]
@@ -328,15 +334,30 @@ impl Boz {
         for i in complete_vec {
             match i {
                 TextTypes::SingleText(val) => match self.type_of_border {
-                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => output_string
-                        .push_str(
-                            format!(
-                                "│{}{}│\n",
-                                val.text,
-                                " ".repeat((self.width - (val.text.len() as i32 - 78)) as usize)
-                            )
-                            .as_str(),
-                        ),
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                        match val.ansi_code {
+                            true => output_string.push_str(
+                                format!(
+                                    "│{}{}│\n",
+                                    val.text,
+                                    " ".repeat(
+                                        (self.width - (val.text.len() as i32 - 78)) as usize
+                                    )
+                                )
+                                .as_str(),
+                            ),
+                            false => output_string.push_str(
+                                format!(
+                                    "│{}{}│\n",
+                                    val.text,
+                                    " ".repeat(
+                                        ((self.width as i32) - (val.text.len() as i32)) as usize
+                                    )
+                                )
+                                .as_str(),
+                            ),
+                        }
+                    }
 
                     TypeOfBorder::NoBorders => {
                         output_string.push_str(format!("{}\n", val.text).as_str())
