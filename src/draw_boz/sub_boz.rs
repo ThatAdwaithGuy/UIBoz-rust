@@ -1,7 +1,7 @@
 use super::boz::{Boz, TypeOfBorder};
 use crate::{draw_boz::boz, errors::TextError};
 use core::panic;
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 // use crate::draw_boz::opts;
 
 type Texts = Vec<TextType>;
@@ -82,6 +82,21 @@ fn nb_to_b(boz: NestedBoz) -> Option<boz::Boz> {
     Some(Boz::new(texts, boz.height, boz.width, boz.type_of_border))
 }
 
+fn word_indices(input: &str) -> HashMap<usize, &str> {
+    let mut result = HashMap::new();
+    let mut current_index = 0;
+
+    for word in input.split_whitespace() {
+        if let Some(start_index) = input[current_index..].find(word) {
+            let absolute_index = current_index + start_index;
+            result.insert(absolute_index, word);
+            current_index = absolute_index + word.len();
+        }
+    }
+
+    result
+}
+
 fn collapse_nested_boz(nested_boz: SubBoz) -> Result<Vec<boz::Text>, TextError> {
     let mut res: Vec<boz::Text> = vec![];
     for text_type in nested_boz.boz.texts {
@@ -91,7 +106,7 @@ fn collapse_nested_boz(nested_boz: SubBoz) -> Result<Vec<boz::Text>, TextError> 
                 let mut res1: Vec<boz::Text> = vec![];
                 for text_type1 in sub_boz.boz.texts {
                     match text_type1 {
-                        TextType::Text(text1) => res1.push(text1),
+                        TextType::Text(text1) => res1.push(text1.clone().ansi_codes(false)),
                         TextType::SubBoz(sub_boz) => {
                             panic!("SHIT")
                         }
@@ -156,6 +171,7 @@ mod tests {
         );
         let collapsed = collapse_nested_boz(nested_boz.clone())?;
         dbg!(collapsed.clone());
+        dbg!(word_indices(&collapsed[9].text));
         let a = render_lines(
             boz::Boz::new(
                 collapsed.clone(),
@@ -166,10 +182,10 @@ mod tests {
             nested_boz.clone().start_line_number,
             nested_boz.clone().column,
         )?;
-        let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
-        let b = rboz.render_string()?;
-        println!("{}", b);
-        dbg!(a);
+        //let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
+        //let b = rboz.render_string()?;
+        //println!("{}", b);
+        //dbg!(a);
         Ok(())
     }
 }

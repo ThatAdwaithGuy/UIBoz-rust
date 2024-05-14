@@ -115,15 +115,26 @@ pub fn generate_all_values(text_data: &Vec<Text>) -> HashMap<i32, PrivateText> {
 
     let mut all_values: HashMap<i32, PrivateText> = HashMap::new();
     for (i, v) in sorted_text_data.iter().enumerate() {
-        let formatted_opts = opts::parse_text_opts(v.opts.clone());
-        all_values.insert(
-            i.try_into().unwrap(),
-            PrivateText {
-                text: format!("{}{}\x1b[0m", formatted_opts, v.text),
-                line_number: v.line_number,
-                column: v.column,
-            },
-        );
+        if v.ansi_code {
+            let formatted_opts = opts::parse_text_opts(v.opts.clone());
+            all_values.insert(
+                i.try_into().unwrap(),
+                PrivateText {
+                    text: format!("{}{}\x1b[0m", formatted_opts, v.text),
+                    line_number: v.line_number,
+                    column: v.column,
+                },
+            );
+        } else {
+            all_values.insert(
+                i.try_into().unwrap(),
+                PrivateText {
+                    text: v.text.clone(),
+                    line_number: v.line_number,
+                    column: v.column,
+                },
+            );
+        }
     }
     all_values
 }
@@ -220,6 +231,7 @@ pub struct Text {
     pub line_number: i32,
     pub column: i32,
     pub opts: Rc<[opts::TextOpts]>,
+    pub ansi_code: bool,
 }
 impl Text {
     pub fn new(text: &str, line_number: i32, column: i32, opts: Rc<[opts::TextOpts]>) -> Text {
@@ -228,7 +240,12 @@ impl Text {
             line_number,
             column,
             opts,
+            ansi_code: true,
         }
+    }
+    pub fn ansi_codes(&mut self, ansi_code: bool) -> Self {
+        self.ansi_code = ansi_code;
+        self.to_owned()
     }
 }
 
