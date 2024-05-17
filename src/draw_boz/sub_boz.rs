@@ -1,7 +1,9 @@
-use super::boz::{Boz, TypeOfBorder};
+use super::boz::{Boz, Text, TypeOfBorder};
 use crate::{draw_boz::boz, errors::TextError};
 use core::panic;
-use std::{collections::HashMap, rc::Rc};
+use itertools::Itertools;
+use regex;
+use std::{collections::HashMap, hash::Hash, rc::Rc, usize};
 // use crate::draw_boz::opts;
 
 type Texts = Vec<TextType>;
@@ -82,19 +84,66 @@ fn nb_to_b(boz: NestedBoz) -> Option<boz::Boz> {
     Some(Boz::new(texts, boz.height, boz.width, boz.type_of_border))
 }
 
-fn word_indices(input: &str) -> HashMap<usize, &str> {
-    let mut result = HashMap::new();
-    let mut current_index = 0;
+fn sort_hashmap_by_key<K, V>(map: &HashMap<K, V>) -> Vec<(K, V)>
+where
+    K: Ord + Clone + Hash,
+    V: Clone,
+{
+    let mut vec: Vec<(K, V)> = map.iter().map(|(i, v)| (i.clone(), v.clone())).collect();
+    vec.sort_by(|a, b| a.0.cmp(&b.0));
+    vec
+}
 
-    for word in input.split_whitespace() {
-        if let Some(start_index) = input[current_index..].find(word) {
-            let absolute_index = current_index + start_index;
-            result.insert(absolute_index, word);
-            current_index = absolute_index + word.len();
+// Absolute Hell
+fn word_indices(input: &str) -> Vec<(usize, String)> {
+    let mut result: Vec<(usize, String)> = Vec::new();
+    let string = String::from(input)
+        .chars()
+        .enumerate()
+        .collect::<HashMap<usize, char>>();
+
+    let splited: HashMap<usize, char> = sort_hashmap_by_key(&string)
+        .iter()
+        .filter(|(_, x)| *x != ' ')
+        .map(|(i, v)| (*i, *v))
+        .collect();
+    //dbg!(sort_hashmap_by_key(&splited));
+    let mut word = String::new();
+    let mut word_start_index = 0usize;
+    let mut in_word = false;
+    for (i, c) in sort_hashmap_by_key(&splited) {
+        match c {
+            '│' => {
+                if in_word {
+                    result.push((word_start_index, word.clone()));
+                    word.clear();
+                    in_word = false;
+                    word_start_index = 0;
+                }
+                result.push((i, c.to_string()));
+            }
+            _ => {
+                in_word = true;
+                if word_start_index == 0 {
+                    word_start_index = i;
+                }
+                word.push(c);
+            }
         }
     }
 
+    if !word.is_empty() && result.is_empty() {
+        result.push((word_start_index, word.clone()))
+    }
+
     result
+}
+
+fn partition_line(text: Text) -> Vec<Text> {
+    word_indices(&text.text)
+        .iter()
+        .map(|(i, v)| Text::new(v, text.line_number, *i as i32 + text.column, Rc::new([])))
+        .collect()
 }
 
 fn collapse_nested_boz(nested_boz: SubBoz) -> Result<Vec<boz::Text>, TextError> {
@@ -147,6 +196,11 @@ mod tests {
         ////////////////////////////////////////
         // Adwaith, no_of_ansi_codes. Got it? //
         ////////////////////////////////////////
+
+        ////////////////////////////////////////
+        // Past Adwaith, You're wrong, Got it //
+        ////////////////////////////////////////
+
         let mut texts: Vec<TextType> = vec![];
         texts.push(TextType::Text(boz::Text::new("Hello", 1, 4, Rc::new([]))));
         texts.push(TextType::Text(boz::Text::new("world", 1, 11, Rc::new([]))));
@@ -170,8 +224,14 @@ mod tests {
             1,
         );
         let collapsed = collapse_nested_boz(nested_boz.clone())?;
-        dbg!(collapsed.clone());
-        dbg!(word_indices(&collapsed[9].text));
+        let text = &collapsed[2];
+        dbg!(word_indices(&text.text));
+        //dbg!(partition_line(text.clone()));
+        //dbg!(collapsed
+        //    .clone()
+        //    .iter()
+        //    .map(|x| partition_line(x.clone()))
+        //    .collect::<Vec<Vec<Text>>>());
         let a = render_lines(
             boz::Boz::new(
                 collapsed.clone(),
