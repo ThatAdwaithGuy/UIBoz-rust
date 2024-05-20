@@ -107,7 +107,7 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
         .filter(|(_, x)| *x != ' ')
         .map(|(i, v)| (*i, *v))
         .collect();
-    //dbg!(sort_hashmap_by_key(&splited));
+    dbg!(input, sort_hashmap_by_key(&splited));
     let mut word = String::new();
     let mut word_start_index = 0usize;
     let mut in_word = false;
@@ -131,7 +131,7 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
             }
         }
     }
-
+    dbg!(result.clone());
     if !word.is_empty() && result.is_empty() {
         result.push((word_start_index, word.clone()))
     }
@@ -226,12 +226,13 @@ mod tests {
         let collapsed = collapse_nested_boz(nested_boz.clone())?;
         let text = &collapsed[2];
         dbg!(word_indices(&text.text));
-        //dbg!(partition_line(text.clone()));
-        //dbg!(collapsed
-        //    .clone()
-        //    .iter()
-        //    .map(|x| partition_line(x.clone()))
-        //    .collect::<Vec<Vec<Text>>>());
+        dbg!(partition_line(text.clone()));
+        let av = collapsed
+            .clone()
+            .iter()
+            .map(|x| partition_line(x.clone()))
+            .flatten()
+            .collect::<Vec<Text>>();
         let a = render_lines(
             boz::Boz::new(
                 collapsed.clone(),
@@ -242,10 +243,15 @@ mod tests {
             nested_boz.clone().start_line_number,
             nested_boz.clone().column,
         )?;
-        //let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
-        //let b = rboz.render_string()?;
-        //println!("{}", b);
-        //dbg!(a);
+        dbg!(av.clone());
+        let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
+        let b = rboz.render_string()?;
+        println!("{}", b);
+        dbg!(a);
+        //let te = Text::new("╭──────────╮", 1, 0, Rc::new([]));
+        //let tboz = boz::Boz::new(vec![te], 12, 52, TypeOfBorder::CurvedBorders);
+        //println!("{}", tboz.render_string()?);
+
         Ok(())
     }
 }

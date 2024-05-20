@@ -341,7 +341,11 @@ impl Boz {
                                     "│{}{}│\n",
                                     val.text,
                                     " ".repeat(
-                                        (self.width - (val.text.len() as i32 - 78)) as usize
+                                        (self.width
+                                            - (val.text.chars().collect::<Vec<char>>().len()
+                                                as i32
+                                                - 78))
+                                            as usize
                                     )
                                 )
                                 .as_str(),
@@ -351,7 +355,10 @@ impl Boz {
                                     "│{}{}│\n",
                                     val.text,
                                     " ".repeat(
-                                        ((self.width as i32) - (val.text.len() as i32)) as usize
+                                        ((self.width as i32)
+                                            - (val.text.chars().collect::<Vec<char>>().len()
+                                                as i32))
+                                            as usize
                                     )
                                 )
                                 .as_str(),
@@ -371,7 +378,7 @@ impl Boz {
                                 val.text,
                                 " ".repeat(
                                     (self.width
-                                        - val.text.len() as i32
+                                        - val.text.chars().collect::<Vec<char>>().len() as i32
                                         - ((100000 - val.column) * 78))
                                         as usize
                                 )
