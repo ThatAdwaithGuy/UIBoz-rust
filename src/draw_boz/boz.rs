@@ -1,6 +1,6 @@
-use crate::{draw_boz::opts, TextError};
+use crate::errors::TextError;
+use crate::style;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fmt::format;
 use std::rc::Rc;
 
 pub fn get_duplicates(input_hashmap: &HashMap<i32, PrivateText>) -> Vec<HashMap<i32, PrivateText>> {
@@ -117,7 +117,7 @@ pub fn generate_all_values(text_data: &Vec<Text>) -> HashMap<i32, PrivateText> {
     let mut all_values: HashMap<i32, PrivateText> = HashMap::new();
     for (i, v) in sorted_text_data.iter().enumerate() {
         if v.ansi_code {
-            let formatted_opts = opts::parse_text_opts(v.opts.clone());
+            let formatted_opts = style::parse_text_style(v.opts.clone());
             all_values.insert(
                 i.try_into().unwrap(),
                 PrivateText {
@@ -235,11 +235,11 @@ pub struct Text {
     pub text: String,
     pub line_number: i32,
     pub column: i32,
-    pub opts: Rc<[opts::TextOpts]>,
+    pub opts: Rc<[style::TextStyle]>,
     pub ansi_code: bool,
 }
 impl Text {
-    pub fn new(text: &str, line_number: i32, column: i32, opts: Rc<[opts::TextOpts]>) -> Text {
+    pub fn new(text: &str, line_number: i32, column: i32, opts: Rc<[style::TextStyle]>) -> Text {
         Text {
             text: text.to_string(),
             line_number,

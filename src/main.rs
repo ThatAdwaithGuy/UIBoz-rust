@@ -1,13 +1,10 @@
-use draw_boz::boz::PrivateText;
-use errors::TextError;
-use std::collections::HashMap;
-
 // use crate::draw_boz::opts::{parse_text_opts, Colors};
-mod animations;
-mod draw_boz;
-mod errors;
-mod event_loop;
-fn main() -> Result<(), TextError> {
+
+pub mod again;
+pub mod draw_boz;
+pub mod errors;
+pub mod style;
+fn main() -> Result<(), errors::TextError> {
     //let text_data = vec![
     //    draw_boz::boz::Text {
     //        text: "hello",

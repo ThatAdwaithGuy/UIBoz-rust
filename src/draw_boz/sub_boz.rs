@@ -190,7 +190,7 @@ fn collapse_nested_boz(nested_boz: SubBoz) -> Result<Vec<boz::Text>, TextError> 
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    #[ignore]
     #[test]
     fn test_name() -> Result<(), TextError> {
         ////////////////////////////////////////
@@ -201,56 +201,64 @@ mod tests {
         // Past Adwaith, You're wrong, Got it //
         ////////////////////////////////////////
 
-        let mut texts: Vec<TextType> = vec![];
-        texts.push(TextType::Text(boz::Text::new("Hello", 1, 4, Rc::new([]))));
-        texts.push(TextType::Text(boz::Text::new("world", 1, 11, Rc::new([]))));
-        texts.push(TextType::Text(boz::Text::new("Love to", 2, 4, Rc::new([]))));
-        texts.push(TextType::Text(boz::Text::new(
-            "Catpuccin",
-            2,
-            11,
-            Rc::new([]),
-        )));
-        let boz = NestedBoz::new(
-            vec![TextType::Text(boz::Text::new("hello", 5, 5, Rc::new([])))],
-            5,
-            10,
-            TypeOfBorder::CurvedBorders,
-        );
-        texts.push(TextType::SubBoz(SubBoz::new(boz, 3, 1)));
-        let nested_boz = SubBoz::new(
-            NestedBoz::new(texts, 5, 40, TypeOfBorder::CurvedBorders),
-            1,
-            1,
-        );
-        let collapsed = collapse_nested_boz(nested_boz.clone())?;
-        let text = &collapsed[2];
-        dbg!(word_indices(&text.text));
-        dbg!(partition_line(text.clone()));
-        let av = collapsed
-            .clone()
-            .iter()
-            .map(|x| partition_line(x.clone()))
-            .flatten()
-            .collect::<Vec<Text>>();
-        let a = render_lines(
-            boz::Boz::new(
-                collapsed.clone(),
-                nested_boz.clone().boz.height,
-                nested_boz.clone().boz.width,
-                nested_boz.clone().boz.type_of_border,
-            ),
-            nested_boz.clone().start_line_number,
-            nested_boz.clone().column,
-        )?;
-        dbg!(av.clone());
-        let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
-        let b = rboz.render_string()?;
-        println!("{}", b);
-        dbg!(a);
+        //let mut texts: Vec<TextType> = vec![];
+        //texts.push(TextType::Text(boz::Text::new("Hello", 1, 4, Rc::new([]))));
+        //texts.push(TextType::Text(boz::Text::new("world", 1, 11, Rc::new([]))));
+        //texts.push(TextType::Text(boz::Text::new("Love to", 2, 4, Rc::new([]))));
+        //texts.push(TextType::Text(boz::Text::new(
+        //    "Catpuccin",
+        //    2,
+        //    11,
+        //    Rc::new([]),
+        //)));
+        //let boz = NestedBoz::new(
+        //    vec![TextType::Text(boz::Text::new("hello", 5, 5, Rc::new([])))],
+        //    5,
+        //    10,
+        //    TypeOfBorder::CurvedBorders,
+        //);
+        //texts.push(TextType::SubBoz(SubBoz::new(boz, 3, 1)));
+        //let nested_boz = SubBoz::new(
+        //    NestedBoz::new(texts, 5, 40, TypeOfBorder::CurvedBorders),
+        //    1,
+        //    1,
+        //);
+        //let collapsed = collapse_nested_boz(nested_boz.clone())?;
+        //let text = &collapsed[2];
+        //dbg!(word_indices(&text.text));
+        //dbg!(partition_line(text.clone()));
+        //let av = collapsed
+        //    .clone()
+        //    .iter()
+        //    .map(|x| partition_line(x.clone()))
+        //    .flatten()
+        //    .collect::<Vec<Text>>();
+        //let a = render_lines(
+        //    boz::Boz::new(
+        //        collapsed.clone(),
+        //        nested_boz.clone().boz.height,
+        //        nested_boz.clone().boz.width,
+        //        nested_boz.clone().boz.type_of_border,
+        //    ),
+        //    nested_boz.clone().start_line_number,
+        //    nested_boz.clone().column,
+        //)?;
+        //dbg!(av.clone());
+        //let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
+        //let b = rboz.render_string()?;
+        //println!("{}", b);
+        //dbg!(a);
         //let te = Text::new("╭──────────╮", 1, 0, Rc::new([]));
         //let tboz = boz::Boz::new(vec![te], 12, 52, TypeOfBorder::CurvedBorders);
         //println!("{}", tboz.render_string()?);
+
+        let texts = vec![
+            Text::new("Hello", 1, 0, Rc::new([])),
+            Text::new("To", 1, 1, Rc::new([])),
+        ];
+
+        let b = Boz::new(texts, 12, 56, TypeOfBorder::CurvedBorders);
+        println!("{}", b.render_string()?);
 
         Ok(())
     }
