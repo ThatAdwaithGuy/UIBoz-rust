@@ -1,7 +1,6 @@
 // use crate::draw_boz::opts::{parse_text_opts, Colors};
 
 pub mod again;
-pub mod draw_boz;
 pub mod errors;
 pub mod style;
 fn main() -> Result<(), errors::TextError> {

@@ -1,5 +1,7 @@
-use crate::{again, draw_boz::boz::overlay_2_str, errors::TextError, style::parse_text_style};
+use crate::{again, errors::TextError, style::parse_text_style};
 use itertools::{self, Itertools};
+
+use super::Text;
 
 fn group_lines(texts: Vec<again::Text>) -> Vec<Vec<again::Text>> {
     texts
@@ -69,26 +71,31 @@ pub fn overlay(lst: &[&'static str]) -> Option<String> {
                 .collect::<Option<String>>()
         })
 }
-trait ApplyVec<T, R, A> {
-    fn apply(self, f: fn(A) -> R) -> R;
-}
 
-impl<I, T, R, A> ApplyVec<T, R, A> for I
-where
-    I: Iterator<Item = T>,
-    A: std::iter::FromIterator<T>,
-{
-    fn apply(self, f: fn(A) -> R) -> R {
-        f(self.collect())
-    }
-}
-
-pub fn handle(texts: Vec<again::Text>) -> Result<Vec<Vec<again::Text>>, TextError> {
+pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
     Ok(texts
         .iter()
-        .apply(group_lines)
-        .iter()
-        .map(|x| {
+        .group_by(|x| x.line_number)
+        .into_iter()
+        .map(|(_, x)| x.into_iter().map(|y| y.clone()).collect())
+        .map(|x: Vec<Text>| {
+            x.iter()
+                .scan(None, |state: &mut Option<Text>, current: &Text| {
+                    let result = match state {
+                        None => current.column,
+                        Some(prev) => current.column - prev.column,
+                    };
+                    *state = Some(current.clone());
+                    Some(Text::new(
+                        &current.text,
+                        current.line_number,
+                        result,
+                        current.style,
+                    ))
+                })
+                .collect_vec()
+        })
+        .map(|x: Vec<again::Text>| {
             x.iter()
                 .map(|y| {
                     again::Text::new(
@@ -104,6 +111,14 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<Vec<again::Text>>, TextErro
                     )
                 })
                 .collect::<Vec<again::Text>>()
+        })
+        .map(|x| {
+            Text::new(
+                &x.iter().map(|y| y.text.clone()).join(""),
+                x[0].line_number,
+                0,
+                &[],
+            )
         })
         .collect())
 }

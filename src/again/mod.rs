@@ -42,11 +42,24 @@ impl Text {
 
 #[cfg(test)]
 mod tests {
+    use crate::errors::TextError;
+
     use super::*;
 
     #[test]
-    fn test() {
+    fn test() -> Result<(), TextError> {
         let texts = vec![Text::new("Hello", 0, 0, &[]), Text::new("World", 0, 6, &[])];
-        dbg!(utils::handle(texts));
+        let test = vec![
+            Text::new("hello", 0, 1, &[]),
+            Text::new("hello", 0, 2, &[]),
+            Text::new("hello", 0, 3, &[]),
+            Text::new("hello", 0, 4, &[]),
+        ];
+
+        let a = utils::handle(test)?;
+        let text = &a[0].text;
+        println!("{}", text);
+
+        Ok(())
     }
 }
