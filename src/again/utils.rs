@@ -128,7 +128,7 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
                             Some(prev) => {
                                 current.column
                                     - (prev.column
-                                        + prev.text.chars().collect::<Vec<char>>().len() as u32
+                                        + prev.text.chars().collect::<Vec<char>>().len() as u32)
                             }
                         };
                         *state = Some(current.clone());

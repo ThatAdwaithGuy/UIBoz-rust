@@ -1,22 +1,20 @@
-use super::boz::{Boz, Text, TypeOfBorder};
-use crate::{draw_boz::boz, errors::TextError};
+use super::again;
+use crate::errors;
 use core::panic;
-use itertools::Itertools;
-use regex;
 use std::{collections::HashMap, hash::Hash, rc::Rc, usize};
-// use crate::draw_boz::opts;
+// use crate::draw_again::opts;
 
 type Texts = Vec<TextType>;
 
 #[derive(Clone)]
-struct NestedBoz {
+struct NestedWindow {
     texts: Texts,
-    height: i32,
-    width: i32,
-    type_of_border: boz::TypeOfBorder,
+    height: u32,
+    width: u32,
+    type_of_border: again::TypeOfBorder,
 }
-impl NestedBoz {
-    fn new(texts: Texts, height: i32, width: i32, type_of_border: TypeOfBorder) -> Self {
+impl NestedWindow {
+    fn new(texts: Texts, height: u32, width: u32, type_of_border: again::TypeOfBorder) -> Self {
         Self {
             texts,
             height,
@@ -27,15 +25,15 @@ impl NestedBoz {
 }
 
 #[derive(Clone)]
-struct SubBoz {
-    boz: NestedBoz,
-    start_line_number: i32,
-    column: i32,
+struct SubWindow {
+    window: NestedWindow,
+    start_line_number: u32,
+    column: u32,
 }
-impl SubBoz {
-    fn new(boz: NestedBoz, start_line_number: i32, column: i32) -> Self {
+impl SubWindow {
+    fn new(window: NestedWindow, start_line_number: u32, column: u32) -> Self {
         Self {
-            boz,
+            window,
             start_line_number,
             column,
         }
@@ -44,44 +42,49 @@ impl SubBoz {
 
 #[derive(Clone)]
 enum TextType {
-    SubBoz(SubBoz),
-    Text(boz::Text),
+    SubWindow(SubWindow),
+    Text(again::Text),
 }
 
-fn has_nested_boz(boz: NestedBoz) -> bool {
-    boz.texts.iter().any(|tt| match tt {
-        TextType::SubBoz(_) => true,
+fn has_nested_again(window: NestedWindow) -> bool {
+    window.texts.iter().any(|tt| match tt {
+        TextType::SubWindow(_) => true,
         TextType::Text(_) => false,
     })
 }
 
 fn render_lines(
-    boz: boz::Boz,
-    start_line_number: i32,
-    column: i32,
-) -> Result<Vec<boz::Text>, TextError> {
-    let rendered_boz = boz.render_string()?;
-    let splited: Vec<&str> = rendered_boz.split("\n").into_iter().collect();
-    let mut res: Vec<boz::Text> = splited
+    window: again::Window,
+    start_line_number: u32,
+    column: u32,
+) -> Result<Vec<again::Text>, errors::TextError> {
+    let rendered_again = window.render()?;
+    let splited: Vec<&str> = rendered_again.split("\n").into_iter().collect();
+    let mut res: Vec<again::Text> = splited
         .into_iter()
         .enumerate()
-        .map(|(i, v)| boz::Text::new(v, i as i32 + start_line_number, column, Rc::new([])))
+        .map(|(i, v)| again::Text::new(v, i as u32 + start_line_number, column, &[]))
         .collect();
     Ok(res)
 }
 
-// NestedBoz to Boz
-fn nb_to_b(boz: NestedBoz) -> Option<boz::Boz> {
+// Nestedagain to Boz
+fn nb_to_b(window: NestedWindow) -> Option<again::Window> {
     let mut texts = vec![];
-    for tt in boz.texts {
+    for tt in window.texts {
         match tt {
             TextType::Text(text) => texts.push(text),
-            TextType::SubBoz(_) => {
+            TextType::SubWindow(_) => {
                 return None;
             }
         }
     }
-    Some(Boz::new(texts, boz.height, boz.width, boz.type_of_border))
+    Some(again::Window::new(
+        texts,
+        window.height,
+        window.width,
+        window.type_of_border,
+    ))
 }
 
 fn sort_hashmap_by_key<K, V>(map: &HashMap<K, V>) -> Vec<(K, V)>
@@ -139,60 +142,61 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
     result
 }
 
-fn partition_line(text: Text) -> Vec<Text> {
+fn partition_line(text: again::Text) -> Vec<again::Text> {
     word_indices(&text.text)
         .iter()
-        .map(|(i, v)| Text::new(v, text.line_number, *i as i32 + text.column, Rc::new([])))
+        .map(|(i, v)| again::Text::new(v, text.line_number, *i as u32 + text.column, &[]))
         .collect()
 }
 
-fn collapse_nested_boz(nested_boz: SubBoz) -> Result<Vec<boz::Text>, TextError> {
-    let mut res: Vec<boz::Text> = vec![];
-    for text_type in nested_boz.boz.texts {
+fn collapse_nested_again(nested_windows: SubWindow) -> Result<Vec<again::Text>, errors::TextError> {
+    let mut res: Vec<again::Text> = vec![];
+    for text_type in nested_windows.window.texts {
         match text_type {
             TextType::Text(text) => res.push(text),
-            TextType::SubBoz(sub_boz) => {
-                let mut res1: Vec<boz::Text> = vec![];
-                for text_type1 in sub_boz.boz.texts {
+            TextType::SubWindow(sub_window) => {
+                let mut res1: Vec<again::Text> = vec![];
+                for text_type1 in sub_window.window.texts {
                     match text_type1 {
-                        TextType::Text(text1) => res1.push(text1.clone().ansi_codes(false)),
-                        TextType::SubBoz(sub_boz) => {
+                        TextType::Text(text1) => res1.push(text1.clone()),
+                        TextType::SubWindow(_sub_boz) => {
                             panic!("SHIT")
                         }
                     }
                 }
                 res.extend(render_lines(
-                    boz::Boz::new(
+                    again::Window::new(
                         res1,
-                        sub_boz.boz.height,
-                        sub_boz.boz.width,
-                        sub_boz.boz.type_of_border,
+                        sub_window.window.height,
+                        sub_window.window.width,
+                        sub_window.window.type_of_border,
                     ),
-                    sub_boz.start_line_number,
-                    sub_boz.column,
+                    sub_window.start_line_number,
+                    sub_window.column,
                 )?)
             }
         }
     }
     //Ok(render_lines(
-    //    boz::Boz::new(
+    //    again::Boz::new(
     //        res,
-    //        nested_boz.boz.height,
-    //        nested_boz.boz.width,
-    //        nested_boz.boz.type_of_border,
+    //        nested_again.boz.height,
+    //        nested_again.boz.width,
+    //        nested_again.boz.type_of_border,
     //    ),
-    //    nested_boz.start_line_number,
-    //    nested_boz.column,
+    //    nested_again.start_line_number,
+    //    nested_again.column,
     //)?)
     Ok(res)
 }
 
 #[cfg(test)]
 mod tests {
+    use self::again::{Text, TypeOfBorder};
+
     use super::*;
-    #[ignore]
     #[test]
-    fn test_name() -> Result<(), TextError> {
+    fn test_name() -> Result<(), errors::TextError> {
         ////////////////////////////////////////
         // Adwaith, no_of_ansi_codes. Got it? //
         ////////////////////////////////////////
@@ -202,28 +206,28 @@ mod tests {
         ////////////////////////////////////////
 
         //let mut texts: Vec<TextType> = vec![];
-        //texts.push(TextType::Text(boz::Text::new("Hello", 1, 4, Rc::new([]))));
-        //texts.push(TextType::Text(boz::Text::new("world", 1, 11, Rc::new([]))));
-        //texts.push(TextType::Text(boz::Text::new("Love to", 2, 4, Rc::new([]))));
-        //texts.push(TextType::Text(boz::Text::new(
+        //texts.push(TextType::Text(again::Text::new("Hello", 1, 4, Rc::new([]))));
+        //texts.push(TextType::Text(again::Text::new("world", 1, 11, Rc::new([]))));
+        //texts.push(TextType::Text(again::Text::new("Love to", 2, 4, Rc::new([]))));
+        //texts.push(TextType::Text(again::Text::new(
         //    "Catpuccin",
         //    2,
         //    11,
         //    Rc::new([]),
         //)));
-        //let boz = NestedBoz::new(
-        //    vec![TextType::Text(boz::Text::new("hello", 5, 5, Rc::new([])))],
+        //let again = NestedBoz::new(
+        //    vec![TextType::Text(again::Text::new("hello", 5, 5, Rc::new([])))],
         //    5,
         //    10,
         //    TypeOfBorder::CurvedBorders,
         //);
-        //texts.push(TextType::SubBoz(SubBoz::new(boz, 3, 1)));
-        //let nested_boz = SubBoz::new(
-        //    NestedBoz::new(texts, 5, 40, TypeOfBorder::CurvedBorders),
+        //texts.push(TextType::Subagain(SubBoz::new(boz, 3, 1)));
+        //let nested_again = SubBoz::new(
+        //    Nestedagain::new(texts, 5, 40, TypeOfBorder::CurvedBorders),
         //    1,
         //    1,
         //);
-        //let collapsed = collapse_nested_boz(nested_boz.clone())?;
+        //let collapsed = collapse_nested_again(nested_boz.clone())?;
         //let text = &collapsed[2];
         //dbg!(word_indices(&text.text));
         //dbg!(partition_line(text.clone()));
@@ -234,31 +238,55 @@ mod tests {
         //    .flatten()
         //    .collect::<Vec<Text>>();
         //let a = render_lines(
-        //    boz::Boz::new(
+        //    again::Boz::new(
         //        collapsed.clone(),
-        //        nested_boz.clone().boz.height,
-        //        nested_boz.clone().boz.width,
-        //        nested_boz.clone().boz.type_of_border,
+        //        nested_again.clone().boz.height,
+        //        nested_again.clone().boz.width,
+        //        nested_again.clone().boz.type_of_border,
         //    ),
-        //    nested_boz.clone().start_line_number,
-        //    nested_boz.clone().column,
+        //    nested_again.clone().start_line_number,
+        //    nested_again.clone().column,
         //)?;
         //dbg!(av.clone());
-        //let rboz = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
-        //let b = rboz.render_string()?;
+        //let ragain = boz::Boz::new(collapsed, 20, 100, TypeOfBorder::CurvedBorders);
+        //let b = ragain.render_string()?;
         //println!("{}", b);
         //dbg!(a);
         //let te = Text::new("╭──────────╮", 1, 0, Rc::new([]));
-        //let tboz = boz::Boz::new(vec![te], 12, 52, TypeOfBorder::CurvedBorders);
-        //println!("{}", tboz.render_string()?);
+        //let tagain = boz::Boz::new(vec![te], 12, 52, TypeOfBorder::CurvedBorders);
+        //println!("{}", tagain.render_string()?);
 
-        let texts = vec![
-            Text::new("Hello", 1, 0, Rc::new([])),
-            Text::new("To", 1, 1, Rc::new([])),
-        ];
+        //let texts = vec![
+        //    again::Text::new("Hello", 1, 0, &[]),
+        //    again::Text::new("To", 1, 7, &[]),
+        //];
 
-        let b = Boz::new(texts, 12, 56, TypeOfBorder::CurvedBorders);
-        println!("{}", b.render_string()?);
+        //let b = again::Window::new(texts, 12, 56, again::TypeOfBorder::CurvedBorders);
+        //println!("{}", b.render()?);
+        let mut texts: Vec<TextType> = vec![TextType::Text(Text::new("Hello", 1, 0, &[]))];
+        let sub_window = SubWindow::new(
+            NestedWindow::new(
+                vec![TextType::Text(Text::new("@", 1, 1, &[]))],
+                3,
+                5,
+                TypeOfBorder::CurvedBorders,
+            ),
+            1,
+            1,
+        );
+
+        texts.push(TextType::SubWindow(sub_window));
+
+        let sub_win = SubWindow::new(
+            NestedWindow::new(texts, 3, 5, TypeOfBorder::CurvedBorders),
+            1,
+            1,
+        );
+        let text = collapse_nested_again(sub_win)?;
+
+        let win = again::Window::new(text, 10, 100, TypeOfBorder::CurvedBorders);
+
+        println!("{}", win.render()?);
 
         Ok(())
     }

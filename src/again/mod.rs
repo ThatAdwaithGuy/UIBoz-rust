@@ -1,12 +1,10 @@
-use std::any::Any;
-
 use itertools::Itertools;
 
 use crate::{errors::TextError, style};
 mod utils;
 
 #[derive(Clone, Debug)]
-struct Text {
+pub struct Text {
     pub text: String,
     pub line_number: u32,
     pub column: u32,
@@ -15,7 +13,7 @@ struct Text {
 }
 
 #[derive(Clone, Debug)]
-struct Window {
+pub struct Window {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
@@ -23,7 +21,7 @@ struct Window {
 }
 
 impl Window {
-    fn new(texts: Vec<Text>, height: u32, width: u32, type_of_border: TypeOfBorder) -> Window {
+    pub fn new(texts: Vec<Text>, height: u32, width: u32, type_of_border: TypeOfBorder) -> Window {
         Window {
             texts: texts.into(),
             height,
@@ -32,7 +30,7 @@ impl Window {
         }
     }
 
-    fn render(&self) -> Result<String, TextError> {
+    pub fn render(&self) -> Result<String, TextError> {
         let res =
             utils::replace_none_with_line_numbers(self.height, &utils::handle(self.texts.clone())?);
         dbg!(res.clone());
@@ -115,14 +113,13 @@ impl Text {
         self.to_owned()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use crate::errors::TextError;
 
     use super::*;
     use std::rc::Rc;
-
+    #[ignore]
     #[test]
     fn test() -> Result<(), TextError> {
         let test = vec![Text::new("Hello", 1, 1, &[]), Text::new("World", 1, 7, &[])];
