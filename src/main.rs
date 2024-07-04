@@ -3,8 +3,7 @@
 pub mod again;
 pub mod errors;
 pub mod style;
-pub mod sub_boz;
-
+pub mod sub_win;
 fn main() -> Result<(), errors::TextError> {
     //let text_data = vec![
     //    draw_boz::boz::Text {

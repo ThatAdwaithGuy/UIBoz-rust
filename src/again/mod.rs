@@ -9,7 +9,29 @@ pub struct Text {
     pub line_number: u32,
     pub column: u32,
     pub style: &'static [style::TextStyle],
-    no_of_ansi: u32,
+    pub no_of_ansi: u32,
+}
+
+impl Text {
+    pub fn new(
+        text: &str,
+        line_number: u32,
+        column: u32,
+        style: &'static [style::TextStyle],
+    ) -> Text {
+        Text {
+            text: text.to_string(),
+            line_number,
+            column,
+            style,
+            no_of_ansi: 1,
+        }
+    }
+
+    pub fn no_of_ansi(&mut self, no_of_ansi: u32) -> Self {
+        self.no_of_ansi = no_of_ansi;
+        self.to_owned()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -30,36 +52,45 @@ impl Window {
         }
     }
 
-    pub fn render(&self) -> Result<String, TextError> {
+    pub fn render(&self, dbg_mode: bool) -> Result<String, TextError> {
+        //dbg!(&self);
         let res =
             utils::replace_none_with_line_numbers(self.height, &utils::handle(self.texts.clone())?);
-        dbg!(res.clone());
+        //dbg!(&res);
         let texts: String = res
             .iter()
             .map(|x| match x {
-                None => format!("│{}│\n", " ".repeat(self.width as usize)),
+                None => match self.type_of_border {
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                        format!("│{}│\n", " ".repeat(self.width as usize))
+                    }
+                    TypeOfBorder::NoBorders => "\n".to_string(),
+                },
                 Some(text) => {
-                    //dbg!(
-                    //    self.width,
-                    //    text,
-                    //    text.text.chars().collect::<Vec<char>>().len(),
-                    //    (text.text.chars().collect::<Vec<char>>().len() as isize)
-                    //        - (79 * text.no_of_ansi as isize),
-                    //    self.width as isize
-                    //        - ((text.text.chars().collect::<Vec<char>>().len() as isize)
-                    //            - (79 * text.no_of_ansi as isize))
-                    //);
+                    if dbg_mode {
+                        dbg!(
+                            text,
+                            //text.text.chars().collect::<Vec<char>>().len(),
+                            //self.width,
+                            //text.text.chars().collect::<Vec<char>>().len(),
+                            //78 * text.no_of_ansi as isize,
+                            //(text.text.chars().collect::<Vec<char>>().len() as isize)
+                            //    - (78 * text.no_of_ansi as isize),
+                            self.width as isize
+                                - ((text.text.chars().collect::<Vec<char>>().len() as isize)
+                                    - (78 * text.no_of_ansi as isize)),
+                        );
+                    }
+                    let calc = self.width as i32
+                        - ((text.text.chars().collect::<Vec<char>>().len() as i32)
+                            - (78 * text.no_of_ansi as i32));
+                    if calc < 0 {
+                        panic!("ERROR");
+                    }
                     match self.type_of_border {
-                        TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => format!(
-                            "│{}{}│\n",
-                            text.text,
-                            " ".repeat(
-                                (self.width as i32
-                                    - ((text.text.chars().collect::<Vec<char>>().len() as i32)
-                                        - (78 * text.no_of_ansi as i32)))
-                                    as usize
-                            )
-                        ),
+                        TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                            format!("│{}{}│\n", text.text, " ".repeat(calc as usize))
+                        }
                         TypeOfBorder::NoBorders => text.text.clone(),
                     }
                 }
@@ -85,33 +116,11 @@ impl Window {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum TypeOfBorder {
     NoBorders,
     CurvedBorders,
     SquareBorders,
-}
-
-impl Text {
-    pub fn new(
-        text: &str,
-        line_number: u32,
-        column: u32,
-        style: &'static [style::TextStyle],
-    ) -> Text {
-        Text {
-            text: text.to_string(),
-            line_number,
-            column,
-            style,
-            no_of_ansi: 1,
-        }
-    }
-
-    pub fn no_of_ansi(&mut self, no_of_ansi: u32) -> Self {
-        self.no_of_ansi = no_of_ansi;
-        self.to_owned()
-    }
 }
 #[cfg(test)]
 mod tests {
@@ -126,7 +135,7 @@ mod tests {
         dbg!(utils::handle(test.clone()));
 
         let win = Window::new(test.into(), 20, 100, TypeOfBorder::CurvedBorders);
-        let res = win.render()?;
+        let res = win.render(false)?;
         println!("{}", res);
 
         dbg!(style::parse_text_style(Rc::new([])).len());

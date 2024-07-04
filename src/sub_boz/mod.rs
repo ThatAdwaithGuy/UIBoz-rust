@@ -1,7 +1,7 @@
 use super::again;
 use crate::errors;
 use core::panic;
-use std::{collections::HashMap, hash::Hash, rc::Rc, usize};
+use std::{collections::HashMap, hash::Hash, usize};
 // use crate::draw_again::opts;
 
 type Texts = Vec<TextType>;
@@ -60,11 +60,12 @@ fn render_lines(
 ) -> Result<Vec<again::Text>, errors::TextError> {
     let rendered_again = window.render()?;
     let splited: Vec<&str> = rendered_again.split("\n").into_iter().collect();
-    let mut res: Vec<again::Text> = splited
+    let res: Vec<again::Text> = splited
         .into_iter()
         .enumerate()
         .map(|(i, v)| again::Text::new(v, i as u32 + start_line_number, column, &[]))
         .collect();
+    //dbg!(window, &res);
     Ok(res)
 }
 
@@ -110,7 +111,7 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
         .filter(|(_, x)| *x != ' ')
         .map(|(i, v)| (*i, *v))
         .collect();
-    dbg!(input, sort_hashmap_by_key(&splited));
+    //dbg!(input, sort_hashmap_by_key(&splited));
     let mut word = String::new();
     let mut word_start_index = 0usize;
     let mut in_word = false;
@@ -143,9 +144,14 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
 }
 
 fn partition_line(text: again::Text) -> Vec<again::Text> {
-    word_indices(&text.text)
+    let words = word_indices(&text.text);
+
+    words
         .iter()
-        .map(|(i, v)| again::Text::new(v, text.line_number, *i as u32 + text.column, &[]))
+        .map(|(i, v)| {
+            again::Text::new(v, text.line_number, *i as u32 + text.column, &[])
+                .no_of_ansi(words.len() as u32)
+        })
         .collect()
 }
 
@@ -164,7 +170,7 @@ fn collapse_nested_again(nested_windows: SubWindow) -> Result<Vec<again::Text>, 
                         }
                     }
                 }
-                res.extend(render_lines(
+                let iter = render_lines(
                     again::Window::new(
                         res1,
                         sub_window.window.height,
@@ -173,7 +179,9 @@ fn collapse_nested_again(nested_windows: SubWindow) -> Result<Vec<again::Text>, 
                     ),
                     sub_window.start_line_number,
                     sub_window.column,
-                )?)
+                )?;
+                dbg!(&iter);
+                res.extend(iter.into_iter().map(partition_line).flatten())
             }
         }
     }
@@ -263,10 +271,10 @@ mod tests {
 
         //let b = again::Window::new(texts, 12, 56, again::TypeOfBorder::CurvedBorders);
         //println!("{}", b.render()?);
-        let mut texts: Vec<TextType> = vec![TextType::Text(Text::new("Hello", 1, 0, &[]))];
+        let mut texts: Vec<TextType> = vec![TextType::Text(Text::new("Hello", 0, 0, &[]))];
         let sub_window = SubWindow::new(
             NestedWindow::new(
-                vec![TextType::Text(Text::new("@", 1, 1, &[]))],
+                vec![TextType::Text(Text::new("$", 1, 1, &[]))],
                 3,
                 5,
                 TypeOfBorder::CurvedBorders,
@@ -283,8 +291,9 @@ mod tests {
             1,
         );
         let text = collapse_nested_again(sub_win)?;
+        dbg!(&text);
 
-        let win = again::Window::new(text, 10, 100, TypeOfBorder::CurvedBorders);
+        let win = again::Window::new(text, 10, 170, TypeOfBorder::CurvedBorders);
 
         println!("{}", win.render()?);
 

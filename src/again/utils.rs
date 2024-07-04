@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{again, errors::TextError, style::parse_text_style};
 use itertools::{self, Itertools};
 
@@ -8,7 +6,7 @@ use super::Text;
 fn group_lines(texts: Vec<again::Text>) -> Vec<Vec<again::Text>> {
     texts
         .iter()
-        .group_by(|x| x.line_number)
+        .chunk_by(|x| x.line_number)
         .into_iter()
         .map(|(_, x)| x.into_iter().map(|y| y.clone()).collect())
         .collect()
@@ -89,22 +87,32 @@ fn overlay(lst: &[&'static str]) -> Option<String> {
 }
 
 fn check_errors(texts: &Vec<again::Text>) -> Result<(), TextError> {
+    //dbg!(texts);
     let mut sorted = texts.clone();
     sorted.sort_by_key(|k| k.column);
+    let chunked = sorted
+        .clone()
+        .into_iter()
+        .chunk_by(|x| x.line_number)
+        .into_iter()
+        .map(|(_, x)| x.collect_vec())
+        .collect_vec();
 
-    for i in 0..sorted.len() - 1 {
-        let sorted1 = &sorted[i];
-        let sorted2 = &sorted[i + 1];
+    for lst in chunked {
+        for i in 0..lst.len() - 1 {
+            let sorted1 = &lst[i];
+            let sorted2 = &lst[i + 1];
 
-        // Calculate the end column of the first string
-        let end1 = sorted1.column + sorted2.text.len() as u32;
+            // Calculate the end column of the first string
+            let end1 = sorted1.column + sorted2.text.len() as u32;
 
-        // Check if the first string overlaps with the next one
-        if end1 > sorted2.column {
-            return Err(TextError::TextOverlayed(
-                "IDK".to_string(),
-                "IDK".to_string(),
-            ));
+            // Check if the first string overlaps with the next one
+            if end1 > sorted2.column {
+                return Err(TextError::TextOverlayed(
+                    sorted1.text.clone(),
+                    sorted2.text.clone(),
+                ));
+            }
         }
     }
 
@@ -115,7 +123,7 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
     let _ = check_errors(&texts)?;
     Ok(texts
         .iter()
-        .group_by(|x| x.line_number)
+        .chunk_by(|x| x.line_number)
         .into_iter()
         .map(|(_, x)| x.into_iter().map(|y| y.clone()).collect())
         .map(|x: Vec<Text>| (x.clone(), x.len()))
@@ -133,16 +141,17 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
                         };
                         *state = Some(current.clone());
                         Some((
-                            Text::new(&current.text, current.line_number, result, current.style),
+                            Text::new(&current.text, current.line_number, result, current.style)
+                                .no_of_ansi(current.no_of_ansi),
                             x.1,
                         ))
                     })
                     .collect_vec();
-            dbg!(x, b.clone());
             b
         })
         .map(|x: Vec<(again::Text, usize)>| {
-            x.iter()
+            let a = x
+                .iter()
                 .map(|y| {
                     (
                         again::Text::new(
@@ -155,23 +164,30 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
                             y.0.line_number,
                             y.0.column,
                             y.0.style.into(),
-                        ),
+                        )
+                        .no_of_ansi(y.0.no_of_ansi),
                         y.1,
                     )
                 })
-                .collect::<Vec<(again::Text, usize)>>()
+                .collect::<Vec<(again::Text, usize)>>();
+            a
         })
         .map(|x: Vec<(again::Text, usize)>| {
-            Text::new(
-                &x.iter()
-                    .map(|y| y.0.clone())
-                    .map(|y| y.text.clone())
-                    .join(""),
+            let no_of_ansi = if x.len() == 1 {
+                x[0].0.no_of_ansi
+            } else {
+                x.len() as u32
+            };
+            let b = Text::new(
+                &x.iter().map(|y| y.0.text.clone()).join(""),
                 x[0].0.line_number,
                 0,
                 &[],
             )
-            .no_of_ansi(x[0].1 as u32)
+            .no_of_ansi(no_of_ansi as u32);
+
+            dbg!(x, &b);
+            b
         })
         .collect())
 }
