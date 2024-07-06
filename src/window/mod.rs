@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::fs;
 
 use crate::{errors::TextError, style};
 mod utils;
@@ -35,16 +36,21 @@ impl Text {
 }
 
 #[derive(Clone, Debug)]
-pub struct Window {
+pub struct NonNestedAbleWindow {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
     pub type_of_border: TypeOfBorder,
 }
 
-impl Window {
-    pub fn new(texts: Vec<Text>, height: u32, width: u32, type_of_border: TypeOfBorder) -> Window {
-        Window {
+impl NonNestedAbleWindow {
+    pub fn new(
+        texts: Vec<Text>,
+        height: u32,
+        width: u32,
+        type_of_border: TypeOfBorder,
+    ) -> NonNestedAbleWindow {
+        NonNestedAbleWindow {
             texts: texts.into(),
             height,
             width,
@@ -127,18 +133,17 @@ mod tests {
     use crate::errors::TextError;
 
     use super::*;
-    use std::rc::Rc;
-    #[ignore]
+    use std::{path::Path, rc::Rc};
+    // OMG THIS SUCKS
     #[test]
-    fn test() -> Result<(), TextError> {
+    fn window_test() -> Result<(), TextError> {
+        let _string = "╭────────────────────╮\n│ \x1b[0000000000000022m\x1b[0000000000000022m\x1b[022m\u{1b}[022m\x1b[022m\x1b[022m\x1b[022m\x1b[022mHello\x1b[0m \x1b[0000000000000022m\x1b[0000000000000022m\x1b[022m\x1b[022m\x1b[022m\u{1b}[022m\x1b[022m\x1b[\
+022mWorld\x1b[0m        │\n│                    │\n│                    │\n│                    │\n│                    │\n╰────────────────────╯\n".to_string();
+
         let test = vec![Text::new("Hello", 1, 1, &[]), Text::new("World", 1, 7, &[])];
-        dbg!(utils::handle(test.clone()));
-
-        let win = Window::new(test.into(), 20, 100, TypeOfBorder::CurvedBorders);
-        let res = win.render(false)?;
-        println!("{}", res);
-
-        dbg!(style::parse_text_style(Rc::new([])).len());
+        let window = NonNestedAbleWindow::new(test, 5, 20, TypeOfBorder::CurvedBorders);
+        let contents = window.render(false)?;
+        assert_eq!(_string, contents);
 
         Ok(())
     }

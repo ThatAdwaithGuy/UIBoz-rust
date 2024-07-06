@@ -1,9 +1,9 @@
-use crate::{again, errors::TextError, style::parse_text_style};
+use crate::{errors::TextError, style::parse_text_style, window};
 use itertools::{self, Itertools};
 
 use super::Text;
 
-fn group_lines(texts: Vec<again::Text>) -> Vec<Vec<again::Text>> {
+fn group_lines(texts: Vec<window::Text>) -> Vec<Vec<window::Text>> {
     texts
         .iter()
         .chunk_by(|x| x.line_number)
@@ -37,7 +37,7 @@ fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Ve
 
 pub fn replace_none_with_line_numbers(
     width_of_line: u32,
-    vec_with_struct: &Vec<again::Text>,
+    vec_with_struct: &Vec<window::Text>,
 ) -> Vec<Option<Text>> {
     (0..width_of_line)
         .map(|index| {
@@ -86,7 +86,7 @@ fn overlay(lst: &[&'static str]) -> Option<String> {
         })
 }
 
-fn check_errors(texts: &Vec<again::Text>) -> Result<(), TextError> {
+fn check_errors(texts: &Vec<window::Text>) -> Result<(), TextError> {
     //dbg!(texts);
     let mut sorted = texts.clone();
     sorted.sort_by_key(|k| k.column);
@@ -119,7 +119,7 @@ fn check_errors(texts: &Vec<again::Text>) -> Result<(), TextError> {
     Ok(())
 }
 
-pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
+pub fn handle(texts: Vec<window::Text>) -> Result<Vec<window::Text>, TextError> {
     let _ = check_errors(&texts)?;
     Ok(texts
         .iter()
@@ -149,12 +149,12 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
                     .collect_vec();
             b
         })
-        .map(|x: Vec<(again::Text, usize)>| {
+        .map(|x: Vec<(window::Text, usize)>| {
             let a = x
                 .iter()
                 .map(|y| {
                     (
-                        again::Text::new(
+                        window::Text::new(
                             &format!(
                                 "{}{}{}\x1b[0m",
                                 " ".repeat(y.0.column as usize),
@@ -169,10 +169,10 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
                         y.1,
                     )
                 })
-                .collect::<Vec<(again::Text, usize)>>();
+                .collect::<Vec<(window::Text, usize)>>();
             a
         })
-        .map(|x: Vec<(again::Text, usize)>| {
+        .map(|x: Vec<(window::Text, usize)>| {
             let no_of_ansi = if x.len() == 1 {
                 x[0].0.no_of_ansi
             } else {
@@ -186,7 +186,6 @@ pub fn handle(texts: Vec<again::Text>) -> Result<Vec<again::Text>, TextError> {
             )
             .no_of_ansi(no_of_ansi as u32);
 
-            dbg!(x, &b);
             b
         })
         .collect())

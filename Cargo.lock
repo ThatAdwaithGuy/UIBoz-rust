@@ -6,6 +6,7 @@ version = 3
 name = "UIBoz-rust"
 version = "0.1.0"
 dependencies = [
+ "dyn-clone",
  "itertools",
  "jemallocator",
  "regex",
@@ -29,6 +30,12 @@ checksum = "f1174fb0b6ec23863f8b971027804a42614e347eafb0a95bf0b12cdae21fc4d0"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "either"

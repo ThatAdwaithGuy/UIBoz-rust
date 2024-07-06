@@ -1,9 +1,9 @@
 // use crate::draw_boz::opts::{parse_text_opts, Colors};
-
-pub mod again;
 pub mod errors;
+pub mod node;
 pub mod style;
 pub mod sub_win;
+pub mod window;
 fn main() -> Result<(), errors::TextError> {
     //let text_data = vec![
     //    draw_boz::boz::Text {
