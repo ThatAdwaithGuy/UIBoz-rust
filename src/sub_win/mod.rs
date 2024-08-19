@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use crate::errors::TextError;
-use crate::window;
+use crate::raw_window;
 use std::collections::HashMap;
 use std::hash::Hash;
 type Texts = Vec<TextType>;
@@ -68,7 +68,7 @@ pub struct NestedWindow {
     texts: Texts,
     height: u32,
     width: u32,
-    type_of_border: window::TypeOfBorder,
+    type_of_border: raw_window::TypeOfBorder,
 }
 
 impl NestedWindow {
@@ -76,7 +76,7 @@ impl NestedWindow {
         texts: Texts,
         height: u32,
         width: u32,
-        type_of_border: window::TypeOfBorder,
+        type_of_border: raw_window::TypeOfBorder,
     ) -> Self {
         Self {
             texts,
@@ -106,7 +106,7 @@ impl SubWindow {
     }
     fn render(&self) -> Result<String, TextError> {
         let texts = collapse_subwindow(self.clone())?;
-        let window = window::NonNestedAbleWindow::new(
+        let window = raw_window::NonNestableWindow::new(
             texts,
             self.window.height,
             self.window.width,
@@ -119,7 +119,7 @@ impl SubWindow {
 #[derive(Clone, Debug)]
 pub enum TextType {
     SubWindow(SubWindow),
-    Text(window::Text),
+    Text(raw_window::Text),
 }
 
 fn sort_hashmap_by_key<K, V>(map: &HashMap<K, V>) -> Vec<(K, V)>
@@ -176,13 +176,13 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
     result
 }
 
-fn partition_line(text: window::Text) -> Vec<window::Text> {
+fn partition_line(text: raw_window::Text) -> Vec<raw_window::Text> {
     let words = word_indices(&text.text);
 
     words
         .iter()
         .map(|(i, v)| {
-            window::Text::new(v, text.line_number, *i as u32 + text.column, &[])
+            raw_window::Text::new(v, text.line_number, *i as u32 + text.column, &[])
                 .no_of_ansi(words.len() as u32)
         })
         .collect()
@@ -208,7 +208,7 @@ fn find_no_of_ansi(nested: SubWindow) -> u32 {
 */
 
 fn update_map(win: SubWindow) -> Option<SubWindow> {
-    let mut texts: Vec<&window::Text> = vec![];
+    let mut texts: Vec<&raw_window::Text> = vec![];
     for text_type in win.window.texts.iter() {
         match text_type {
             TextType::Text(text) => texts.push(&text),
@@ -229,7 +229,7 @@ fn update_map(win: SubWindow) -> Option<SubWindow> {
     Some(window)
 }
 
-fn update_window_map(win: window::NonNestedAbleWindow) -> HashMap<u32, u32> {
+fn update_window_map(win: raw_window::NonNestableWindow) -> HashMap<u32, u32> {
     win.texts
         .iter()
         .chunk_by(|x| x.line_number)
@@ -250,7 +250,7 @@ fn add_maps(map1: HashMap<u32, u32>, map2: HashMap<u32, u32>) -> HashMap<u32, u3
     result
 }
 
-fn add_texts_maps(text: Vec<window::Text>, map: &HashMap<u32, u32>) -> Vec<window::Text> {
+fn add_texts_maps(text: Vec<raw_window::Text>, map: &HashMap<u32, u32>) -> Vec<raw_window::Text> {
     let mut ret = vec![];
     let mut unseen: Vec<u32> = ((text)[0].line_number..=text[text.len() - 1].line_number).collect();
 
@@ -279,8 +279,8 @@ fn is_nested(text: &Vec<TextType>) -> bool {
 
 fn collapse_one_deep_subwindow(
     win: SubWindow,
-) -> Result<(Vec<window::Text>, HashMap<u32, u32>), TextError> {
-    let mut texts: Vec<window::Text> = Vec::new();
+) -> Result<(Vec<raw_window::Text>, HashMap<u32, u32>), TextError> {
+    let mut texts: Vec<raw_window::Text> = Vec::new();
 
     if win.window.texts.iter().any(|x| match x {
         TextType::Text(text) => {
@@ -296,7 +296,7 @@ fn collapse_one_deep_subwindow(
     let new_texts = add_texts_maps(texts.clone(), &win.ansi_codes_map);
 
     //dbg!(new_texts);
-    let window = window::NonNestedAbleWindow::new(
+    let window = raw_window::NonNestableWindow::new(
         texts.clone(),
         win.window.height,
         win.window.width,
@@ -308,14 +308,14 @@ fn collapse_one_deep_subwindow(
     let lines: Vec<&str> = winding.split("\n").collect_vec();
     let mut ret = vec![];
     for i in 0..lines.len() - 1 {
-        ret.push(window::Text::new(lines[i], i as u32 + 1u32, 0, &[]));
+        ret.push(raw_window::Text::new(lines[i], i as u32 + 1u32, 0, &[]));
     }
 
     Ok((ret.clone(), update_window_map(window)))
 }
 
-fn collapse_subwindow(win: SubWindow) -> Result<Vec<window::Text>, TextError> {
-    let mut res1: Vec<window::Text> = vec![];
+fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextError> {
+    let mut res1: Vec<raw_window::Text> = vec![];
     let mut hashmap: HashMap<u32, u32> = HashMap::new();
 
     for text_type in win.window.texts {
@@ -350,21 +350,20 @@ mod tests {
     use crate::errors::TextError;
 
     use super::*;
-    #[ignore]
     #[test]
     fn some() -> Result<(), TextError> {
         let bob = vec![
-            window::Text::new("@", 1, 0, &[]),
-            window::Text::new("@", 2, 0, &[]),
-            window::Text::new("@", 2, 0, &[]),
+            raw_window::Text::new("@", 1, 0, &[]),
+            raw_window::Text::new("@", 2, 0, &[]),
+            raw_window::Text::new("@", 2, 0, &[]),
         ];
-        let children = TextType::Text(window::Text::new("@", 1, 0, &[]));
-        let children1 = TextType::Text(window::Text::new("@", 2, 0, &[]));
-        let children2 = TextType::Text(window::Text::new("@", 2, 2, &[]));
+        let children = TextType::Text(raw_window::Text::new("@", 1, 0, &[]));
+        let children1 = TextType::Text(raw_window::Text::new("@", 2, 0, &[]));
+        let children2 = TextType::Text(raw_window::Text::new("@", 2, 2, &[]));
 
         let texts = vec![children.clone(), children1.clone(), children2.clone()];
         let child1 = SubWindow::new(
-            NestedWindow::new(texts, 10, 10, window::TypeOfBorder::CurvedBorders),
+            NestedWindow::new(texts, 10, 10, raw_window::TypeOfBorder::CurvedBorders),
             1,
             1,
         );
@@ -374,7 +373,7 @@ mod tests {
                 vec![children.clone(), children.clone()],
                 5,
                 10,
-                window::TypeOfBorder::CurvedBorders,
+                raw_window::TypeOfBorder::CurvedBorders,
             ),
             4,
             1,
@@ -389,16 +388,16 @@ mod tests {
                 ],
                 20,
                 10,
-                window::TypeOfBorder::CurvedBorders,
+                raw_window::TypeOfBorder::CurvedBorders,
             ),
             1,
             1,
         );
 
         let t = vec![
-            window::Text::new("!", 1, 0, &[]),
-            window::Text::new("@", 2, 0, &[]),
-            window::Text::new("#", 2, 1, &[]),
+            raw_window::Text::new("!", 1, 0, &[]),
+            raw_window::Text::new("@", 2, 0, &[]),
+            raw_window::Text::new("#", 2, 1, &[]),
         ];
 
         //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
@@ -406,11 +405,11 @@ mod tests {
         dbg!(&root);
         let a = collapse_subwindow(root)?;
         dbg!(&a);
-        let b = window::NonNestedAbleWindow::new(
+        let b = raw_window::NonNestableWindow::new(
             a.clone(),
             20,
             100,
-            window::TypeOfBorder::CurvedBorders,
+            raw_window::TypeOfBorder::CurvedBorders,
         );
         println!("{}", b.render(false)?);
 

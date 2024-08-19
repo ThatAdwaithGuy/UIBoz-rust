@@ -36,21 +36,21 @@ impl Text {
 }
 
 #[derive(Clone, Debug)]
-pub struct NonNestedAbleWindow {
+pub struct NonNestableWindow {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
     pub type_of_border: TypeOfBorder,
 }
 
-impl NonNestedAbleWindow {
+impl NonNestableWindow {
     pub fn new(
         texts: Vec<Text>,
         height: u32,
         width: u32,
         type_of_border: TypeOfBorder,
-    ) -> NonNestedAbleWindow {
-        NonNestedAbleWindow {
+    ) -> NonNestableWindow {
+        NonNestableWindow {
             texts: texts.into(),
             height,
             width,
@@ -141,7 +141,7 @@ mod tests {
 022mWorld\x1b[0m        │\n│                    │\n│                    │\n│                    │\n│                    │\n╰────────────────────╯\n".to_string();
 
         let test = vec![Text::new("Hello", 1, 1, &[]), Text::new("World", 1, 7, &[])];
-        let window = NonNestedAbleWindow::new(test, 5, 20, TypeOfBorder::CurvedBorders);
+        let window = NonNestableWindow::new(test, 5, 20, TypeOfBorder::CurvedBorders);
         let contents = window.render(false)?;
         assert_eq!(_string, contents);
 

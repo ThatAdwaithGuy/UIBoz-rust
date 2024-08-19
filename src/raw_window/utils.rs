@@ -1,9 +1,9 @@
-use crate::{errors::TextError, style::parse_text_style, window};
+use crate::{errors::TextError, raw_window, style::parse_text_style};
 use itertools::{self, Itertools};
 
 use super::Text;
 
-fn group_lines(texts: Vec<window::Text>) -> Vec<Vec<window::Text>> {
+fn group_lines(texts: Vec<raw_window::Text>) -> Vec<Vec<raw_window::Text>> {
     texts
         .iter()
         .chunk_by(|x| x.line_number)
@@ -37,7 +37,7 @@ fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Ve
 
 pub fn replace_none_with_line_numbers(
     width_of_line: u32,
-    vec_with_struct: &Vec<window::Text>,
+    vec_with_struct: &Vec<raw_window::Text>,
 ) -> Vec<Option<Text>> {
     (0..width_of_line)
         .map(|index| {
@@ -86,7 +86,7 @@ fn overlay(lst: &[&'static str]) -> Option<String> {
         })
 }
 
-fn check_errors(texts: &Vec<window::Text>) -> Result<(), TextError> {
+fn check_errors(texts: &Vec<raw_window::Text>) -> Result<(), TextError> {
     //dbg!(texts);
     let mut sorted = texts.clone();
     sorted.sort_by_key(|k| k.column);
@@ -119,7 +119,7 @@ fn check_errors(texts: &Vec<window::Text>) -> Result<(), TextError> {
     Ok(())
 }
 
-pub fn handle(texts: Vec<window::Text>) -> Result<Vec<window::Text>, TextError> {
+pub fn handle(texts: Vec<raw_window::Text>) -> Result<Vec<raw_window::Text>, TextError> {
     let _ = check_errors(&texts)?;
     Ok(texts
         .iter()
@@ -149,12 +149,12 @@ pub fn handle(texts: Vec<window::Text>) -> Result<Vec<window::Text>, TextError> 
                     .collect_vec();
             b
         })
-        .map(|x: Vec<(window::Text, usize)>| {
+        .map(|x: Vec<(raw_window::Text, usize)>| {
             let a = x
                 .iter()
                 .map(|y| {
                     (
-                        window::Text::new(
+                        raw_window::Text::new(
                             &format!(
                                 "{}{}{}\x1b[0m",
                                 " ".repeat(y.0.column as usize),
@@ -169,10 +169,10 @@ pub fn handle(texts: Vec<window::Text>) -> Result<Vec<window::Text>, TextError> 
                         y.1,
                     )
                 })
-                .collect::<Vec<(window::Text, usize)>>();
+                .collect::<Vec<(raw_window::Text, usize)>>();
             a
         })
-        .map(|x: Vec<(window::Text, usize)>| {
+        .map(|x: Vec<(raw_window::Text, usize)>| {
             let no_of_ansi = if x.len() == 1 {
                 x[0].0.no_of_ansi
             } else {
