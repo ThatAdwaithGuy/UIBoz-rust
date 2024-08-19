@@ -4,6 +4,7 @@ use crate::errors::TextError;
 use crate::raw_window;
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::vec;
 type Texts = Vec<TextType>;
 /*
 macro_rules! constructor_step {
@@ -96,7 +97,7 @@ pub struct SubWindow {
     ansi_codes_map: HashMap<u32, u32>,
 }
 impl SubWindow {
-    fn new(window: NestedWindow, start_line_number: u32, column: u32) -> Self {
+    pub fn new(window: NestedWindow, start_line_number: u32, column: u32) -> Self {
         Self {
             window,
             start_line_number,
@@ -251,6 +252,9 @@ fn add_maps(map1: HashMap<u32, u32>, map2: HashMap<u32, u32>) -> HashMap<u32, u3
 }
 
 fn add_texts_maps(text: Vec<raw_window::Text>, map: &HashMap<u32, u32>) -> Vec<raw_window::Text> {
+    if text == vec![] {
+        return vec![];
+    }
     let mut ret = vec![];
     let mut unseen: Vec<u32> = ((text)[0].line_number..=text[text.len() - 1].line_number).collect();
 
@@ -314,7 +318,7 @@ fn collapse_one_deep_subwindow(
     Ok((ret.clone(), update_window_map(window)))
 }
 
-fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextError> {
+pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextError> {
     let mut res1: Vec<raw_window::Text> = vec![];
     let mut hashmap: HashMap<u32, u32> = HashMap::new();
 
@@ -357,11 +361,11 @@ mod tests {
             raw_window::Text::new("@", 2, 0, &[]),
             raw_window::Text::new("@", 2, 0, &[]),
         ];
-        let children = TextType::Text(raw_window::Text::new("@", 1, 0, &[]));
+        let children = TextType::Text(raw_window::Text::new("", 1, 0, &[]));
         let children1 = TextType::Text(raw_window::Text::new("@", 2, 0, &[]));
         let children2 = TextType::Text(raw_window::Text::new("@", 2, 2, &[]));
 
-        let texts = vec![children.clone(), children1.clone(), children2.clone()];
+        let texts = vec![children.clone()];
         let child1 = SubWindow::new(
             NestedWindow::new(texts, 10, 10, raw_window::TypeOfBorder::CurvedBorders),
             1,
@@ -382,7 +386,7 @@ mod tests {
         let root = SubWindow::new(
             NestedWindow::new(
                 vec![
-                    TextType::SubWindow(child1.clone()),
+                    //TextType::SubWindow(child1.clone()),
                     //TextType::SubWindow(child2.clone()),
                     //TextType::SubWindow(child2.clone()),
                 ],

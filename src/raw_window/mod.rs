@@ -4,7 +4,7 @@ use std::fs;
 use crate::{errors::TextError, style};
 mod utils;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Text {
     pub text: String,
     pub line_number: u32,
