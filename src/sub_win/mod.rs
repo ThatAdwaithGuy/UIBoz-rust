@@ -1,9 +1,10 @@
 use itertools::Itertools;
-
+pub mod new_mod;
 use crate::errors::TextError;
 use crate::raw_window;
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::ops::Index;
 use std::vec;
 type Texts = Vec<TextType>;
 /*
@@ -255,22 +256,21 @@ fn add_texts_maps(text: Vec<raw_window::Text>, map: &HashMap<u32, u32>) -> Vec<r
     if text == vec![] {
         return vec![];
     }
+    let mut text_clone = text.clone();
     let mut ret = vec![];
-    let mut unseen: Vec<u32> = ((text)[0].line_number..=text[text.len() - 1].line_number).collect();
-
-    for (k, v) in map.iter() {
-        if let Some(val) = text.iter().find(|x| x.line_number == *k) {
-            let mut vaal = val.clone();
-            vaal.no_of_ansi = *v;
-            ret.push(vaal.to_owned());
-            unseen.retain(|x| *x != val.line_number);
+    for t in text.iter() {
+        for (line_number, ansi_codes) in map.iter() {
+            if t.line_number == *line_number {
+                ret.push(t.clone().no_of_ansi(*ansi_codes));
+                text_clone = text_clone
+                    .iter()
+                    .filter(|x| *x != t)
+                    .map(|x| x.clone())
+                    .collect();
+            }
         }
     }
-    for idx in unseen {
-        // TODO: This will not work if the text is not sorted by line number. fix it.
-        ret.push(text[idx as usize - 1].clone());
-    }
-    ret.sort_by_key(|x| x.line_number);
+    ret.extend(text_clone);
     ret
 }
 
@@ -285,7 +285,7 @@ fn collapse_one_deep_subwindow(
     win: SubWindow,
 ) -> Result<(Vec<raw_window::Text>, HashMap<u32, u32>), TextError> {
     let mut texts: Vec<raw_window::Text> = Vec::new();
-
+    // depth check
     if win.window.texts.iter().any(|x| match x {
         TextType::Text(text) => {
             texts.push(text.clone());
@@ -301,7 +301,7 @@ fn collapse_one_deep_subwindow(
 
     //dbg!(new_texts);
     let window = raw_window::NonNestableWindow::new(
-        texts.clone(),
+        new_texts.clone(),
         win.window.height,
         win.window.width,
         win.window.type_of_border,
@@ -312,8 +312,17 @@ fn collapse_one_deep_subwindow(
     let lines: Vec<&str> = winding.split("\n").collect_vec();
     let mut ret = vec![];
     for i in 0..lines.len() - 1 {
-        ret.push(raw_window::Text::new(lines[i], i as u32 + 1u32, 0, &[]));
+        if i == 0 || i == lines.len() - 1 {
+            ret.push(raw_window::Text::new(lines[i], (i + 1) as u32, 0, &[]));
+        } else if lines[i].contains("\x1b") {
+            dbg!("BROOOO", lines[i]);
+            ret.push(
+                raw_window::Text::new(lines[i], (i + 1) as u32, 0, &[])
+                    .no_of_ansi((lines[i].matches("\x1b").count() / 8) as u32),
+            );
+        }
     }
+    dbg!(&ret, &win);
 
     Ok((ret.clone(), update_window_map(window)))
 }
@@ -324,18 +333,24 @@ pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextE
 
     for text_type in win.window.texts {
         match text_type {
-            TextType::Text(t) => res1.push(t),
+            TextType::Text(t) => {
+                dbg!(&t);
+                res1.push(t)
+            }
             TextType::SubWindow(window1) => {
                 if !is_nested(&window1.window.texts) {
+                    dbg!(&window1.window.texts);
                     let iter = collapse_one_deep_subwindow(window1)?;
-                    dbg!(&iter.1);
+                    dbg!(&iter.0, &hashmap);
                     hashmap = add_maps(
                         hashmap,
                         iter.1
                             .iter()
-                            .map(|(k, v)| (k + 1, *v + 1))
+                            .map(|(k, v)| (*k, *v + 1))
                             .collect::<HashMap<u32, u32>>(),
                     );
+                    dbg!(&iter);
+                    dbg!(&hashmap);
                     res1.extend(iter.0);
                 } else {
                     return Err(TextError::LeftBounds("asdfasdf".to_string()));
@@ -343,6 +358,7 @@ pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextE
             }
         }
     }
+    dbg!(&res1);
     res1 = add_texts_maps(res1, &hashmap);
 
     dbg!(&res1);
@@ -351,6 +367,8 @@ pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextE
 
 #[cfg(test)]
 mod tests {
+    use core::hash;
+
     use crate::errors::TextError;
 
     use super::*;
@@ -403,12 +421,15 @@ mod tests {
             raw_window::Text::new("@", 2, 0, &[]),
             raw_window::Text::new("#", 2, 1, &[]),
         ];
+        let mut hashmap: HashMap<u32, u32> = HashMap::new();
+        hashmap.insert(2, 2);
+        dbg!(&hashmap);
+        dbg!(&t);
+        dbg!(add_texts_maps(t, &hashmap));
 
         //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
 
-        dbg!(&root);
         let a = collapse_subwindow(root)?;
-        dbg!(&a);
         let b = raw_window::NonNestableWindow::new(
             a.clone(),
             20,

@@ -207,5 +207,6 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
             TextStyle::Hide(false) => output_string.push_str("\x1b[022m"),
         }
     }
+    dbg!(&output_string);
     output_string
 }
