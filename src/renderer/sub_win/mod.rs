@@ -106,16 +106,6 @@ impl SubWindow {
             ansi_codes_map: HashMap::new(),
         }
     }
-    fn render(&self) -> Result<String, TextError> {
-        let texts = collapse_sub_window(self.clone(), 0)?;
-        let window = window_renderer::NonNestableWindow::new(
-            texts,
-            self.window.height,
-            self.window.width,
-            self.window.type_of_border,
-        );
-        Ok(window.render(false)?)
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -123,7 +113,7 @@ pub enum TextType {
     SubWindow(SubWindow),
     Text(window_renderer::Text),
 }
-
+/*
 fn sort_hashmap_by_key<K, V>(map: &HashMap<K, V>) -> Vec<(K, V)>
 where
     K: Ord + Clone + Hash,
@@ -134,6 +124,7 @@ where
     vec
 }
 // Absolute Hell
+// TODO: Need to implement this
 fn word_indices(input: &str) -> Vec<(usize, String)> {
     let mut result: Vec<(usize, String)> = Vec::new();
     let string = String::from(input)
@@ -276,7 +267,7 @@ fn add_texts_maps(
     ret.extend(text_clone);
     ret
 }
-
+*/
 fn is_nested(text: &Vec<TextType>) -> bool {
     text.iter().any(|x| match x {
         TextType::Text(_) => false,
@@ -504,9 +495,6 @@ mod tests {
         ];
         let mut hashmap: HashMap<u32, u32> = HashMap::new();
         hashmap.insert(2, 2);
-        dbg!(&hashmap);
-        dbg!(&t);
-        dbg!(add_texts_maps(t, &hashmap));
 
         //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
 

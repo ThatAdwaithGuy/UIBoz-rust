@@ -36,7 +36,7 @@ impl Text {
 }
 
 #[derive(Clone, Debug)]
-pub struct NonNestableWindow {
+pub(in crate::renderer) struct NonNestableWindow {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
