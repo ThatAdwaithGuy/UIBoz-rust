@@ -1,7 +1,7 @@
 use itertools::Itertools;
-pub mod new_mod;
+//pub mod new_mod;
+use super::window_renderer;
 use crate::errors::TextError;
-use crate::raw_window;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Index;
@@ -70,7 +70,7 @@ pub struct NestedWindow {
     texts: Texts,
     height: u32,
     width: u32,
-    type_of_border: raw_window::TypeOfBorder,
+    type_of_border: window_renderer::TypeOfBorder,
 }
 
 impl NestedWindow {
@@ -78,7 +78,7 @@ impl NestedWindow {
         texts: Texts,
         height: u32,
         width: u32,
-        type_of_border: raw_window::TypeOfBorder,
+        type_of_border: window_renderer::TypeOfBorder,
     ) -> Self {
         Self {
             texts,
@@ -107,8 +107,8 @@ impl SubWindow {
         }
     }
     fn render(&self) -> Result<String, TextError> {
-        let texts = collapse_subwindow(self.clone())?;
-        let window = raw_window::NonNestableWindow::new(
+        let texts = collapse_sub_window(self.clone(), 0)?;
+        let window = window_renderer::NonNestableWindow::new(
             texts,
             self.window.height,
             self.window.width,
@@ -121,7 +121,7 @@ impl SubWindow {
 #[derive(Clone, Debug)]
 pub enum TextType {
     SubWindow(SubWindow),
-    Text(raw_window::Text),
+    Text(window_renderer::Text),
 }
 
 fn sort_hashmap_by_key<K, V>(map: &HashMap<K, V>) -> Vec<(K, V)>
@@ -178,13 +178,13 @@ fn word_indices(input: &str) -> Vec<(usize, String)> {
     result
 }
 
-fn partition_line(text: raw_window::Text) -> Vec<raw_window::Text> {
+fn partition_line(text: window_renderer::Text) -> Vec<window_renderer::Text> {
     let words = word_indices(&text.text);
 
     words
         .iter()
         .map(|(i, v)| {
-            raw_window::Text::new(v, text.line_number, *i as u32 + text.column, &[])
+            window_renderer::Text::new(v, text.line_number, *i as u32 + text.column, &[])
                 .no_of_ansi(words.len() as u32)
         })
         .collect()
@@ -210,7 +210,7 @@ fn find_no_of_ansi(nested: SubWindow) -> u32 {
 */
 
 fn update_map(win: SubWindow) -> Option<SubWindow> {
-    let mut texts: Vec<&raw_window::Text> = vec![];
+    let mut texts: Vec<&window_renderer::Text> = vec![];
     for text_type in win.window.texts.iter() {
         match text_type {
             TextType::Text(text) => texts.push(&text),
@@ -231,7 +231,7 @@ fn update_map(win: SubWindow) -> Option<SubWindow> {
     Some(window)
 }
 
-fn update_window_map(win: raw_window::NonNestableWindow) -> HashMap<u32, u32> {
+fn update_window_map(win: window_renderer::NonNestableWindow) -> HashMap<u32, u32> {
     win.texts
         .iter()
         .chunk_by(|x| x.line_number)
@@ -252,7 +252,10 @@ fn add_maps(map1: HashMap<u32, u32>, map2: HashMap<u32, u32>) -> HashMap<u32, u3
     result
 }
 
-fn add_texts_maps(text: Vec<raw_window::Text>, map: &HashMap<u32, u32>) -> Vec<raw_window::Text> {
+fn add_texts_maps(
+    text: Vec<window_renderer::Text>,
+    map: &HashMap<u32, u32>,
+) -> Vec<window_renderer::Text> {
     if text == vec![] {
         return vec![];
     }
@@ -281,7 +284,85 @@ fn is_nested(text: &Vec<TextType>) -> bool {
     })
 }
 
-fn collapse_one_deep_subwindow(
+pub fn collapse_one_deep_sub_window(
+    win: SubWindow,
+) -> Result<Vec<window_renderer::Text>, TextError> {
+    let mut texts: Vec<window_renderer::Text> = Vec::new();
+    // Depth check
+    if win.window.texts.iter().any(|x| match x {
+        TextType::Text(text) => {
+            texts.push(text.clone());
+            false
+        }
+        TextType::SubWindow(_) => true,
+    }) {
+        return Err(TextError::DuplicateText(
+            "if you see this. I made a mistake here".to_string(),
+        ));
+    }
+    let window = window_renderer::NonNestableWindow::new(
+        texts,
+        win.window.height,
+        win.window.width,
+        win.window.type_of_border,
+    );
+    let mut return_val: Vec<window_renderer::Text> = vec![];
+    let rendered_string = window.render(false)?;
+    let split = rendered_string.split("\n");
+    for (idx, line) in split.enumerate() {
+        let count = (line.matches("\x1b").count() / 8) as u32;
+        return_val
+            .push(window_renderer::Text::new(line, (idx + 1) as u32, 0, &[]).no_of_ansi(count + 1));
+    }
+    Ok(return_val)
+}
+const MAX_DEPTH: u32 = 128;
+pub fn collapse_sub_window(
+    win: SubWindow,
+    depth: u32,
+) -> Result<Vec<window_renderer::Text>, TextError> {
+    let mut res: Vec<window_renderer::Text> = Vec::new();
+    if depth >= MAX_DEPTH {
+        return Err(TextError::DepthLimitExceeded(win));
+    }
+
+    for text_type in win.window.texts {
+        match text_type {
+            TextType::Text(t) => res.push(t.to_owned()),
+            TextType::SubWindow(sub_win) => match is_nested(&sub_win.window.texts) {
+                true => {
+                    let collapsed = collapse_sub_window(sub_win, depth + 1)?;
+
+                    let window = window_renderer::NonNestableWindow::new(
+                        collapsed,
+                        win.window.height,
+                        win.window.width,
+                        win.window.type_of_border,
+                    );
+                    let mut return_val: Vec<window_renderer::Text> = vec![];
+                    dbg!(&window);
+                    let rendered_string = window.render(false)?;
+                    println!("debug:\n{}", rendered_string.clone());
+                    let split = rendered_string.split("\n");
+                    for (idx, line) in split.enumerate() {
+                        let count = (line.matches("\x1b").count() / 8) as u32;
+                        return_val.push(
+                            window_renderer::Text::new(line, (idx + 1) as u32, 0, &[])
+                                .no_of_ansi(count + 1),
+                        );
+                    }
+                    dbg!(&res);
+                    res.extend(return_val);
+                }
+                false => res.extend(collapse_one_deep_sub_window(sub_win)?),
+            },
+        }
+    }
+
+    Ok(res)
+}
+/*
+fn collapse_one_deep_sub_window_old(
     win: SubWindow,
 ) -> Result<(Vec<raw_window::Text>, HashMap<u32, u32>), TextError> {
     let mut texts: Vec<raw_window::Text> = Vec::new();
@@ -327,7 +408,7 @@ fn collapse_one_deep_subwindow(
     Ok((ret.clone(), update_window_map(window)))
 }
 
-pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextError> {
+pub fn collapse_sub_window_old(win: SubWindow) -> Result<Vec<raw_window::Text>, TextError> {
     let mut res1: Vec<raw_window::Text> = vec![];
     let mut hashmap: HashMap<u32, u32> = HashMap::new();
 
@@ -340,7 +421,7 @@ pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextE
             TextType::SubWindow(window1) => {
                 if !is_nested(&window1.window.texts) {
                     dbg!(&window1.window.texts);
-                    let iter = collapse_one_deep_subwindow(window1)?;
+                    let iter = collapse_one_deep_sub_window(window1)?;
                     dbg!(&iter.0, &hashmap);
                     hashmap = add_maps(
                         hashmap,
@@ -364,7 +445,7 @@ pub fn collapse_subwindow(win: SubWindow) -> Result<Vec<raw_window::Text>, TextE
     dbg!(&res1);
     Ok(res1)
 }
-
+*/
 #[cfg(test)]
 mod tests {
     use core::hash;
@@ -375,17 +456,17 @@ mod tests {
     #[test]
     fn some() -> Result<(), TextError> {
         let bob = vec![
-            raw_window::Text::new("@", 1, 0, &[]),
-            raw_window::Text::new("@", 2, 0, &[]),
-            raw_window::Text::new("@", 2, 0, &[]),
+            window_renderer::Text::new("@", 1, 0, &[]),
+            window_renderer::Text::new("@", 2, 0, &[]),
+            window_renderer::Text::new("@", 2, 0, &[]),
         ];
-        let children = TextType::Text(raw_window::Text::new("", 1, 0, &[]));
-        let children1 = TextType::Text(raw_window::Text::new("@", 2, 0, &[]));
-        let children2 = TextType::Text(raw_window::Text::new("@", 2, 2, &[]));
+        let children = TextType::Text(window_renderer::Text::new("", 1, 0, &[]));
+        let children1 = TextType::Text(window_renderer::Text::new("@", 2, 0, &[]));
+        let children2 = TextType::Text(window_renderer::Text::new("@", 2, 2, &[]));
 
         let texts = vec![children.clone()];
         let child1 = SubWindow::new(
-            NestedWindow::new(texts, 10, 10, raw_window::TypeOfBorder::CurvedBorders),
+            NestedWindow::new(texts, 10, 10, window_renderer::TypeOfBorder::CurvedBorders),
             1,
             1,
         );
@@ -395,7 +476,7 @@ mod tests {
                 vec![children.clone(), children.clone()],
                 5,
                 10,
-                raw_window::TypeOfBorder::CurvedBorders,
+                window_renderer::TypeOfBorder::CurvedBorders,
             ),
             4,
             1,
@@ -410,16 +491,16 @@ mod tests {
                 ],
                 20,
                 10,
-                raw_window::TypeOfBorder::CurvedBorders,
+                window_renderer::TypeOfBorder::CurvedBorders,
             ),
             1,
             1,
         );
 
         let t = vec![
-            raw_window::Text::new("!", 1, 0, &[]),
-            raw_window::Text::new("@", 2, 0, &[]),
-            raw_window::Text::new("#", 2, 1, &[]),
+            window_renderer::Text::new("!", 1, 0, &[]),
+            window_renderer::Text::new("@", 2, 0, &[]),
+            window_renderer::Text::new("#", 2, 1, &[]),
         ];
         let mut hashmap: HashMap<u32, u32> = HashMap::new();
         hashmap.insert(2, 2);
@@ -429,12 +510,12 @@ mod tests {
 
         //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
 
-        let a = collapse_subwindow(root)?;
-        let b = raw_window::NonNestableWindow::new(
+        let a = collapse_sub_window(root, 0)?;
+        let b = window_renderer::NonNestableWindow::new(
             a.clone(),
             20,
             100,
-            raw_window::TypeOfBorder::CurvedBorders,
+            window_renderer::TypeOfBorder::CurvedBorders,
         );
         println!("{}", b.render(false)?);
 

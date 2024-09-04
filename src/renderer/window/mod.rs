@@ -1,9 +1,9 @@
 use crate::errors::TextError;
-use crate::raw_window;
-use crate::raw_window::TypeOfBorder;
-use crate::sub_win::{self, NestedWindow};
-use crate::sub_win::{SubWindow, TextType};
-
+use crate::renderer::sub_win::{self, NestedWindow};
+use crate::renderer::sub_win::{SubWindow, TextType};
+use crate::window_renderer;
+use crate::window_renderer::TypeOfBorder;
+#[derive(Debug)]
 pub struct Window {
     texts: Vec<TextType>,
     width: u32,
@@ -33,8 +33,8 @@ impl Window {
             self.type_of_border,
         );
         let sub_window = SubWindow::new(nested_window, 0, 0);
-        let collapsed = sub_win::collapse_subwindow(sub_window)?;
-        let window = raw_window::NonNestableWindow::new(
+        let collapsed = sub_win::collapse_sub_window(sub_window, 0)?;
+        let window = window_renderer::NonNestableWindow::new(
             collapsed,
             self.height,
             self.width,

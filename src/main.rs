@@ -1,33 +1,79 @@
 use std::{ops::Sub, vec};
 
-use raw_window::Text;
-use sub_win::{NestedWindow, SubWindow, TextType};
-
 //use crate::window::opts::{parse_text_opts, Colors};
 pub mod errors;
-pub mod raw_window;
-pub mod style;
-pub mod sub_win;
-pub mod window;
+pub mod renderer;
+use crate::renderer::style;
+use crate::renderer::sub_win::*;
+use crate::renderer::window;
+use crate::renderer::window_renderer::*;
 fn main() -> Result<(), errors::TextError> {
-    let inner_window = NestedWindow::new(
-        vec![TextType::Text(Text::new("!", 1, 0, &[]))],
-        1,
-        1,
-        raw_window::TypeOfBorder::CurvedBorders,
-    );
-    let inner_sub = SubWindow::new(inner_window, 1, 0);
-    let outer = window::Window::new(
-        vec![
-            TextType::SubWindow(inner_sub),
-            TextType::Text(Text::new("Hello", 1, 10, &[])),
-        ],
-        56,
-        12,
-        raw_window::TypeOfBorder::CurvedBorders,
-    );
-    let string = outer.render()?;
-    println!("{}", string);
+    let first_window =
+        NestedWindow::new(vec![], 1, 1, window_renderer::TypeOfBorder::CurvedBorders);
+    let first_sub_window = SubWindow::new(first_window, 1, 0);
 
+    let second_window = NestedWindow::new(
+        vec![TextType::SubWindow(first_sub_window)],
+        3,
+        3,
+        window_renderer::TypeOfBorder::CurvedBorders,
+    );
+    let second_sub_window = SubWindow::new(second_window, 1, 0);
+    println!(
+        "{}",
+        Window::new(
+            collapse_sub_window(second_sub_window.clone(), 1)?
+                .iter()
+                .map(|x| TextType::Text(x.clone()))
+                .collect(),
+            56,
+            12,
+            window_renderer::TypeOfBorder::CurvedBorders
+        )
+        .render()?
+    );
+    let third_window = NestedWindow::new(
+        vec![TextType::SubWindow(second_sub_window)],
+        3,
+        3,
+        window_renderer::TypeOfBorder::CurvedBorders,
+    );
+    let third_sub_window = SubWindow::new(third_window, 1, 0);
+
+    println!(
+        "{}",
+        Window::new(
+            collapse_sub_window(third_sub_window.clone(), 1)?
+                .iter()
+                .map(|x| TextType::Text(x.clone()))
+                .collect(),
+            56,
+            12,
+            window_renderer::TypeOfBorder::CurvedBorders
+        )
+        .render()?
+    );
+
+    let fourth_window = NestedWindow::new(
+        vec![TextType::SubWindow(third_sub_window)],
+        6,
+        6,
+        window_renderer::TypeOfBorder::CurvedBorders,
+    );
+    let fourth_sub_window = SubWindow::new(fourth_window, 1, 0);
+
+    println!(
+        "{}",
+        Window::new(
+            collapse_sub_window(fourth_sub_window.clone(), 1)?
+                .iter()
+                .map(|x| TextType::Text(x.clone()))
+                .collect(),
+            56,
+            12,
+            window_renderer::TypeOfBorder::CurvedBorders
+        )
+        .render()?
+    );
     Ok(())
 }

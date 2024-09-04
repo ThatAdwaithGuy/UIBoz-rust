@@ -1,9 +1,11 @@
-use crate::{errors::TextError, raw_window, style::parse_text_style};
+use super::*;
+use crate::{errors::TextError, style::parse_text_style};
+
 use itertools::{self, Itertools};
 
 use super::Text;
 
-fn group_lines(texts: Vec<raw_window::Text>) -> Vec<Vec<raw_window::Text>> {
+fn group_lines(texts: Vec<Text>) -> Vec<Vec<Text>> {
     texts
         .iter()
         .chunk_by(|x| x.line_number)
@@ -37,7 +39,7 @@ fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Ve
 
 pub fn replace_none_with_line_numbers(
     width_of_line: u32,
-    vec_with_struct: &Vec<raw_window::Text>,
+    vec_with_struct: &Vec<Text>,
 ) -> Vec<Option<Text>> {
     (0..width_of_line)
         .map(|index| {
@@ -86,7 +88,7 @@ fn overlay(lst: &[&'static str]) -> Option<String> {
         })
 }
 
-fn check_errors(texts: &Vec<raw_window::Text>) -> Result<(), TextError> {
+fn check_errors(texts: &Vec<Text>) -> Result<(), TextError> {
     //dbg!(texts);
     let mut sorted = texts.clone();
     sorted.sort_by_key(|k| k.column);
@@ -119,42 +121,55 @@ fn check_errors(texts: &Vec<raw_window::Text>) -> Result<(), TextError> {
     Ok(())
 }
 
-pub fn handle(texts: Vec<raw_window::Text>) -> Result<Vec<raw_window::Text>, TextError> {
-    let _ = check_errors(&texts)?;
+pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
+    let _ = check_errors(&unsorted_texts)?;
+    let mut texts = unsorted_texts;
+    texts.sort_by_key(|x| x.line_number);
     Ok(texts
         .iter()
         .chunk_by(|x| x.line_number)
         .into_iter()
         .map(|(_, x)| x.into_iter().map(|y| y.clone()).collect())
+        .collect::<Vec<Vec<Text>>>()
+        .into_iter()
         .map(|x: Vec<Text>| (x.clone(), x.len()))
         .map(|x: (Vec<Text>, usize)| {
-            let b =
-                x.0.iter()
-                    .scan(None, |state: &mut Option<Text>, current: &Text| {
-                        let result = match state {
-                            None => current.column,
-                            Some(prev) => {
-                                current.column
-                                    - (prev.column
-                                        + prev.text.chars().collect::<Vec<char>>().len() as u32)
-                            }
-                        };
-                        *state = Some(current.clone());
-                        Some((
-                            Text::new(&current.text, current.line_number, result, current.style)
-                                .no_of_ansi(current.no_of_ansi),
-                            x.1,
-                        ))
-                    })
-                    .collect_vec();
+            let b = x
+                .0
+                .iter()
+                .scan(None, |state: &mut Option<Text>, current: &Text| {
+                    let result = match state {
+                        None => current.column,
+                        Some(prev) => {
+                            dbg!(
+                                &current,
+                                &prev,
+                                &prev.text.chars().collect::<Vec<char>>().len(),
+                                (prev.no_of_ansi * 78),
+                            );
+                            current.column
+                                - (prev.column
+                                    + (prev.text.chars().collect::<Vec<char>>().len()
+                                        - ((prev.text.matches("\x1b").count() / 8) as u32 * 78)
+                                            as usize) as u32)
+                        }
+                    };
+                    *state = Some(current.clone());
+                    Some((
+                        Text::new(&current.text, current.line_number, result, current.style)
+                            .no_of_ansi(current.no_of_ansi),
+                        x.1,
+                    ))
+                })
+                .collect_vec();
             b
         })
-        .map(|x: Vec<(raw_window::Text, usize)>| {
+        .map(|x: Vec<(Text, usize)>| {
             let a = x
                 .iter()
                 .map(|y| {
                     (
-                        raw_window::Text::new(
+                        Text::new(
                             &format!(
                                 "{}{}{}\x1b[0m",
                                 " ".repeat(y.0.column as usize),
@@ -169,10 +184,10 @@ pub fn handle(texts: Vec<raw_window::Text>) -> Result<Vec<raw_window::Text>, Tex
                         y.1,
                     )
                 })
-                .collect::<Vec<(raw_window::Text, usize)>>();
+                .collect::<Vec<(Text, usize)>>();
             a
         })
-        .map(|x: Vec<(raw_window::Text, usize)>| {
+        .map(|x: Vec<(Text, usize)>| {
             let no_of_ansi = if x.len() == 1 {
                 x[0].0.no_of_ansi
             } else {
