@@ -141,12 +141,12 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     let result = match state {
                         None => current.column,
                         Some(prev) => {
-                            dbg!(
-                                &current,
-                                &prev,
-                                &prev.text.chars().collect::<Vec<char>>().len(),
-                                (prev.no_of_ansi * 78),
-                            );
+                            //dbg!(
+                            //    &current,
+                            //    &prev,
+                            //    &prev.text.chars().collect::<Vec<char>>().len(),
+                            //    (prev.no_of_ansi * 78),
+                            //);
                             current.column
                                 - (prev.column
                                     + (prev.text.chars().collect::<Vec<char>>().len()

@@ -2,8 +2,8 @@ use std::{ops::Sub, vec};
 
 //use crate::window::opts::{parse_text_opts, Colors};
 pub mod errors;
+pub mod frontend;
 pub mod renderer;
-
 use crate::renderer::style;
 use crate::renderer::sub_win::*;
 use crate::renderer::window::*;
@@ -12,7 +12,6 @@ use crate::renderer::*;
 fn main() -> Result<(), errors::TextError> {
     let first_window = NestedWindow::new(vec![], 1, 1, TypeOfBorder::CurvedBorders);
     let first_sub_window = SubWindow::new(first_window, 1, 0);
-
     let second_window = NestedWindow::new(
         vec![TextType::SubWindow(first_sub_window)],
         3,
