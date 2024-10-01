@@ -1,3 +1,6 @@
+#![feature(thin_box)]
+#![feature(unsize)]
+
 pub mod macros;
 pub mod node;
 use node::Node;

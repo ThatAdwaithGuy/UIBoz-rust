@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use std::fs;
 
-use crate::errors::TextError;
+use errors::TextError;
 mod utils;
 use style;
 
@@ -37,7 +37,7 @@ impl Text {
 }
 
 #[derive(Clone, Debug)]
-pub(in crate::renderer) struct NonNestableWindow {
+pub(crate) struct NonNestableWindow {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
@@ -197,10 +197,9 @@ pub enum TypeOfBorder {
 }
 #[cfg(test)]
 mod tests {
-    use crate::errors::TextError;
+    use errors::TextError;
 
     use super::*;
-    use std::{path::Path, rc::Rc};
     // OMG THIS SUCKS
     #[test]
     fn window_test() -> Result<(), TextError> {

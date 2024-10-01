@@ -1,7 +1,7 @@
 use itertools::Itertools;
 //pub mod new_mod;
 use super::window_renderer;
-use crate::errors::TextError;
+use errors::TextError;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Index;
@@ -314,7 +314,7 @@ pub fn collapse_sub_window(
 ) -> Result<Vec<window_renderer::Text>, TextError> {
     let mut res: Vec<window_renderer::Text> = Vec::new();
     if depth >= MAX_DEPTH {
-        return Err(TextError::DepthLimitExceeded(win));
+        return Err(TextError::DepthLimitExceeded());
     }
 
     for text_type in win.window.texts {
@@ -441,7 +441,7 @@ pub fn collapse_sub_window_old(win: SubWindow) -> Result<Vec<raw_window::Text>, 
 mod tests {
     use core::hash;
 
-    use crate::errors::TextError;
+    use errors::TextError;
 
     use super::*;
     #[test]

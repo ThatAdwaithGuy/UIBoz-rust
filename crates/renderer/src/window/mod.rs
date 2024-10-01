@@ -1,8 +1,7 @@
-use crate::errors::TextError;
-use crate::renderer::sub_win::{self, NestedWindow};
-use crate::renderer::sub_win::{SubWindow, TextType};
+use crate::sub_win::{self, SubWindow, TextType, NestedWindow};
 use crate::window_renderer;
 use crate::window_renderer::TypeOfBorder;
+use errors::TextError;
 #[derive(Debug)]
 pub struct Window {
     texts: Vec<TextType>,

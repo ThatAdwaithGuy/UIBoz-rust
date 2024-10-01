@@ -1,5 +1,6 @@
 use super::*;
-use crate::{errors::TextError, style::parse_text_style};
+use errors::TextError;
+use style::parse_text_style;
 
 use super::Text;
 /*
@@ -109,7 +110,7 @@ fn check_errors(texts: &Vec<Text>) -> Result<(), TextError> {
 
             // Check if the first string overlaps with the next one
             if end1 > sorted2.column {
-                return Err(TextError::TextOverlayed(
+                return Err(TextError::TextOverlaid(
                     sorted1.text.clone(),
                     sorted2.text.clone(),
                 ));

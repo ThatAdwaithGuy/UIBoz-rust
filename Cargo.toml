@@ -6,7 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["errors", "style", "renderer", "frontend"]
+members = [
+    "crates/*",
+    "crates/errors",
+    "crates/style",
+    "crates/renderer",
+    "crates/frontend",
+]
 
 [dependencies]
 itertools = "0.13.0"
