@@ -1,6 +1,6 @@
+#![feature(thin_box)]
+#![feature(unsize)]
 use std::{ops::Sub, vec};
-
-//use crate::window::opts::{parse_text_opts, Colors};
 pub mod errors;
 pub mod frontend;
 pub mod renderer;

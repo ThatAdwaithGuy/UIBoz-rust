@@ -1,69 +1,75 @@
+#![feature(thin_box)]
+
 use std::{
     any::{Any, TypeId},
+    boxed::ThinBox,
     collections::HashMap,
-    ops::DerefMut,
-    rc::Rc,
+    marker::{PhantomData, Unsize},
+    mem::transmute,
+    ops::{Deref, DerefMut},
 };
 
 pub trait Node {}
-pub enum IsMutable<'a> {
-    Mutable(Box<&'a mut dyn Any>),
-    NonMutable(Box<dyn Any>),
+
+#[derive(Debug, Default)]
+pub struct NodeStorage {
+    dyn_items: HashMap<TypeId, ThinBox<dyn Any>>,
+    items: HashMap<TypeId, Box<dyn Any>>,
 }
 
-pub struct NodeContainer<'a> {
-    pub events: HashMap<TypeId, IsMutable<'a>>,
-}
-
-impl<'a> NodeContainer<'a> {
+impl NodeStorage {
+    /// Create a new registry
     pub fn new() -> Self {
-        NodeContainer {
-            events: HashMap::new(),
+        Self {
+            dyn_items: HashMap::default(),
+            items: HashMap::default(),
         }
     }
 
-    pub fn get_all_values(&self) -> Vec<&Box<dyn Any>> {
-        self.events
-            .keys()
-            .map(|val| {
-                self.events
-                    .get(val)
-                    .map(|val| match val {
-                        IsMutable::Mutable(x) => x.downcast_ref().unwrap(),
-                        IsMutable::NonMutable(x) => x.downcast_ref().unwrap(),
-                    })
-                    .unwrap()
-            })
-            .collect()
+    // thanks to NotAPenguin0, who wrote this code
+
+    fn put_dyn_boxed<T: ?Sized + 'static + Node>(&mut self, item: ThinBox<T>) {
+        // SAFETY: ThinBox always has the same size regardless of the type inside,
+        // so we can transmute this to a different pointer until we cast it back to
+        // T in get()
+        let any = unsafe { std::mem::transmute::<_, ThinBox<dyn Any>>(item) };
+        self.dyn_items.insert(TypeId::of::<T>(), any);
     }
 
-    // Thanks to NotAPenguin. https://notapenguin0.github.io/posts/rust-event-systems/
+    /// Put a static type `T` into the registry. This can then be retrieved back
+    /// by calling [`Self::get::<T>()`]
     pub fn put<T: 'static + Node>(&mut self, item: T) {
-        self.events
-            .insert(TypeId::of::<T>(), IsMutable::NonMutable(Box::new(item)));
+        self.items.insert(TypeId::of::<T>(), Box::new(item));
     }
 
-    pub fn put_mut<T: 'static + Node>(&mut self, item: &'a mut T) {
-        self.events
-            .insert(TypeId::of::<T>(), IsMutable::Mutable(Box::new(item)));
+    /// Put a trait object into the registry. If called with `dyn MyTrait`, this takes in
+    /// any `Foo: MyTrait`, which is then moved into the registry and can be queried back with
+    /// [`Self::get_dyn::<dyn MyTrait>()`]
+    pub fn put_dyn<T: ?Sized + 'static + Node>(&mut self, item: impl Unsize<T>) {
+        self.put_dyn_boxed(ThinBox::<T>::new_unsize(item));
     }
 
-    // You can get a mutable as a immutable reference but you cannot get a immutable
-    // as a mutable reference.
+    /// Get the registered object for `T`, or `None` if it didn't exist.
     pub fn get<T: 'static + Node>(&self) -> Option<&T> {
-        let any = self.events.get(&TypeId::of::<T>());
-        any.map(|val| match val {
-            IsMutable::Mutable(x) => x.downcast_ref().unwrap(),
-            IsMutable::NonMutable(x) => x.downcast_ref().unwrap(),
-        })
+        let any = self.items.get(&TypeId::of::<T>());
+        any.map(|value| value.downcast_ref::<T>().unwrap())
     }
 
+    /// Get a mutable reference to the registered object for `T`, or `None` if it didn't exist.
     pub fn get_mut<T: 'static + Node>(&mut self) -> Option<&mut T> {
-        self.events
-            .get_mut(&TypeId::of::<T>())
-            .and_then(|val| match val {
-                IsMutable::Mutable(x) => x.downcast_mut(),
-                IsMutable::NonMutable(_) => panic!("ERROR"),
-            })
+        let any = self.items.get_mut(&TypeId::of::<T>());
+        any.map(|value| value.downcast_mut::<T>().unwrap())
+    }
+
+    /// Get the registered implementation for `dyn MyTrait`, or `None` if it didn't exist.
+    pub fn get_dyn<T: ?Sized + 'static + Node>(&self) -> Option<&T> {
+        let any = self.dyn_items.get(&TypeId::of::<T>());
+        any.map(|any| unsafe { std::mem::transmute::<_, &ThinBox<T>>(any) }.deref())
+    }
+
+    /// Get a mutable reference to the registered implementation for `dyn MyTrait`, or `None` if it didn't exist.
+    pub fn get_dyn_mut<T: ?Sized + 'static + Node>(&mut self) -> Option<&mut T> {
+        let any = self.dyn_items.get_mut(&TypeId::of::<T>());
+        any.map(|any| unsafe { std::mem::transmute::<_, &mut ThinBox<T>>(any) }.deref_mut())
     }
 }

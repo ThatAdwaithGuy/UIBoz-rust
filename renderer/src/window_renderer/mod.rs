@@ -1,8 +1,9 @@
 use itertools::Itertools;
 use std::fs;
 
-use crate::{errors::TextError, style};
+use crate::errors::TextError;
 mod utils;
+use style;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Text {

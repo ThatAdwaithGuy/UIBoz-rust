@@ -1,68 +1,79 @@
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-};
 pub mod macros;
 pub mod node;
-use std::io;
-use std::{thread, time};
-use termion::input::TermRead;
-use termion::raw::IntoRawMode;
-use termion::{self, is_tty};
+use node::Node;
 
-use node::*;
-//trait Model {
-//    fn view(&self) -> String;
-//    fn controller(&mut self, event_listener: &NodeContainer);
-//}
-#[derive(Debug)]
+trait ViewNode: node::Node {
+    fn view(&self, node_container: &node::NodeStorage) -> Option<String>;
+}
+
+trait ControllerNode: node::Node {
+    fn mutate(&mut self, node_container: &mut node::NodeStorage);
+}
+
+struct App<V: ViewNode, M: ControllerNode> {
+    view: V,
+    controller: M,
+    nodes: node::NodeStorage,
+}
+
+impl<V: ViewNode, M: ControllerNode> App<V, M> {
+    fn new(view: V, model: M) -> App<V, M> {
+        Self {
+            view,
+            controller: model,
+            nodes: node::NodeStorage::new(),
+        }
+    }
+
+    fn run(&mut self, refresh_screen: bool) -> Option<()> {
+        loop {
+            println!("{}", self.view.view(&self.nodes)?);
+            if refresh_screen {
+                print!("\x1b[2J");
+                print!("\x1b[H");
+            }
+            self.controller.mutate(&mut self.nodes);
+        }
+    }
+}
 struct Counter {
-    count: u32,
+    counter: usize,
 }
-
 impl Node for Counter {}
+struct View {}
+impl Node for View {}
 
-impl Counter {
-    fn new() -> Self {
-        Self { count: 0 }
+impl ViewNode for View {
+    fn view(&self, node_container: &node::NodeStorage) -> Option<String> {
+        let string = format!(
+            "Hello, World for {}",
+            node_container.get::<Counter>()?.counter
+        );
+        Some(string.to_string())
     }
 }
 
-struct MutableCounter(Counter);
-impl Node for MutableCounter {}
-impl MutableCounter {
-    fn new() -> Self {
-        MutableCounter(Counter::new())
+struct Rollers {}
+macros::impl_node!(Rollers);
+impl ControllerNode for Rollers {
+    fn mutate(&mut self, node_container: &mut node::NodeStorage) {
+        let mut counter = node_container.get_mut::<Counter>().unwrap();
+        counter.counter += 1;
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::is_trait;
-
-    use super::*;
-
-    #[test]
-    fn feature() {
-        let mut node_container = NodeContainer::new();
-        let counter = Counter::new();
-        let mut mut_counter = MutableCounter::new();
-
-        node_container.put(counter);
-        node_container.put_mut(&mut mut_counter);
-
-        //for (type_id, is_mutable) in node_container.events {
-        //    match is_mutable {
-        //        IsMutable::Mutable(boxed_node) => {
-        //            let node = boxed_node.downcast_ref().unwrap();
-        //        }
-        //        IsMutable::NonMutable(boxed_node) => todo!(),
-        //    }
-        //}
-    }
-
-    #[test]
-    fn test_is_trait_macro() {
-        assert!(is_trait!(Counter, Node));
-    }
+#[test]
+fn feature() {
+    let mut node_container = node::NodeStorage::new();
+    let mut counter = Counter { counter: 0 };
+    node_container.put(counter);
+    let mut app: App<View, Rollers> = App {
+        view: View {},
+        controller: Rollers {},
+        nodes: node_container,
+    };
+    app.run(true);
 }
+
+struct DefaultKeyboardInput {}
+macros::impl_node!(DefaultKeyboardInput);

@@ -1,10 +1,8 @@
 use super::*;
 use crate::{errors::TextError, style::parse_text_style};
 
-use itertools::{self, Itertools};
-
 use super::Text;
-
+/*
 fn group_lines(texts: Vec<Text>) -> Vec<Vec<Text>> {
     texts
         .iter()
@@ -35,7 +33,7 @@ fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Ve
     smaler_list.extend(add_pad.iter());
 
     (bigger_list, smaler_list)
-}
+}*/
 
 pub fn replace_none_with_line_numbers(
     width_of_line: u32,
@@ -51,6 +49,7 @@ pub fn replace_none_with_line_numbers(
         })
         .collect()
 }
+/*
 fn overlay(lst: &[&'static str]) -> Option<String> {
     lst.iter()
         .try_fold("".to_string(), |acc, ele| -> Option<String> {
@@ -86,7 +85,7 @@ fn overlay(lst: &[&'static str]) -> Option<String> {
                 })
                 .collect::<Option<String>>()
         })
-}
+}*/
 
 fn check_errors(texts: &Vec<Text>) -> Result<(), TextError> {
     //dbg!(texts);
