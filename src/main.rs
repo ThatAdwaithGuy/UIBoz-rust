@@ -1,14 +1,14 @@
 #![feature(thin_box)]
 #![feature(unsize)]
-use std::{ops::Sub, vec};
-pub mod errors;
-pub mod frontend;
-pub mod renderer;
 use crate::renderer::style;
 use crate::renderer::sub_win::*;
 use crate::renderer::window::*;
 use crate::renderer::window_renderer::*;
 use crate::renderer::*;
+use errors;
+use frontend;
+use std::{ops::Sub, vec};
+use style;
 fn main() -> Result<(), errors::TextError> {
     let first_window = NestedWindow::new(vec![], 1, 1, TypeOfBorder::CurvedBorders);
     let first_sub_window = SubWindow::new(first_window, 1, 0);

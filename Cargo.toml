@@ -6,8 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["errors", "style", "renderer"]
+members = ["errors", "style", "renderer", "frontend"]
 
 [dependencies]
 itertools = "0.13.0"
 dyn-clone = "1.0.17"
+
+style = { path = "crates/style" }
+errors = { path = "crates/errors" }
+frontend = { path = "crates/frontend" }
+renderer = { path = "crates/renderer" }
