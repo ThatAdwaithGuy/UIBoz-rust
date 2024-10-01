@@ -23,5 +23,4 @@ macro_rules! impl_node {
 }
 
 pub(crate) use impl_node;
-
 pub(crate) use is_trait;

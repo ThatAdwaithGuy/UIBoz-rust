@@ -3,6 +3,8 @@
 
 pub mod macros;
 pub mod node;
+use std::io;
+
 use node::Node;
 
 trait ViewNode: node::Node {
@@ -65,6 +67,36 @@ impl ControllerNode for Rollers {
     }
 }
 
+struct DefaultKeyboardInput {}
+macros::impl_node!(DefaultKeyboardInput);
+
+use crossterm::{
+    event::{self, Event, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
+impl DefaultKeyboardInput {
+    fn getch() -> std::io::Result<event::KeyEvent> {
+        enable_raw_mode()?;
+        if event::poll(std::time::Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                disable_raw_mode()?;
+                return Ok(key);
+            } else {
+                disable_raw_mode()?;
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "Invalid event captured",
+                ));
+            }
+        } else {
+            disable_raw_mode()?;
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid event captured",
+            ));
+        }
+    }
+}
 #[test]
 fn feature() {
     let mut node_container = node::NodeStorage::new();
@@ -77,6 +109,3 @@ fn feature() {
     };
     app.run(true);
 }
-
-struct DefaultKeyboardInput {}
-macros::impl_node!(DefaultKeyboardInput);
