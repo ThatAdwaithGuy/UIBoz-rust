@@ -1,8 +1,9 @@
 #![feature(thin_box)]
 #![feature(unsize)]
 use errors;
-use frontend;
+use frontend::node::Node;
 use node_proc_macro::Node;
+//use node_proc_macro::Node;
 use renderer::sub_win::*;
 use renderer::window::*;
 use renderer::window_renderer::*;
@@ -15,7 +16,9 @@ struct Hello {}
 
 fn main() -> Result<(), errors::TextError> {
     let first_window = NestedWindow::new(vec![], 1, 1, TypeOfBorder::CurvedBorders);
-    let first_sub_window = SubWindow::niew(first_window, 1, 0);
+
+    dbg!(frontend::macros::is_trait!(Hello, Node));
+    let first_sub_window = SubWindow::new(first_window, 1, 0);
     let second_window = NestedWindow::new(
         vec![TextType::SubWindow(first_sub_window)],
         3,

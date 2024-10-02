@@ -1,5 +1,5 @@
 [package]
-name = "node-drive-macro"
+name = "node_proc_macro"
 version = "0.1.0"
 edition = "2021"
 

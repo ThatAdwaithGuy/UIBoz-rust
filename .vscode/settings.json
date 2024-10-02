@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "getch",
         "termion",
         "Unsize",
         "Vtable"

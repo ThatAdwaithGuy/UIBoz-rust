@@ -10,6 +10,7 @@ dependencies = [
  "errors",
  "frontend",
  "itertools",
+ "node_proc_macro",
  "renderer",
  "style",
 ]
@@ -150,9 +151,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-drive-macro"
+name = "node_proc_macro"
 version = "0.1.0"
 dependencies = [
+ "frontend",
  "quote",
  "syn 1.0.109",
 ]

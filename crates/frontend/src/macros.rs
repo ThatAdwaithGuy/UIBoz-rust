@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! is_trait {
     ($name:ty, $trait_name:path) => {{
         trait __InnerMarkerTrait {
@@ -16,11 +17,12 @@ macro_rules! is_trait {
     }};
 }
 
+#[macro_export]
 macro_rules! impl_node {
     ($type:ty) => {
         impl node::Node for $type {}
     };
 }
 
-pub(crate) use impl_node;
-pub(crate) use is_trait;
+pub use impl_node;
+pub use is_trait;
