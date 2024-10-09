@@ -1,86 +1,30 @@
-#![feature(thin_box)]
-#![feature(unsize)]
-use errors;
-use frontend::node::Node;
-use node_proc_macro::Node;
-//use node_proc_macro::Node;
-use renderer::sub_win::*;
-use renderer::window::*;
 use renderer::window_renderer::*;
-use renderer::*;
-use std::{ops::Sub, vec};
-use style;
 
-#[derive(Node)]
-struct Hello {}
-
-fn main() -> Result<(), errors::TextError> {
-    let first_window = NestedWindow::new(vec![], 1, 1, TypeOfBorder::CurvedBorders);
-
-    dbg!(frontend::macros::is_trait!(Hello, Node));
-    let first_sub_window = SubWindow::new(first_window, 1, 0);
-    let second_window = NestedWindow::new(
-        vec![TextType::SubWindow(first_sub_window)],
-        3,
-        3,
-        TypeOfBorder::CurvedBorders,
-    );
-    let second_sub_window = SubWindow::new(second_window, 1, 0);
-    println!(
-        "{}",
-        Window::new(
-            collapse_sub_window(second_sub_window.clone(), 1)?
-                .iter()
-                .map(|x| TextType::Text(x.clone()))
-                .collect(),
-            56,
-            12,
-            TypeOfBorder::CurvedBorders
-        )
-        .render()?
-    );
-    let third_window = NestedWindow::new(
-        vec![TextType::SubWindow(second_sub_window)],
-        3,
-        3,
-        TypeOfBorder::CurvedBorders,
-    );
-    let third_sub_window = SubWindow::new(third_window, 1, 0);
-
-    println!(
-        "{}",
-        Window::new(
-            collapse_sub_window(third_sub_window.clone(), 1)?
-                .iter()
-                .map(|x| TextType::Text(x.clone()))
-                .collect(),
-            56,
-            12,
-            TypeOfBorder::CurvedBorders
-        )
-        .render()?
-    );
-
-    let fourth_window = NestedWindow::new(
-        vec![TextType::SubWindow(third_sub_window)],
-        6,
-        6,
-        TypeOfBorder::CurvedBorders,
-    );
-    let fourth_sub_window = SubWindow::new(fourth_window, 1, 0);
-
-    println!(
-        "{}",
-        Window::new(
-            collapse_sub_window(fourth_sub_window.clone(), 1)?
-                .iter()
-                .map(|x| TextType::Text(x.clone()))
-                .collect(),
-            56,
-            12,
-            TypeOfBorder::CurvedBorders
-        )
-        .render()?
-    );
-    Ok(())
+enum Operators {
+    Add(f32, f32),     
+    Subtraction(f32, f32),     
+    Multiplication(f32, f32),     
+    Division(f32, f32),     
+    SquareRoot(f32),
 }
+
+struct History {
+    lst: Vec<Operators>
+}
+// Option: Only to use for division by 0
+fn eval_operator(op: Operators) -> Option<f32> {
+   match op {
+    Operators::Add(lhs, rhs) => Some(lhs + rhs),
+    Operators::Subtraction(lhs, rhs) => Some(lhs - rhs),
+    Operators::Multiplication(lhs, rhs) => Some(lhs * rhs),
+    Operators::Division(lhs, rhs) => if rhs == 0 {None} else {Some(lhs/rhs)},
+    Operators::SquareRoot(num) => Some(num.sqrt()),
+}} 
+
+
+fn main() {
+    let texts = vec![];
+    let win = renderer::window::Window::new(texts, 56, 12, TypeOfBorder::CurvedBorders);
+    println!("{}", win.render().unwrap());
+}
+

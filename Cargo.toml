@@ -12,14 +12,16 @@ members = [
     "crates/errors",
     "crates/style",
     "crates/renderer",
-    "crates/frontend",
+    "crates/frontend", 
 ]
 [dependencies]
 itertools = "0.13.0"
 dyn-clone = "1.0.17"
+crossterm = "0.28.1"
 
 style = { path = "crates/style" }
 errors = { path = "crates/errors" }
 frontend = { path = "crates/frontend" }
 renderer = { path = "crates/renderer" }
 node_proc_macro = { path = "crates/node_proc_macro" }
+calculator = "0.0.1"

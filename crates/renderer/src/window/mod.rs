@@ -1,4 +1,4 @@
-use crate::sub_win::{self, SubWindow, TextType, NestedWindow};
+use crate::sub_win::{self, NestedWindow, SubWindow, TextType};
 use crate::window_renderer;
 use crate::window_renderer::TypeOfBorder;
 use errors::TextError;
