@@ -12,8 +12,10 @@ members = [
     "crates/errors",
     "crates/style",
     "crates/renderer",
-    "crates/frontend", 
+    "crates/nodes", 
+    "crates/pages", 
 ]
+
 [dependencies]
 itertools = "0.13.0"
 dyn-clone = "1.0.17"
@@ -21,6 +23,10 @@ crossterm = "0.28.1"
 
 style = { path = "crates/style" }
 errors = { path = "crates/errors" }
-frontend = { path = "crates/frontend" }
 renderer = { path = "crates/renderer" }
 node_proc_macro = { path = "crates/node_proc_macro" }
+nodes = { path = "crates/nodes" }
+pages = { path = "crates/pages" }
+storage = { path  = "crates/storage" }
+world = { path  = "crates/world" }
+

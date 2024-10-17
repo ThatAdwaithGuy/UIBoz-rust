@@ -1,10 +1,7 @@
-use itertools::Itertools;
 //pub mod new_mod;
 use super::window_renderer;
 use errors::TextError;
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::ops::Index;
 use std::vec;
 type Texts = Vec<TextType>;
 /*
@@ -287,9 +284,7 @@ pub fn collapse_one_deep_sub_window(
         }
         TextType::SubWindow(_) => true,
     }) {
-        return Err(TextError::DuplicateText(
-            "if you see this. I made a mistake here".to_string(),
-        ));
+        return Err(TextError::UnhandledError(-1));
     }
     let window = window_renderer::NonNestableWindow::new(
         texts,
@@ -331,9 +326,7 @@ pub fn collapse_sub_window(
                         win.window.type_of_border,
                     );
                     let mut return_val: Vec<window_renderer::Text> = vec![];
-                    dbg!(&window);
                     let rendered_string = window.render(false)?;
-                    println!("debug:\n{}", rendered_string.clone());
                     let split = rendered_string.split("\n");
                     for (idx, line) in split.enumerate() {
                         let count = (line.matches("\x1b").count() / 8) as u32;
@@ -342,7 +335,6 @@ pub fn collapse_sub_window(
                                 .no_of_ansi(count + 1),
                         );
                     }
-                    dbg!(&res);
                     res.extend(return_val);
                 }
                 false => res.extend(collapse_one_deep_sub_window(sub_win)?),

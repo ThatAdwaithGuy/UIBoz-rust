@@ -1,0 +1,11 @@
+[package]
+name = "nodes"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossterm = "0.28.1"
+node_proc_macro = { path = "../node_proc_macro" }
+renderer = { path = "../renderer" }
+storage = { path = "../storage" }
+pages = { path = "../pages" }

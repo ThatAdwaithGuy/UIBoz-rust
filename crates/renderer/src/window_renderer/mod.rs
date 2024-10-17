@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::fs;
+use std::{collections::HashSet, fs};
 
 use errors::TextError;
 mod utils;
@@ -44,6 +44,33 @@ pub(crate) struct NonNestableWindow {
     pub type_of_border: TypeOfBorder,
 }
 
+fn check_errors(window: &NonNestableWindow) -> Result<(), TextError> {
+    let mut seen: HashSet<(u32, u32)> = HashSet::new();
+
+    for text in window.texts.iter() {
+        // Check 1
+        if seen.contains(&(text.line_number, text.column)) {
+            return Err(TextError::TextOverlaid(
+                format!(
+                    "The conflict is at {} {} and one of the text is {}",
+                    text.line_number, text.column, text.text
+                ),
+                "".to_string(),
+            ));
+        } else {
+            seen.insert((text.line_number, text.column));
+        }
+        // Check 2
+        if (text.column as usize) + text.text.chars().collect::<Vec<char>>().len()
+            > (window.width as usize)
+        {
+            return Err(TextError::LeftBounds(text.text.clone()));
+        }
+    }
+
+    Ok(())
+}
+
 impl NonNestableWindow {
     pub fn new(
         texts: Vec<Text>,
@@ -60,14 +87,10 @@ impl NonNestableWindow {
     }
 
     pub fn render(&self, dbg_mode: bool) -> Result<String, TextError> {
-        //dbg!(&self);
         let handled = utils::handle(self.texts.clone())?;
-        //dbg!(&handled);
-        let res = utils::replace_none_with_line_numbers(self.height, &handled);
-        //dbg!(&res);
         let mut texts = String::new();
 
-        for item in res.iter() {
+        for item in utils::replace_none_with_line_numbers(self.height, &handled).iter() {
             let line = match item {
                 None => match self.type_of_border {
                     TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
@@ -120,8 +143,7 @@ impl NonNestableWindow {
 
             texts.push_str(&line);
         }
-        //let texts: String = res
-        //    .iter()
+        //let texts: String = res .iter()
         //    .map(|x| match x {
         //        None => match self.type_of_border {
         //            TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
