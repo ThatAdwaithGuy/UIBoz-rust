@@ -1,6 +1,6 @@
-use storage::Node;
 use proc_macro::TokenStream;
 use quote::quote;
+use storage::Node;
 use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(Node)]

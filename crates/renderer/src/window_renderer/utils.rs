@@ -212,11 +212,52 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
             } else {
                 x.len() as u32
             };
+            let mut styles: [style::TextStyle; 4] = [
+                style::TextStyle::RightSideConnect(false),
+                style::TextStyle::LeftSideConnect(false),
+                style::TextStyle::UpSideConnect(-1),
+                style::TextStyle::DownSideConnect(-1),
+            ];
+
+            for text in &x {
+                let column = text.0.column as i32;
+                for s in text.0.style {
+                    match s {
+                        style::TextStyle::RightSideConnect(_) => {
+                            styles[0] = style::TextStyle::RightSideConnect(true);
+                        }
+                        style::TextStyle::LeftSideConnect(_) => {
+                            styles[1] = style::TextStyle::LeftSideConnect(false);
+                        }
+                        style::TextStyle::UpSideConnect(_) => {
+                            styles[2] = style::TextStyle::UpSideConnect(column);
+                        }
+                        style::TextStyle::DownSideConnect(_) => {
+                            styles[3] = style::TextStyle::DownSideConnect(column);
+                        }
+                        _ => {}
+                    }
+                    if styles
+                        == [
+                            style::TextStyle::RightSideConnect(false),
+                            style::TextStyle::LeftSideConnect(false),
+                            style::TextStyle::UpSideConnect(-1),
+                            style::TextStyle::DownSideConnect(-1),
+                        ]
+                    {
+                        break;
+                    }
+                }
+            }
             let b = Text::new(
                 &x.iter().map(|y| y.0.text.clone()).join(""),
                 x[0].0.line_number,
                 0,
-                &[],
+                {
+                    let mut arr = [style::TextStyle::Bold(false); 12];
+                    arr[..4].copy_from_slice(&styles);
+                    arr
+                },
             )
             .no_of_ansi(no_of_ansi as u32);
 

@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use renderer::window::Window;
+use std::collections::HashMap;
 
 pub trait Page {
     fn name(&self) -> String;
@@ -28,18 +28,19 @@ impl PageManager {
     }
 
     pub fn new_page(&mut self, page: impl Page + 'static) {
-        self.pages.insert(PageId(self.current_id.0 + 1), Box::new(page));
+        self.pages
+            .insert(PageId(self.current_id.0 + 1), Box::new(page));
     }
 
     pub fn change_page(&mut self, page_id: u32) {
         self.current_page = PageId(page_id);
-    } 
+    }
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_works() {
-       assert_eq!(4, 4);
+        assert_eq!(4, 4);
     }
 }

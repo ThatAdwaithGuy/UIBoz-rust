@@ -1,7 +1,7 @@
 pub mod inputs;
 pub mod label;
-pub mod widgets;
 pub mod runtime;
+pub mod widgets;
 
 pub use crossterm::event::Event;
 

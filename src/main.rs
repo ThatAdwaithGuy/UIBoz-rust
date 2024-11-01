@@ -1,11 +1,11 @@
 #![feature(thin_box)]
 use node_proc_macro::Node;
 use nodes::runtime::Runtime;
-use world::ControllerNode;
-use world::ViewNode;
+use renderer::*;
 use storage::*;
 use world::App;
-use renderer::*;
+use world::ControllerNode;
+use world::ViewNode;
 // Disadvantage of crates
 
 #[derive(Clone, Node)]
@@ -56,7 +56,7 @@ impl ViewNode for View {
                 &count.0.to_string(),
                 1,
                 1,
-                &[],
+                window_renderer::empty_styles(),
             ))],
             1,
             1,
@@ -91,17 +91,10 @@ impl ControllerNode for Update {
     }
 }
 
-fn main() {
-    let mut storage: Storage<Mutable> = Storage::new();
-    let keyboard = Keyboard {};
-    let counter = Counter(0);
-    let runtime = Runtime { is_running: true, current_page: pages::PageId(0) };
-    let page_manager = pages::PageManager::new();
-    storage.put(keyboard);
-    storage.put_mut(counter);
-    storage.put_mut(runtime);
-    storage.put_mut(page_manager);
-
-    let mut app = App::new(View {}, Update {}, storage.into_immutable());
-    app.run();
+fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
+    let mut arr = [style::TextStyle::Bold(false); 12];
+    arr[..slice.len()].copy_from_slice(slice);
+    arr
 }
+
+fn main() {}

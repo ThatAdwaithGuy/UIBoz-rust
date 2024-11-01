@@ -10,17 +10,16 @@ pub struct Text {
     pub text: String,
     pub line_number: u32,
     pub column: u32,
-    pub style: &'static [style::TextStyle],
+    pub style: [style::TextStyle; 12],
     pub no_of_ansi: u32,
 }
 
+pub fn empty_styles() -> [style::TextStyle; 12] {
+    [style::TextStyle::Bold(false); 12]
+}
+
 impl Text {
-    pub fn new(
-        text: &str,
-        line_number: u32,
-        column: u32,
-        style: &'static [style::TextStyle],
-    ) -> Text {
+    pub fn new(text: &str, line_number: u32, column: u32, style: [style::TextStyle; 12]) -> Text {
         Text {
             text: text.to_string(),
             line_number,
@@ -89,6 +88,8 @@ impl NonNestableWindow {
     pub fn render(&self, dbg_mode: bool) -> Result<String, TextError> {
         let handled = utils::handle(self.texts.clone())?;
         let mut texts = String::new();
+        let mut up_indicies: Vec<u32> = Vec::new();
+        let mut down_indicies: Vec<u32> = Vec::new();
 
         for item in utils::replace_none_with_line_numbers(self.height, &handled).iter() {
             let line = match item {
@@ -121,20 +122,37 @@ impl NonNestableWindow {
                     let calc = self.width as i32 - visible_length as i32;
 
                     if calc < 0 {
-                        //panic!(
-                        //    "ERROR, with calc: {:?}, W: {}\nL:{}\nN: {}\nT: {}\nTEXT: {:#?}",
-                        //    calc,
-                        //    self.width,
-                        //    text_length,
-                        //    esc_seq_count,
-                        //    text.text,
-                        //    self.width as i32 - (visible_length as i32)
-                        //);
                         return Err(TextError::UnhandledError(calc));
+                    }
+                    let mut left_char = "│".to_string();
+                    let mut right_char = "│".to_string();
+                    dbg!(text.style);
+                    for style in text.style {
+                        match style {
+                            style::TextStyle::LeftSideConnect(_) => {
+                                left_char = "├".to_string();
+                            }
+                            style::TextStyle::RightSideConnect(_) => {
+                                right_char = "┤".to_string();
+                            }
+                            style::TextStyle::UpSideConnect(_) => {
+                                up_indicies.push(text.column);
+                            }
+                            style::TextStyle::DownSideConnect(_) => {
+                                down_indicies.push(text.column);
+                            }
+                            _ => {}
+                        }
                     }
                     match self.type_of_border {
                         TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
-                            format!("│{}{}│\n", text.text, " ".repeat(calc as usize))
+                            format!(
+                                "{}{}{}{}\n",
+                                left_char,
+                                text.text,
+                                " ".repeat(calc as usize),
+                                right_char
+                            )
                         }
                         TypeOfBorder::NoBorders => text.text.clone(),
                     }
@@ -143,69 +161,65 @@ impl NonNestableWindow {
 
             texts.push_str(&line);
         }
-        //let texts: String = res .iter()
-        //    .map(|x| match x {
-        //        None => match self.type_of_border {
-        //            TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
-        //                format!("│{}│\n", " ".repeat(self.width as usize))
-        //            }
-        //            TypeOfBorder::NoBorders => "\n".to_string(),
-        //        },
-        //        Some(text) => {
-        //            if dbg_mode {
-        //                dbg!(
-        //                    text,
-        //                    text.text.chars().collect::<Vec<char>>().len(),
-        //                    self.width,
-        //                    text.text.chars().collect::<Vec<char>>().len(),
-        //                    78 * (text.text.matches("\x1b").count() / 8) as isize,
-        //                    (text.text.chars().collect::<Vec<char>>().len() as isize)
-        //                        - (78 * (text.text.matches("\x1b").count() / 8) as isize),
-        //                    self.width as i32
-        //                        - ((text.text.chars().collect::<Vec<char>>().len() as i32)
-        //                            - (78 * (text.text.matches("\x1b").count() / 8) as i32))
-        //                );
-        //            }
-        //            let calc = self.width as i32
-        //                - ((text.text.chars().collect::<Vec<char>>().len() as i32)
-        //                    - (78 * (text.text.matches("\x1b").count() / 8) as i32));
-        //            if calc < 0 {
-        //                panic!(
-        //                    "ERROR, with calc: {:?}, W: {}\nL:{}\nN: {}\nT: {}\nTEXT: {:#?}",
-        //                    calc,
-        //                    self.width,
-        //                    text.text.chars().collect::<Vec<char>>().len(),
-        //                    (text.text.matches("\x1b").count() / 8),
-        //                    text.text,
-        //                    self.width as i32
-        //                        - ((text.text.chars().collect::<Vec<char>>().len() as i32)
-        //                            - (78 * (text.text.matches("\x1b").count() / 8) as i32))
-        //                );
-        //            }
-        //            match self.type_of_border {
-        //                TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
-        //                    format!("│{}{}│\n", text.text, " ".repeat(calc as usize))
-        //                }
-        //                TypeOfBorder::NoBorders => text.text.clone(),
-        //            }
-        //        }
-        //    })
-        //    .join("");
+        dbg!(&up_indicies);
+        dbg!(&down_indicies);
         let top_border = match self.type_of_border {
             TypeOfBorder::NoBorders => "\n".to_string(),
             TypeOfBorder::CurvedBorders => {
-                format!("╭{}╮\n", "─".repeat(self.width as usize))
+                let mut border: Vec<String> = vec![];
+                for idx in 0..self.width {
+                    if up_indicies.contains(&idx) {
+                        border.push("┬".to_string());
+                    } else {
+                        border.push("─".to_string());
+                    }
+                }
+                format!("╭{}╮\n", border.join(""))
             }
             TypeOfBorder::SquareBorders => {
-                format!("┌{}┐\n", "─".repeat(self.width as usize))
+                let mut border: Vec<String> = vec![];
+                for idx in 0..self.width {
+                    if up_indicies.contains(&idx) {
+                        border.push("┬".to_string());
+                    } else {
+                        border.push("─".to_string());
+                    }
+                }
+                format!("┌{}┐\n", border.join(""))
             }
         };
 
         let bottom_border = match self.type_of_border {
             TypeOfBorder::NoBorders => "\n".to_string(),
+            TypeOfBorder::CurvedBorders => {
+                let mut border: Vec<String> = vec![];
+                for idx in 0..self.width {
+                    if down_indicies.contains(&idx) {
+                        border.push("┴".to_string());
+                    } else {
+                        border.push("─".to_string());
+                    }
+                }
+                format!("╰{}╯\n", border.join(""))
+            }
+            TypeOfBorder::SquareBorders => {
+                let mut border: Vec<String> = vec![];
+                for idx in 0..self.width {
+                    if down_indicies.contains(&idx) {
+                        border.push("┴".to_string());
+                    } else {
+                        border.push("─".to_string());
+                    }
+                }
+                format!("└{}┘\n", border.join(""))
+            }
+        };
+        /*
+        let bottom_border = match self.type_of_border {
+            TypeOfBorder::NoBorders => "\n".to_string(),
             TypeOfBorder::CurvedBorders => format!("╰{}╯\n", "─".repeat(self.width as usize)),
             TypeOfBorder::SquareBorders => format!("└{}┘\n", "─".repeat(self.width as usize)),
-        };
+        };*/
 
         Ok([top_border, texts, bottom_border].join(""))
     }

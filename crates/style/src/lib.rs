@@ -20,7 +20,7 @@ pub enum Colors {
     Gold,
     RGB { red: i32, green: i32, blue: i32 },
 }
-#[derive(Debug, Clone, std::marker::Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TextStyle {
     ForeColor(Colors),
     BackGroundColor(Colors),
@@ -30,6 +30,12 @@ pub enum TextStyle {
     Blink(bool),
     Reverse(bool),
     Hide(bool),
+    RightSideConnect(bool),
+    LeftSideConnect(bool),
+    // What is the use of the number. I wrote this and forgot. :)
+    // Wait, is it column
+    UpSideConnect(i32),
+    DownSideConnect(i32),
 }
 
 // BOILERPLATE
@@ -48,6 +54,10 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
     let mut is_blink_seen: bool = false;
     let mut is_reverse_seen: bool = false;
     let mut is_hide_seen: bool = false;
+    let mut is_right_seen: bool = false;
+    let mut is_left_seen: bool = false;
+    let mut is_up_seen: bool = false;
+    let mut is_down_seen: bool = false;
 
     for i in copy_lst.iter() {
         match i {
@@ -107,6 +117,41 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
                 is_hide_seen = true;
                 filter_lst.push(*i);
             }
+            TextStyle::RightSideConnect(_) => {
+                if is_right_seen {
+                    continue;
+                }
+
+                is_right_seen = true;
+                filter_lst.push(*i);
+            }
+
+            TextStyle::LeftSideConnect(_) => {
+                if is_left_seen {
+                    continue;
+                }
+
+                is_left_seen = true;
+                filter_lst.push(*i);
+            }
+
+            TextStyle::UpSideConnect(_) => {
+                if is_up_seen {
+                    continue;
+                }
+
+                is_up_seen = true;
+                filter_lst.push(*i);
+            }
+
+            TextStyle::DownSideConnect(_) => {
+                if is_down_seen {
+                    continue;
+                }
+
+                is_down_seen = true;
+                filter_lst.push(*i);
+            }
         }
     }
 
@@ -142,6 +187,21 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
         filter_lst.push(TextStyle::Hide(false));
     }
 
+    if !is_right_seen {
+        filter_lst.push(TextStyle::RightSideConnect(false));
+    }
+
+    if !is_left_seen {
+        filter_lst.push(TextStyle::LeftSideConnect(false));
+    }
+
+    if !is_up_seen {
+        filter_lst.push(TextStyle::UpSideConnect(-1));
+    }
+
+    if !is_down_seen {
+        filter_lst.push(TextStyle::DownSideConnect(-1));
+    }
     for i in filter_lst {
         match i {
             TextStyle::ForeColor(color) => {
@@ -205,6 +265,7 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
             TextStyle::Blink(false) => output_string.push_str("\x1b[022m"), // Blink
             TextStyle::Reverse(false) => output_string.push_str("\x1b[022m"), // Reverse
             TextStyle::Hide(false) => output_string.push_str("\x1b[022m"),
+            _ => {}
         }
     }
     output_string

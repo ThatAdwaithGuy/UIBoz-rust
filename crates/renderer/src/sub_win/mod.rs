@@ -297,8 +297,10 @@ pub fn collapse_one_deep_sub_window(
     let split = rendered_string.split("\n");
     for (idx, line) in split.enumerate() {
         let count = (line.matches("\x1b").count() / 8) as u32;
-        return_val
-            .push(window_renderer::Text::new(line, (idx + 1) as u32, 0, &[]).no_of_ansi(count + 1));
+        return_val.push(
+            window_renderer::Text::new(line, (idx + 1) as u32, 0, window_renderer::empty_styles())
+                .no_of_ansi(count + 1),
+        );
     }
     Ok(return_val)
 }
@@ -331,8 +333,13 @@ pub fn collapse_sub_window(
                     for (idx, line) in split.enumerate() {
                         let count = (line.matches("\x1b").count() / 8) as u32;
                         return_val.push(
-                            window_renderer::Text::new(line, (idx + 1) as u32, 0, &[])
-                                .no_of_ansi(count + 1),
+                            window_renderer::Text::new(
+                                line,
+                                (idx + 1) as u32,
+                                0,
+                                window_renderer::empty_styles(),
+                            )
+                            .no_of_ansi(count + 1),
                         );
                     }
                     res.extend(return_val);
