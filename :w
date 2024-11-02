@@ -1,0 +1,22 @@
+use std::iter::Peekable;
+use std::str::Chars;
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Token {
+    OpenTag(String),               // <tag
+    CloseTag(String),              // </tag>
+    SelfClosingTag(String),        // <tag/>
+    EndTag,                        // >
+    Equals,                        // =
+    Text(String),                  // text content
+    QuotedString(String),          // "string" or 'string'
+    Identifier(String),            // attribute names
+    Comment(String),               // <!-- comment -->
+    ProcessingInstruction(String), // <?xml ...?>
+}
+
+pub struct Lexer<'a> {
+    input: Peekable<Chars<'a>>,
+    position: usize,
+}
+

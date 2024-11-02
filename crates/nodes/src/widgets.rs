@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use node_proc_macro::Node;
 use renderer::sub_win::SubWindow;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use storage::Node;
 
 pub trait Widget: storage::Node {
