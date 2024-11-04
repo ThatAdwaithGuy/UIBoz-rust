@@ -5,6 +5,7 @@ edition = "2021"
 
 [lib]
 proc-macro = true
+dylib = true
 
 [dependencies]
 syn = "1.0"

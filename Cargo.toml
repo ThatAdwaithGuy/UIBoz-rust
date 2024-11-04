@@ -12,9 +12,8 @@ members = [
     "crates/errors",
     "crates/style",
     "crates/renderer",
-    "crates/nodes", 
-    "crates/pages", 
-    "crates/templates", 
+    "crates/nodes",
+    "crates/pages",
 ]
 
 [dependencies]
@@ -23,12 +22,10 @@ dyn-clone = "1.0.17"
 crossterm = "0.28.1"
 
 style = { path = "crates/style" }
-templates = { path = "crates/templates" }
 errors = { path = "crates/errors" }
 renderer = { path = "crates/renderer" }
 node_proc_macro = { path = "crates/node_proc_macro" }
 nodes = { path = "crates/nodes" }
 pages = { path = "crates/pages" }
-storage = { path  = "crates/storage" }
-world = { path  = "crates/world" }
-
+storage = { path = "crates/storage" }
+world = { path = "crates/world" }

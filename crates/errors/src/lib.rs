@@ -1,4 +1,12 @@
 use thiserror::Error;
+#[derive(Error, Debug)]
+pub enum LayoutErrors {
+    #[error("\x1b[91mERROR\x1b[0m")]
+    Down
+    Up
+    Left
+    Right
+}
 
 #[derive(Error, Debug)]
 pub enum TextError {

@@ -1,28 +1,27 @@
 use node_proc_macro::Node;
-use renderer::sub_win::SubWindow;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use storage::Node;
+use renderer::window_renderer::Text;
 
 pub trait Widget: storage::Node {
-    fn render(&self) -> SubWindow;
+    fn render(&self) -> Vec<Text>;
 }
 
 #[derive(Node)]
 pub struct WidgetRenderer {
-    widgets: HashMap<u32, Box<dyn Widget>>,
+    widgets: Vec<Box<dyn Widget>>,
     lastest_id: u32,
 }
 
 impl WidgetRenderer {
     pub fn new() -> Self {
         Self {
-            widgets: HashMap::new(),
+            widgets: Vec::new(),
             lastest_id: 0,
         }
     }
 
     pub fn add_widget(&mut self, widget: impl Widget + 'static) {
-        self.widgets.insert(self.lastest_id + 1, Box::new(widget));
+        self.widgets.push(Box::new(widget));
     }
 }
