@@ -2,30 +2,11 @@
 name = "UIBoz"
 version = "0.1.0"
 edition = "2021"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-    "crates/*",
-    "crates/node_proc_macro",
-    "crates/errors",
-    "crates/style",
-    "crates/renderer",
-    "crates/nodes",
-    "crates/pages",
-]
 
 [dependencies]
 itertools = "0.13.0"
 dyn-clone = "1.0.17"
 crossterm = "0.28.1"
-
-style = { path = "crates/style" }
-errors = { path = "crates/errors" }
-renderer = { path = "crates/renderer" }
-node_proc_macro = { path = "crates/node_proc_macro" }
-nodes = { path = "crates/nodes" }
-pages = { path = "crates/pages" }
-storage = { path = "crates/storage" }
-world = { path = "crates/world" }
+thiserror = "*"

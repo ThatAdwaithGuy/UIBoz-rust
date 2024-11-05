@@ -1,6 +1,7 @@
-use pages::PageManager;
-pub use storage::Node;
-pub use storage::{Immutable, Mutable, Storage};
+use crate::nodes;
+use crate::pages::PageManager;
+pub use crate::storage::Node;
+pub use crate::storage::{Immutable, Storage};
 
 pub struct App<V: ViewNode, C: ControllerNode> {
     view_node: V,
@@ -36,15 +37,4 @@ pub trait ViewNode: Node {
 
 pub trait ControllerNode: Node {
     fn update(&mut self, storage: &Storage<Immutable>) -> Option<()>;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }

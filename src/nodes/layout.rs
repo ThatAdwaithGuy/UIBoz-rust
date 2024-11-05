@@ -1,6 +1,6 @@
-use std::{collections::HashMap, marker::PhantomData};
-
-use crate::widgets;
+use super::widgets;
+use crate::errors;
+use std::collections::HashMap;
 
 type WindowId = usize;
 
@@ -43,9 +43,7 @@ macro_rules! direction_method {
 
 impl<'a> Layout<'a> {
     pub fn new() -> Self {
-        Self {
-            splits: vec![],
-        }
+        Self { splits: vec![] }
     }
 
     pub fn vsplit(
@@ -180,8 +178,6 @@ impl<'a> Layout<'a> {
     direction_method!(right, Splits::Right);
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,37 +185,55 @@ mod tests {
     #[test]
     fn right() {
         let mut layout = Layout::new();
-        assert_eq!(layout.right().right().check().unwrap_err(), errors::LayoutErrors::Right);
+        assert_eq!(
+            layout.right().right().check().unwrap_err(),
+            errors::LayoutErrors::Right
+        );
     }
 
     #[test]
     fn left() {
         let mut layout = Layout::new();
-        assert_eq!(layout.left().left().check().unwrap_err(), errors::LayoutErrors::Left);
+        assert_eq!(
+            layout.left().left().check().unwrap_err(),
+            errors::LayoutErrors::Left
+        );
     }
 
     #[test]
     fn up() {
         let mut layout = Layout::new();
-        assert_eq!(layout.up().up().check().unwrap_err(), errors::LayoutErrors::Up);
+        assert_eq!(
+            layout.up().up().check().unwrap_err(),
+            errors::LayoutErrors::Up
+        );
     }
 
     #[test]
     fn down() {
         let mut layout = Layout::new();
-        assert_eq!(layout.down().down().check().unwrap_err(), errors::LayoutErrors::Down);
+        assert_eq!(
+            layout.down().down().check().unwrap_err(),
+            errors::LayoutErrors::Down
+        );
     }
 
     #[test]
     fn general_test() {
         let mut layout = Layout::new();
-        let layout = layout.vsplit(2, &[None, None]).left().split(3, &[None, None, None]);
+        let layout = layout
+            .vsplit(2, &[None, None])
+            .left()
+            .split(3, &[None, None, None]);
         assert_eq!((), layout.check().unwrap())
     }
     #[test]
     fn my_test() {
         let mut layout = Layout::new();
-        let layout = layout.vsplit(2, &[None, None]).left().split(3, &[None, None, None]);
+        let layout = layout
+            .vsplit(2, &[None, None])
+            .left()
+            .split(3, &[None, None, None]);
         dbg!(layout);
     }
 }

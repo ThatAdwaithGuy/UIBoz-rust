@@ -1,6 +1,8 @@
-use crate::sub_win::{self, NestedWindow, SubWindow, TextType};
-use crate::window_renderer;
-use crate::window_renderer::TypeOfBorder;
+use crate::errors;
+
+use super::sub_win::{self, NestedWindow, SubWindow, TextType};
+use super::window_renderer;
+use super::window_renderer::TypeOfBorder;
 use errors::TextError;
 #[derive(Debug)]
 pub struct Window {
@@ -18,10 +20,10 @@ impl Window {
         type_of_border: TypeOfBorder,
     ) -> Self {
         Self {
-            texts: texts,
-            width: width,
-            height: height,
-            type_of_border: type_of_border,
+            texts,
+            width,
+            height,
+            type_of_border,
         }
     }
     pub fn render(&self) -> Result<String, TextError> {

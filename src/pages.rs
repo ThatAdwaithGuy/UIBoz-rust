@@ -1,4 +1,5 @@
-use renderer::window::Window;
+use crate::renderer::window::Window;
+use crate::storage;
 use std::collections::HashMap;
 
 pub trait Page {

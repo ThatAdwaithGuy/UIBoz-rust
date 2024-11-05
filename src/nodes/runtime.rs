@@ -1,11 +1,14 @@
 use pages::Page;
 use storage::*;
 
-#[derive(node_proc_macro::Node)]
+use crate::{pages, storage};
+
 pub struct Runtime {
     pub is_running: bool,
     pub current_page: pages::PageId,
 }
+
+impl Node for Runtime {}
 
 impl Runtime {
     fn new(storage: Storage<Immutable>) -> Option<Self> {

@@ -1,16 +1,15 @@
-use node_proc_macro::Node;
-use renderer::window_renderer::Text;
-use serde::{Deserialize, Serialize};
-use storage::Node;
+use crate::renderer::window_renderer::Text;
+use crate::storage::Node;
 
-pub trait Widget: storage::Node + std::fmt::Debug {
+pub trait Widget: Node + std::fmt::Debug {
     fn render(&self) -> Vec<Text>;
 }
 
-#[derive(Node)]
 pub struct WidgetRenderer {
     widgets: Vec<Box<dyn Widget>>,
 }
+
+impl Node for WidgetRenderer {}
 
 impl WidgetRenderer {
     pub fn new() -> Self {

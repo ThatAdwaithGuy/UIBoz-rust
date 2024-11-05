@@ -1,8 +1,8 @@
 use crossterm::event::KeyCode;
-use frontend::node::Node;
-use node_proc_macro::Node;
-use nodes::inputs::getch;
-use renderer::window_renderer::*;
+use crate::frontend::node::Node;
+use crate::node_proc_macro::Node;
+use crate::nodes::inputs::getch;
+use crate::renderer::window_renderer::*;
 use std::collections::HashMap;
 
 enum Operators {

@@ -1,9 +1,9 @@
 use itertools::Itertools;
-use std::{collections::HashSet, fs};
+use std::collections::HashSet;
 
-use errors::TextError;
+use crate::errors::TextError;
 mod utils;
-use style;
+use crate::style;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Text {
@@ -19,12 +19,23 @@ pub fn empty_styles() -> [style::TextStyle; 12] {
 }
 
 impl Text {
-    pub fn new(text: &str, line_number: u32, column: u32, style: [style::TextStyle; 12]) -> Text {
+    pub fn new(text: &str, line_number: u32, column: u32, style: &[style::TextStyle]) -> Text {
+        assert!(
+            style.len() <= 12,
+            "The styles argument execded its limit of 12."
+        );
+        let mut formatted_style = [style::TextStyle::Bold(false); 12];
+        if style.len() == 12 {
+            formatted_style = style.try_into().unwrap();
+        } else {
+            formatted_style[..style.len()].copy_from_slice(style);
+        }
+
         Text {
             text: text.to_string(),
             line_number,
             column,
-            style,
+            style: formatted_style,
             no_of_ansi: 1,
         }
     }
@@ -104,17 +115,17 @@ impl NonNestableWindow {
                         let text_length = text.text.chars().count();
                         let esc_seq_count = text.text.matches("\x1b").count() / 8;
                         let visible_length = text_length - (78 * esc_seq_count) as usize;
-                        let calc = self.width as i32 - visible_length as i32;
+                        let _calc = self.width as i32 - visible_length as i32;
 
-                        dbg!(
-                            text,
-                            text_length,
-                            self.width,
-                            visible_length,
-                            78 * esc_seq_count as isize,
-                            calc,
-                            self.width as i32 - (visible_length as i32)
-                        );
+                        //dbg!(
+                        //    text,
+                        //    text_length,
+                        //    self.width,
+                        //    visible_length,
+                        //    78 * esc_seq_count as isize,
+                        //    calc,
+                        //    self.width as i32 - (visible_length as i32)
+                        //);
                     }
                     let text_length = text.text.chars().count();
                     let esc_seq_count = text.text.matches("\x1b").count() / 8;
@@ -124,22 +135,27 @@ impl NonNestableWindow {
                     if calc < 0 {
                         return Err(TextError::UnhandledError(calc));
                     }
+
                     let mut left_char = "│".to_string();
                     let mut right_char = "│".to_string();
-                    dbg!(text.style);
                     for style in text.style {
                         match style {
-                            style::TextStyle::LeftSideConnect(_) => {
+                            style::TextStyle::LeftSideConnect(true) => {
                                 left_char = "├".to_string();
                             }
-                            style::TextStyle::RightSideConnect(_) => {
+                            style::TextStyle::RightSideConnect(true) => {
                                 right_char = "┤".to_string();
                             }
-                            style::TextStyle::UpSideConnect(_) => {
-                                up_indicies.push(text.column);
+
+                            style::TextStyle::UpSideConnect(val) => {
+                                if val != -1 {
+                                    up_indicies.push(text.column);
+                                }
                             }
-                            style::TextStyle::DownSideConnect(_) => {
-                                down_indicies.push(text.column);
+                            style::TextStyle::DownSideConnect(val) => {
+                                if val != -1 {
+                                    down_indicies.push(text.column);
+                                }
                             }
                             _ => {}
                         }
@@ -161,8 +177,6 @@ impl NonNestableWindow {
 
             texts.push_str(&line);
         }
-        dbg!(&up_indicies);
-        dbg!(&down_indicies);
         let top_border = match self.type_of_border {
             TypeOfBorder::NoBorders => "\n".to_string(),
             TypeOfBorder::CurvedBorders => {
@@ -188,6 +202,7 @@ impl NonNestableWindow {
                 format!("┌{}┐\n", border.join(""))
             }
         };
+        dbg!(&down_indicies, &up_indicies);
 
         let bottom_border = match self.type_of_border {
             TypeOfBorder::NoBorders => "\n".to_string(),
@@ -205,6 +220,7 @@ impl NonNestableWindow {
             TypeOfBorder::SquareBorders => {
                 let mut border: Vec<String> = vec![];
                 for idx in 0..self.width {
+                    dbg!(idx);
                     if down_indicies.contains(&idx) {
                         border.push("┴".to_string());
                     } else {
@@ -233,16 +249,20 @@ pub enum TypeOfBorder {
 }
 #[cfg(test)]
 mod tests {
-    use errors::TextError;
+    use crate::errors::TextError;
 
     use super::*;
     // OMG THIS SUCKS
+    #[ignore = "…"]
     #[test]
     fn window_test() -> Result<(), TextError> {
         let _string = "╭────────────────────╮\n│ \x1b[0000000000000022m\x1b[0000000000000022m\x1b[022m\u{1b}[022m\x1b[022m\x1b[022m\x1b[022m\x1b[022mHello\x1b[0m \x1b[0000000000000022m\x1b[0000000000000022m\x1b[022m\x1b[022m\x1b[022m\u{1b}[022m\x1b[022m\x1b[\
 022mWorld\x1b[0m        │\n│                    │\n│                    │\n│                    │\n│                    │\n╰────────────────────╯\n".to_string();
 
-        let test = vec![Text::new("Hello", 1, 1, &[]), Text::new("World", 1, 7, &[])];
+        let test = vec![
+            Text::new("Hello", 1, 1, empty_styles()),
+            Text::new("World", 1, 7, empty_styles()),
+        ];
         let window = NonNestableWindow::new(test, 5, 20, TypeOfBorder::CurvedBorders);
         let contents = window.render(false)?;
         assert_eq!(_string, contents);

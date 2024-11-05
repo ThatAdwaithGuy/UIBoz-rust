@@ -1,42 +1,10 @@
 use std::cmp::Ordering;
 
 use super::*;
-use errors::TextError;
+use crate::errors::TextError;
 use style::parse_text_style;
 
 use super::Text;
-/*
-fn group_lines(texts: Vec<Text>) -> Vec<Vec<Text>> {
-    texts
-        .iter()
-        .chunk_by(|x| x.line_number)
-        .into_iter()
-        .map(|(_, x)| x.into_iter().map(|y| y.clone()).collect())
-        .collect()
-}
-
-fn format_column(string: &str, column: i32) -> String {
-    let n = column as usize;
-    let binding = " ".repeat(n);
-    let fstring = binding.as_str();
-    format!("{}{}", fstring, string)
-}
-
-fn make_lists_equal_length(list1: Vec<char>, list2: Vec<char>) -> (Vec<char>, Vec<char>) {
-    let (bigger_list, mut smaler_list) = if list1.len() > list2.len() {
-        (list1, list2)
-    } else if list1.len() < list2.len() {
-        (list2, list1)
-    } else {
-        (list1, list2)
-    };
-
-    let padding = bigger_list.len() - smaler_list.len();
-    let add_pad = vec![' '; padding];
-    smaler_list.extend(add_pad.iter());
-
-    (bigger_list, smaler_list)
-}*/
 
 pub fn replace_none_with_line_numbers(
     width_of_line: u32,
@@ -52,43 +20,6 @@ pub fn replace_none_with_line_numbers(
         })
         .collect()
 }
-/*
-fn overlay(lst: &[&'static str]) -> Option<String> {
-    lst.iter()
-        .try_fold("".to_string(), |acc, ele| -> Option<String> {
-            let (bigger_str, smaler_str) = if acc.len() > ele.len() {
-                (acc, ele.to_string())
-            } else if acc.len() < ele.len() {
-                let var_name = (ele.to_string(), acc);
-                var_name
-            } else {
-                (acc, ele.to_string())
-            };
-
-            let (bigger_list, smaller_list): (Vec<char>, Vec<char>) = make_lists_equal_length(
-                bigger_str.chars().collect::<Vec<char>>(),
-                smaler_str.chars().collect::<Vec<char>>(),
-            );
-
-            bigger_list
-                .iter()
-                .zip(smaller_list)
-                .map(|(x, y)| {
-                    if *x == ' ' && y == ' ' {
-                        Some(' ')
-                    } else if *x != ' ' && y == ' ' {
-                        Some(*x)
-                    } else if *x == ' ' && y != ' ' {
-                        Some(y)
-                    } else if *x != ' ' && y != ' ' {
-                        Some(*x)
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Option<String>>()
-        })
-}*/
 
 fn check_errors(texts: &Vec<Text>) -> Result<(), TextError> {
     //dbg!(texts);
@@ -175,7 +106,29 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     };
                     *state = Some(current.clone());
                     Some((
-                        Text::new(&current.text, current.line_number, result, current.style)
+                        {
+                            let text: &str = &current.text;
+                            let line_number = current.line_number;
+                            let style: &[style::TextStyle] = &current.style;
+                            assert!(
+                                style.len() <= 12,
+                                "The styles argument execded its limit of 12."
+                            );
+                            let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                            if style.len() == 12 {
+                                formatted_style = style.try_into().unwrap();
+                            } else {
+                                formatted_style[..style.len()].copy_from_slice(style);
+                            }
+
+                            Text {
+                                text: text.to_string(),
+                                line_number,
+                                column: result,
+                                style: formatted_style,
+                                no_of_ansi: 1,
+                            }
+                        }
                             .no_of_ansi(current.no_of_ansi),
                         x.1,
                     ))
@@ -188,17 +141,35 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                 .iter()
                 .map(|y| {
                     (
-                        Text::new(
-                            &format!(
-                                "{}{}{}\x1b[0m",
-                                " ".repeat(y.0.column as usize),
-                                parse_text_style(y.0.style.into()),
-                                y.0.text
-                            ),
-                            y.0.line_number,
-                            y.0.column,
-                            y.0.style.into(),
-                        )
+                        {
+                            let text: &str = &format!(
+                                                    "{}{}{}\x1b[0m",
+                                                    " ".repeat(y.0.column as usize),
+                                                    parse_text_style(y.0.style.into()),
+                                                    y.0.text
+                                                );
+                            let line_number = y.0.line_number;
+                            let column = y.0.column;
+                            let style: &[style::TextStyle] = &y.0.style;
+                            assert!(
+                                style.len() <= 12,
+                                "The styles argument execded its limit of 12."
+                            );
+                            let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                            if style.len() == 12 {
+                                formatted_style = style.try_into().unwrap();
+                            } else {
+                                formatted_style[..style.len()].copy_from_slice(style);
+                            }
+
+                            Text {
+                                text: text.to_string(),
+                                line_number,
+                                column,
+                                style: formatted_style,
+                                no_of_ansi: 1,
+                            }
+                        }
                         .no_of_ansi(y.0.no_of_ansi),
                         y.1,
                     )
@@ -249,16 +220,17 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     }
                 }
             }
-            let b = Text::new(
-                &x.iter().map(|y| y.0.text.clone()).join(""),
-                x[0].0.line_number,
-                0,
-                {
+            let b = Text{
+                text: x.iter().map(|y| y.0.text.clone()).join(""),
+                line_number: x[0].0.line_number,
+                column: 0,
+                style: {
                     let mut arr = [style::TextStyle::Bold(false); 12];
                     arr[..4].copy_from_slice(&styles);
                     arr
                 },
-            )
+                no_of_ansi: 0,
+            }
             .no_of_ansi(no_of_ansi as u32);
 
             b
