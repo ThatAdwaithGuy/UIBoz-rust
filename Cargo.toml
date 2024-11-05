@@ -4,9 +4,15 @@ version = "0.1.0"
 edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[ workspace ]
+members = [
+"node_proc_macro"
+]
 
 [dependencies]
 itertools = "0.13.0"
 dyn-clone = "1.0.17"
 crossterm = "0.28.1"
 thiserror = "*"
+node_proc_macro = { path = "./node_proc_macro" }
+

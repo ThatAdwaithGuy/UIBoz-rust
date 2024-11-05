@@ -9,6 +9,7 @@ dependencies = [
  "crossterm",
  "dyn-clone",
  "itertools",
+ "node_proc_macro",
  "thiserror",
 ]
 
@@ -132,6 +133,10 @@ dependencies = [
  "wasi",
  "windows-sys",
 ]
+
+[[package]]
+name = "node_proc_macro"
+version = "0.1.0"
 
 [[package]]
 name = "parking_lot"

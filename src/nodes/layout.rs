@@ -30,6 +30,8 @@ enum Splits<'a> {
 #[derive(Debug)]
 struct Layout<'a> {
     splits: Vec<Splits<'a>>,
+    width: u32,
+    height: u32,
 }
 
 macro_rules! direction_method {
@@ -42,8 +44,10 @@ macro_rules! direction_method {
 }
 
 impl<'a> Layout<'a> {
-    pub fn new() -> Self {
-        Self { splits: vec![] }
+    pub fn new(    width: u32,
+    height: u32,) -> Self {
+
+        Self { splits: vec![], width, height }
     }
 
     pub fn vsplit(
@@ -234,6 +238,5 @@ mod tests {
             .vsplit(2, &[None, None])
             .left()
             .split(3, &[None, None, None]);
-        dbg!(layout);
     }
 }
