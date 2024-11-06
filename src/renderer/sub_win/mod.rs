@@ -1,8 +1,9 @@
 //pub mod new_mod;
-use super::window_renderer;
+use super::window_renderer::{Text, self};
 use crate::errors::TextError;
 use std::collections::HashMap;
 use std::vec;
+use crate::style;
 type Texts = Vec<TextType>;
 #[derive(Clone, Debug)]
 pub struct NestedWindow {

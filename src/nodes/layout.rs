@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn right() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         assert_eq!(
             layout.right().right().check().unwrap_err(),
             errors::LayoutErrors::Right
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn left() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         assert_eq!(
             layout.left().left().check().unwrap_err(),
             errors::LayoutErrors::Left
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn up() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         assert_eq!(
             layout.up().up().check().unwrap_err(),
             errors::LayoutErrors::Up
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn down() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         assert_eq!(
             layout.down().down().check().unwrap_err(),
             errors::LayoutErrors::Down
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn general_test() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         let layout = layout
             .vsplit(2, &[None, None])
             .left()
@@ -233,7 +233,7 @@ mod tests {
     }
     #[test]
     fn my_test() {
-        let mut layout = Layout::new();
+        let mut layout = Layout::new(10, 10);
         let layout = layout
             .vsplit(2, &[None, None])
             .left()
