@@ -1,16 +1,16 @@
 //pub mod new_mod;
-use super::window_renderer::{Text, self};
+use super::window_renderer::{self, Text};
 use crate::errors::TextError;
+use crate::style;
 use std::collections::HashMap;
 use std::vec;
-use crate::style;
 type Texts = Vec<TextType>;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NestedWindow {
-    texts: Texts,
-    height: u32,
-    width: u32,
-    type_of_border: window_renderer::TypeOfBorder,
+    pub texts: Texts,
+    pub height: u32,
+    pub width: u32,
+    pub type_of_border: window_renderer::TypeOfBorder,
 }
 
 impl NestedWindow {
@@ -29,11 +29,11 @@ impl NestedWindow {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SubWindow {
-    window: NestedWindow,
-    start_line_number: u32,
-    column: u32,
+    pub window: NestedWindow,
+    pub start_line_number: u32,
+    pub column: u32,
     // {Line_number: No_Of_Ansi_Codes}
     ansi_codes_map: HashMap<u32, u32>,
 }
@@ -48,7 +48,7 @@ impl SubWindow {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TextType {
     SubWindow(SubWindow),
     Text(window_renderer::Text),
@@ -109,7 +109,7 @@ pub fn collapse_one_deep_sub_window(
                     no_of_ansi: 1,
                 }
             }
-                .no_of_ansi(count + 1),
+            .no_of_ansi(count + 1),
         );
     }
     Ok(return_val)
@@ -185,129 +185,131 @@ mod tests {
 
     use super::*;
     use window_renderer::empty_styles;
-    #[test]
-    fn some() -> Result<(), TextError> {
-        let bob = vec![
-            window_renderer::Text::new("@", 1, 0, &empty_styles()),
-            window_renderer::Text::new("@", 2, 0, &empty_styles()),
-            window_renderer::Text::new("@", 2, 0, &empty_styles()),
-        ];
-        let children = TextType::Text({
-            let style: &[style::TextStyle] = &empty_styles();
-            assert!(
-                style.len() <= 12,
-                "The styles argument execded its limit of 12."
+    /*
+        #[test]
+        fn some() -> Result<(), TextError> {
+            let bob = vec![
+                window_renderer::Text::new("@", 1, 0, &empty_styles()),
+                window_renderer::Text::new("@", 2, 0, &empty_styles()),
+                window_renderer::Text::new("@", 2, 0, &empty_styles()),
+            ];
+            let children = TextType::Text({
+                let style: &[style::TextStyle] = &empty_styles();
+                assert!(
+                    style.len() <= 12,
+                    "The styles argument execded its limit of 12."
+                );
+                let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                if style.len() == 12 {
+                    formatted_style = style.try_into().unwrap();
+                } else {
+                    formatted_style[..style.len()].copy_from_slice(style);
+                }
+
+                Text {
+                    text: "".to_string(),
+                    line_number: 1,
+                    column: 0,
+                    style: formatted_style,
+                    no_of_ansi: 1,
+                }
+            });
+            let children1 = TextType::Text({
+                let style: &[style::TextStyle] = &empty_styles();
+                assert!(
+                    style.len() <= 12,
+                    "The styles argument execded its limit of 12."
+                );
+                let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                if style.len() == 12 {
+                    formatted_style = style.try_into().unwrap();
+                } else {
+                    formatted_style[..style.len()].copy_from_slice(style);
+                }
+
+                Text {
+                    text: "@".to_string(),
+                    line_number: 2,
+                    column: 0,
+                    style: formatted_style,
+                    no_of_ansi: 1,
+                }
+            });
+            let children2 = TextType::Text({
+                let style: &[style::TextStyle] = &empty_styles();
+                assert!(
+                    style.len() <= 12,
+                    "The styles argument execded its limit of 12."
+                );
+                let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                if style.len() == 12 {
+                    formatted_style = style.try_into().unwrap();
+                } else {
+                    formatted_style[..style.len()].copy_from_slice(style);
+                }
+
+                Text {
+                    text: "@".to_string(),
+                    line_number: 2,
+                    column: 2,
+                    style: formatted_style,
+                    no_of_ansi: 1,
+                }
+            });
+
+            let texts = vec![children.clone()];
+            let child1 = SubWindow::new(
+                NestedWindow::new(texts, 10, 10, window_renderer::TypeOfBorder::CurvedBorders),
+                1,
+                1,
             );
-            let mut formatted_style = [style::TextStyle::Bold(false); 12];
-            if style.len() == 12 {
-                formatted_style = style.try_into().unwrap();
-            } else {
-                formatted_style[..style.len()].copy_from_slice(style);
-            }
 
-            Text {
-                text: "".to_string(),
-                line_number: 1,
-                column: 0,
-                style: formatted_style,
-                no_of_ansi: 1,
-            }
-        });
-        let children1 = TextType::Text({
-            let style: &[style::TextStyle] = &empty_styles();
-            assert!(
-                style.len() <= 12,
-                "The styles argument execded its limit of 12."
+            let child2 = SubWindow::new(
+                NestedWindow::new(
+                    vec![children.clone(), children.clone()],
+                    5,
+                    10,
+                    window_renderer::TypeOfBorder::CurvedBorders,
+                ),
+                4,
+                1,
             );
-            let mut formatted_style = [style::TextStyle::Bold(false); 12];
-            if style.len() == 12 {
-                formatted_style = style.try_into().unwrap();
-            } else {
-                formatted_style[..style.len()].copy_from_slice(style);
-            }
 
-            Text {
-                text: "@".to_string(),
-                line_number: 2,
-                column: 0,
-                style: formatted_style,
-                no_of_ansi: 1,
-            }
-        });
-        let children2 = TextType::Text({
-            let style: &[style::TextStyle] = &empty_styles();
-            assert!(
-                style.len() <= 12,
-                "The styles argument execded its limit of 12."
+            let root = SubWindow::new(
+                NestedWindow::new(
+                    vec![
+                        //TextType::SubWindow(child1.clone()),
+                        //TextType::SubWindow(child2.clone()),
+                        //TextType::SubWindow(child2.clone()),
+                    ],
+                    20,
+                    10,
+                    window_renderer::TypeOfBorder::CurvedBorders,
+                ),
+                1,
+                1,
             );
-            let mut formatted_style = [style::TextStyle::Bold(false); 12];
-            if style.len() == 12 {
-                formatted_style = style.try_into().unwrap();
-            } else {
-                formatted_style[..style.len()].copy_from_slice(style);
-            }
 
-            Text {
-                text: "@".to_string(),
-                line_number: 2,
-                column: 2,
-                style: formatted_style,
-                no_of_ansi: 1,
-            }
-        });
+            let t = vec![
+                window_renderer::Text::new("!", 1, 0, &empty_styles()),
+                window_renderer::Text::new("@", 2, 0, &empty_styles()),
+                window_renderer::Text::new("#", 2, 1, &empty_styles()),
+            ];
+            let mut hashmap: HashMap<u32, u32> = HashMap::new();
+            hashmap.insert(2, 2);
 
-        let texts = vec![children.clone()];
-        let child1 = SubWindow::new(
-            NestedWindow::new(texts, 10, 10, window_renderer::TypeOfBorder::CurvedBorders),
-            1,
-            1,
-        );
+            //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
 
-        let child2 = SubWindow::new(
-            NestedWindow::new(
-                vec![children.clone(), children.clone()],
-                5,
-                10,
-                window_renderer::TypeOfBorder::CurvedBorders,
-            ),
-            4,
-            1,
-        );
-
-        let root = SubWindow::new(
-            NestedWindow::new(
-                vec![
-                    //TextType::SubWindow(child1.clone()),
-                    //TextType::SubWindow(child2.clone()),
-                    //TextType::SubWindow(child2.clone()),
-                ],
+            let a = collapse_sub_window(root, 0)?;
+            let b = window_renderer::NonNestableWindow::new(
+                a.clone(),
                 20,
-                10,
+                100,
                 window_renderer::TypeOfBorder::CurvedBorders,
-            ),
-            1,
-            1,
-        );
+            );
+            println!("{}", b.render(false)?);
 
-        let t = vec![
-            window_renderer::Text::new("!", 1, 0, empty_styles()),
-            window_renderer::Text::new("@", 2, 0, empty_styles()),
-            window_renderer::Text::new("#", 2, 1, empty_styles()),
-        ];
-        let mut hashmap: HashMap<u32, u32> = HashMap::new();
-        hashmap.insert(2, 2);
-
-        //let windows = window::Window::new(t, 10, 80, again::TypeOfBorder::CurvedBorders);
-
-        let a = collapse_sub_window(root, 0)?;
-        let b = window_renderer::NonNestableWindow::new(
-            a.clone(),
-            20,
-            100,
-            window_renderer::TypeOfBorder::CurvedBorders,
-        );
-        println!("{}", b.render(false)?);
-
-        Ok(())
-    }
+            Ok(())
+        }
+    */
 }

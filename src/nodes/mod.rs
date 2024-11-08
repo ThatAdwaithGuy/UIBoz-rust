@@ -1,3 +1,4 @@
+pub mod flex;
 pub mod inputs;
 pub mod label;
 pub mod layout;

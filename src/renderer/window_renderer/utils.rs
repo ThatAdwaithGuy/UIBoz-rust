@@ -129,7 +129,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                                 no_of_ansi: 1,
                             }
                         }
-                            .no_of_ansi(current.no_of_ansi),
+                        .no_of_ansi(current.no_of_ansi),
                         x.1,
                     ))
                 })
@@ -143,11 +143,11 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     (
                         {
                             let text: &str = &format!(
-                                                    "{}{}{}\x1b[0m",
-                                                    " ".repeat(y.0.column as usize),
-                                                    parse_text_style(y.0.style.into()),
-                                                    y.0.text
-                                                );
+                                "{}{}{}\x1b[0m",
+                                " ".repeat(y.0.column as usize),
+                                parse_text_style(y.0.style.into()),
+                                y.0.text
+                            );
                             let line_number = y.0.line_number;
                             let column = y.0.column;
                             let style: &[style::TextStyle] = &y.0.style;
@@ -220,7 +220,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     }
                 }
             }
-            let b = Text{
+            let b = Text {
                 text: x.iter().map(|y| y.0.text.clone()).join(""),
                 line_number: x[0].0.line_number,
                 column: 0,

@@ -241,7 +241,7 @@ impl NonNestableWindow {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TypeOfBorder {
     NoBorders,
     CurvedBorders,
@@ -260,8 +260,8 @@ mod tests {
 022mWorld\x1b[0m        │\n│                    │\n│                    │\n│                    │\n│                    │\n╰────────────────────╯\n".to_string();
 
         let test = vec![
-            Text::new("Hello", 1, 1, empty_styles()),
-            Text::new("World", 1, 7, empty_styles()),
+            Text::new("Hello", 1, 1, &empty_styles()),
+            Text::new("World", 1, 7, &empty_styles()),
         ];
         let window = NonNestableWindow::new(test, 5, 20, TypeOfBorder::CurvedBorders);
         let contents = window.render(false)?;

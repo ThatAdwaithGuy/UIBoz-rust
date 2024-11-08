@@ -6,10 +6,10 @@ use super::window_renderer::TypeOfBorder;
 use errors::TextError;
 #[derive(Debug)]
 pub struct Window {
-    texts: Vec<TextType>,
-    width: u32,
-    height: u32,
-    type_of_border: TypeOfBorder,
+    pub texts: Vec<TextType>,
+    pub width: u32,
+    pub height: u32,
+    pub type_of_border: TypeOfBorder,
 }
 
 impl Window {

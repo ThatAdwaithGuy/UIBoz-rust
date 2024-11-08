@@ -44,10 +44,12 @@ macro_rules! direction_method {
 }
 
 impl<'a> Layout<'a> {
-    pub fn new(    width: u32,
-    height: u32,) -> Self {
-
-        Self { splits: vec![], width, height }
+    pub fn new(width: u32, height: u32) -> Self {
+        Self {
+            splits: vec![],
+            width,
+            height,
+        }
     }
 
     pub fn vsplit(
