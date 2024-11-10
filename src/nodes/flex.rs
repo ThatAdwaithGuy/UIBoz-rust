@@ -26,6 +26,7 @@ fn get_column(text_type: &TextType) -> u32 {
 fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
     let min: u32 = texts.iter().map(get_width).min()?;
     let max: u32 = texts.iter().map(get_width).max()?;
+    dbg!(max);
     if max < width - 1 {
         return Some(texts);
     }
@@ -133,16 +134,11 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
     Some(res)
 }
 
-pub trait Flex {
-    fn flex(&self, width: u32, height: u32) -> Option<Window>;
-}
 
-impl Flex for Window {
+impl Window {
     fn flex(&self, width: u32, height: u32) -> Option<Window> {
         let width_dif = std::cmp::max(0,self.width - width);
         let height_dif = std::cmp::max(0,self.height - height);
-        dbg!(width_dif);
-        dbg!(height_dif);
         let mut res = self.texts.clone();
         for _ in 0..width_dif {
             res = shorten_width(res, width)?;
@@ -315,10 +311,11 @@ mod tests {
                 3,
                 1,
             )),
-            TextType::Text(Text::new("!@#$", 5, 3, &[])),
+            TextType::Text(Text::new("!@#$", 5, 4, &[])),
         ];
 
         let shorten = shorten_width(vector, 10);
+        dbg!(&shorten);
         assert_eq!(shorten, Some(answer));
     }
 }

@@ -1,6 +1,6 @@
-/target
-/find_size.sh
-/frontend
-/rules.txt
-/stuff.md
+target/
+find_size.sh
+frontend/
+rules.txt
+stuff.md
 

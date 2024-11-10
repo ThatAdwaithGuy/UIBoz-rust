@@ -44,6 +44,10 @@ impl Text {
         self.no_of_ansi = no_of_ansi;
         self.to_owned()
     }
+
+    pub fn len(&self) -> usize {
+        self.text.chars().collect::<Vec<char>>().len()
+    }
 }
 
 #[derive(Clone, Debug)]

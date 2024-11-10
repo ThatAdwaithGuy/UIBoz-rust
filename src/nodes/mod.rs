@@ -1,5 +1,6 @@
 pub mod flex;
 pub mod inputs;
+pub mod text_layouts;
 pub mod label;
 pub mod layout;
 pub mod runtime;
