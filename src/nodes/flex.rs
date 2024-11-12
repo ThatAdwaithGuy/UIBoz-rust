@@ -75,12 +75,10 @@ fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
             } else {
                 return None;
             }
-
         }
     }
     Some(res)
 }
-
 
 fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
     let min: u32 = texts.iter().map(get_line_number).min()?;
@@ -134,11 +132,10 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
     Some(res)
 }
 
-
 impl Window {
     fn flex(&self, width: u32, height: u32) -> Option<Window> {
-        let width_dif = std::cmp::max(0,self.width - width);
-        let height_dif = std::cmp::max(0,self.height - height);
+        let width_dif = std::cmp::max(0, self.width - width);
+        let height_dif = std::cmp::max(0, self.height - height);
         let mut res = self.texts.clone();
         for _ in 0..width_dif {
             res = shorten_width(res, width)?;
@@ -178,12 +175,7 @@ mod tests {
 
     #[test]
     fn flex_test_compression() {
-        let texts = vec![TextType::Text(Text::new(
-            "@, hello world hehe",
-            1,
-            5,
-            &[],
-        ))];
+        let texts = vec![TextType::Text(Text::new("@, hello world hehe", 1, 5, &[]))];
         let window = Window {
             texts,
             width: 56,

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 pub trait Page {
     fn name(&self) -> String;
-    fn get_window(&self) -> Window;
+    fn layout(&self) -> crate::nodes::layout::Layout;
 }
 
 #[derive(PartialEq, Eq, Hash)]

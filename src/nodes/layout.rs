@@ -7,7 +7,7 @@ type WindowId = usize;
 /*
     Just a layout for one page.
 */
-struct LayoutHandler<'a> {
+pub struct LayoutHandler<'a> {
     widgets: HashMap<WindowId, Box<(dyn widgets::Widget)>>,
     layout: Layout<'a>,
 }
@@ -25,10 +25,20 @@ enum Splits<'a> {
         num: usize,
         splits: &'a [Option<&'a dyn widgets::Widget>],
     },
+    Size {
+        percentage: Option<u8>, // Below or equal to 100
+        size: u32,              // In pixels
+    },
+}
+
+fn render_layout(layout: &Layout) -> Result<Vec<crate::sub_win::TextType>, errors::LayoutErrors> {
+    dbg!(&layout.splits);
+
+    Ok(vec![])
 }
 
 #[derive(Debug)]
-struct Layout<'a> {
+pub struct Layout<'a> {
     splits: Vec<Splits<'a>>,
     width: u32,
     height: u32,
@@ -97,6 +107,8 @@ impl<'a> Layout<'a> {
                     Splits::Right => {
                         return Err(errors::LayoutErrors::Up);
                     }
+
+                    Splits::Size { .. } => {}
                     Splits::Vertical { .. } => {}
                     Splits::Horizontal { .. } => {}
                 },
@@ -113,6 +125,8 @@ impl<'a> Layout<'a> {
                     Splits::Right => {
                         return Err(errors::LayoutErrors::Down);
                     }
+
+                    Splits::Size { .. } => {}
                     Splits::Vertical { .. } => {}
                     Splits::Horizontal { .. } => {}
                 },
@@ -129,6 +143,8 @@ impl<'a> Layout<'a> {
                     Splits::Right => {
                         return Err(errors::LayoutErrors::Left);
                     }
+
+                    Splits::Size { .. } => {}
                     Splits::Vertical { .. } => {}
                     Splits::Horizontal { .. } => {}
                 },
@@ -145,6 +161,7 @@ impl<'a> Layout<'a> {
                     Splits::Right => {
                         return Err(errors::LayoutErrors::Right);
                     }
+                    Splits::Size { .. } => {}
                     Splits::Vertical { .. } => {}
                     Splits::Horizontal { .. } => {}
                 },
@@ -153,6 +170,7 @@ impl<'a> Layout<'a> {
                     Splits::Down => {}
                     Splits::Left => {}
                     Splits::Right => {}
+                    Splits::Size { .. } => {}
                     Splits::Vertical { .. } => {
                         return Err(errors::LayoutErrors::Vsplit);
                     }
@@ -165,6 +183,7 @@ impl<'a> Layout<'a> {
                     Splits::Down => {}
                     Splits::Left => {}
                     Splits::Right => {}
+                    Splits::Size { .. } => {}
 
                     Splits::Vertical { .. } => {
                         return Err(errors::LayoutErrors::Split);
@@ -173,6 +192,7 @@ impl<'a> Layout<'a> {
                         return Err(errors::LayoutErrors::Split);
                     }
                 },
+                Splits::Size { .. } => {}
             }
         }
         Ok(())
@@ -223,7 +243,6 @@ mod tests {
             errors::LayoutErrors::Down
         );
     }
-
     #[test]
     fn general_test() {
         let mut layout = Layout::new(10, 10);
@@ -233,12 +252,14 @@ mod tests {
             .split(3, &[None, None, None]);
         assert_eq!((), layout.check().unwrap())
     }
+
     #[test]
     fn my_test() {
         let mut layout = Layout::new(10, 10);
-        let layout = layout
+        let layout = &(*layout
             .vsplit(2, &[None, None])
             .left()
-            .split(3, &[None, None, None]);
+            .split(3, &[None, None, None]));
+        let _ = render_layout(layout);
     }
 }
