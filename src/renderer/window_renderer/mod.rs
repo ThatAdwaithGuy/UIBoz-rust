@@ -5,13 +5,24 @@ use crate::errors::TextError;
 mod utils;
 use crate::style;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Text {
     pub text: String,
     pub line_number: u32,
     pub column: u32,
     pub style: [style::TextStyle; 12],
     pub no_of_ansi: u32,
+}
+
+impl std::fmt::Debug for Text {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Text")
+            .field("text", &self.text)
+            .field("line_number", &self.line_number)
+            .field("column", &self.column)
+            //.field("style", &format_args!("{:?}", &self.no_of_ansi))
+            .finish()
+    }
 }
 
 pub fn empty_styles() -> [style::TextStyle; 12] {

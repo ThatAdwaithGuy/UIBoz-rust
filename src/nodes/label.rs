@@ -3,14 +3,20 @@ use super::widgets;
 use crate::renderer::window_renderer::Text;
 use crate::storage::Node;
 use node_proc_macro::Node;
-#[derive(Debug, Node)]
-struct Label {
+#[derive(Node, Clone)]
+pub struct Label {
     text: String,
     style: [TextStyle; 12],
 }
 
+impl std::fmt::Debug for Label {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Label").field("text", &self.text).finish()
+    }
+}
+
 impl Label {
-    fn new(text: &str, style: &[TextStyle]) -> Label {
+    pub fn new(text: &str, style: &[TextStyle]) -> Label {
         assert!(
             style.len() <= 12,
             "The styles argument execded its limit of 12."
@@ -32,7 +38,7 @@ impl widgets::Widget for Label {
     fn render(&self) -> Vec<Text> {
         vec![Text {
             text: self.text.clone(),
-            line_number: 0,
+            line_number: 1,
             column: 0,
             style: self.style,
             no_of_ansi: 0,

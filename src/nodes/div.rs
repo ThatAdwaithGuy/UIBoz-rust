@@ -1,6 +1,3 @@
-use std::string;
-
-use super::super::style::TextStyle;
 use super::widgets;
 use crate::storage::Node;
 use crate::sub_win::TextType;
@@ -14,10 +11,37 @@ struct Div {
     type_of_border: TypeOfBorder,
 }
 
+macro_rules! div {
+    // Empty case
+    () => {
+        Vec::new()
+    };
+
+    // Single value case
+    ($elem:expr, $type_of_border:expr) => {
+        {
+            let mut v: Vec<Box<dyn widgets::Widget>> = Vec::new();
+            v.push(Box::new($elem.clone()));
+            Div::new(v, $type_of_border)
+        }
+    };
+
+    // Multiple values case
+    ($($elem:expr),+ $(,)?, $type_of_border:expr) => {
+        {
+            let mut v: Vec<Box<dyn widgets::Widget>> = Vec::new();
+            $(
+                v.push(Box::new($elem.clone()));
+            )+
+            Div::new(v, $type_of_border)
+        }
+    };
+}
+
 impl Div {
-    fn new(texts: &[&dyn widgets::Widget], type_of_border: TypeOfBorder) -> Div {
+    fn new(texts: Vec<Box<dyn widgets::Widget>>, type_of_border: TypeOfBorder) -> Div {
         Self {
-            texts: texts.try_into().expect("Error while converting types"),
+            texts,
             type_of_border,
         }
     }
@@ -25,11 +49,9 @@ impl Div {
 
 impl widgets::Widget for Div {
     fn render(&self) -> Vec<Text> {
-        let flat = self.texts.iter().map(|x| x.render()).flatten(); 
+        let flat = self.texts.iter().map(|x| x.render()).flatten();
         let window = Window::new(
-            flat.clone()
-                .map(|x| TextType::Text(x.clone()))
-                .collect(),
+            flat.clone().map(|x| TextType::Text(x.clone())).collect(),
             flat.clone()
                 .map(|x| x.column + x.len() as u32)
                 .max()
@@ -50,8 +72,14 @@ impl widgets::Widget for Div {
 
 #[cfg(test)]
 mod tests {
+    use super::super::label;
+    use super::*;
+    use widgets::Widget;
+
     #[test]
     fn div_test() {
-        let div = 
+        let label = label::Label::new("Hi", &[]);
+        let div = div![label, TypeOfBorder::CurvedBorders];
+        dbg!(div.render());
     }
 }
