@@ -6,7 +6,6 @@ pub mod layout;
 pub mod runtime;
 pub mod text_layouts;
 pub mod widgets;
-pub use crossterm::event::Event;
 
 #[cfg(test)]
 mod tests {

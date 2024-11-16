@@ -1,4 +1,4 @@
-use crate::renderer::window::Window;
+use crate::renderer::*;
 use crate::storage;
 use std::collections::HashMap;
 

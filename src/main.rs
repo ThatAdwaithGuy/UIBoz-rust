@@ -10,7 +10,6 @@ mod world;
 
 use node_proc_macro::Node;
 use nodes::runtime::Runtime;
-use renderer::*;
 use storage::*;
 use world::ControllerNode;
 use world::ViewNode;
@@ -52,22 +51,22 @@ impl Keyboard {
 
 #[derive(Clone, Node)]
 struct View;
-
+use renderer::*;
 impl ViewNode for View {
     fn view(&self, storage: &Storage<Immutable>) -> Option<String> {
         let count = storage.get_mut::<Counter>()?;
         dbg!(count.0);
 
-        let bx = window::Window::new(
-            vec![sub_win::TextType::Text(window_renderer::Text::new(
+        let bx = Window::new(
+            vec![TextType::Text(Text::new(
                 &count.0.to_string(),
                 1,
                 1,
-                &window_renderer::empty_styles(),
+                &[],
             ))],
             1,
             1,
-            window_renderer::TypeOfBorder::CurvedBorders,
+            TypeOfBorder::CurvedBorders,
         );
 
         Some(format!("\x1b[2J\x1b[H{}\n", count.0))

@@ -1,8 +1,6 @@
 use super::widgets;
 use crate::storage::Node;
-use crate::sub_win::TextType;
-use crate::window::Window;
-use crate::window_renderer::{Text, TypeOfBorder};
+use crate::renderer::*;
 use node_proc_macro::Node;
 
 #[derive(Debug, Node)]

@@ -1,6 +1,6 @@
 use super::super::style::TextStyle;
 use super::widgets;
-use crate::renderer::window_renderer::Text;
+use crate::renderer::*;
 use crate::storage::Node;
 use node_proc_macro::Node;
 #[derive(Node, Clone)]

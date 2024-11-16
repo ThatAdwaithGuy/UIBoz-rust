@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
-use crate::renderer::{sub_win::TextType, window::Window};
+use crate::renderer::*;
+use crate::renderer::*;
 
 fn get_line_number(text_type: &TextType) -> u32 {
     match text_type {
@@ -56,14 +55,14 @@ fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
             if get_column(&text) != 0 {
                 res.push(match text {
                     TextType::SubWindow(sub_window) => {
-                        TextType::SubWindow(crate::renderer::sub_win::SubWindow::new(
+                        TextType::SubWindow(SubWindow::new(
                             sub_window.window.clone(),
                             sub_window.start_line_number,
                             sub_window.column - 1,
                         ))
                     }
                     TextType::Text(text) => {
-                        TextType::Text(crate::renderer::window_renderer::Text {
+                        TextType::Text(Text {
                             text: text.text.clone(),
                             line_number: text.line_number,
                             column: text.column - 1,
@@ -83,7 +82,7 @@ fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
 fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
     let min: u32 = texts.iter().map(get_line_number).min()?;
     let max: u32 = texts.iter().map(get_line_number).max()?;
-    let mut hashmap: Vec<(u32, Vec<TextType>)> = (min..max + 1)
+    let hashmap: Vec<(u32, Vec<TextType>)> = (min..max + 1)
         .map(|i| {
             let matching_structs: Vec<_> = texts
                 .iter()
@@ -110,13 +109,13 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
             // BUG: They can be a bug if two texts are adjecent to each other with no spaces.
             res.extend(idx.1.clone().iter().map(|x| match x {
                 TextType::SubWindow(sub_window) => {
-                    TextType::SubWindow(crate::renderer::sub_win::SubWindow::new(
+                    TextType::SubWindow(SubWindow::new(
                         sub_window.window.clone(),
                         sub_window.start_line_number - 1,
                         sub_window.column,
                     ))
                 }
-                TextType::Text(text) => TextType::Text(crate::renderer::window_renderer::Text {
+                TextType::Text(text) => TextType::Text(Text {
                     text: text.text.clone(),
                     line_number: text.line_number - 1,
                     column: text.column,
@@ -155,9 +154,8 @@ impl Window {
 mod tests {
 
     use super::*;
-    use crate::renderer::sub_win::{SubWindow, TextType};
-    use crate::renderer::window::Window;
-    use crate::renderer::window_renderer::Text;
+    use crate::renderer::*;
+
     #[test]
     fn flex_test_no_compression() {
         let texts = vec![TextType::Text(Text::new("@, hello world hehe", 1, 1, &[]))];
@@ -165,7 +163,7 @@ mod tests {
             texts,
             width: 56,
             height: 12,
-            type_of_border: crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::CurvedBorders,
         };
 
         let flexed = window.flex(24, 12);
@@ -180,7 +178,7 @@ mod tests {
             texts,
             width: 56,
             height: 12,
-            type_of_border: crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::CurvedBorders,
         };
 
         let flexed = window.flex(24, 12);
@@ -192,11 +190,11 @@ mod tests {
         let vector: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 3,
                 1,
@@ -206,11 +204,11 @@ mod tests {
         let correct_answer: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 2,
                 1,
@@ -225,11 +223,11 @@ mod tests {
         let vector: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 2,
                 1,
@@ -245,11 +243,11 @@ mod tests {
         let vector: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 3,
                 1,
@@ -260,11 +258,11 @@ mod tests {
         let correct_answer: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 3,
                 1,
@@ -280,11 +278,11 @@ mod tests {
         let vector: Vec<TextType> = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 3,
                 1,
@@ -294,11 +292,11 @@ mod tests {
         let answer = vec![
             TextType::Text(Text::new("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                crate::renderer::sub_win::NestedWindow::new(
+                NestedWindow::new(
                     vec![TextType::Text(Text::new("@", 1, 0, &[]))],
                     1,
                     1,
-                    crate::renderer::window_renderer::TypeOfBorder::CurvedBorders,
+                    TypeOfBorder::CurvedBorders,
                 ),
                 3,
                 1,

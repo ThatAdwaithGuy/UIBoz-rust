@@ -1,4 +1,4 @@
-use crate::renderer::window_renderer::Text;
+use crate::renderer::*;
 
 impl Text {
     pub fn left(&self) -> Self {

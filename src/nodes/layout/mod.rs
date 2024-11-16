@@ -1,34 +1,59 @@
 use super::widgets;
+pub mod rendering;
 use crate::errors;
 use std::collections::HashMap;
-
-type WindowId = usize;
 
 /*
     Just a layout for one page.
 */
 pub struct LayoutHandler<'a> {
-    widgets: HashMap<WindowId, Box<(dyn widgets::Widget)>>,
     layout: Layout<'a>,
 }
+
 #[derive(Debug, Clone)]
+enum Size<const T: usize> {
+    Percentage( [u8; T]),
+    Chars([u8; T]),
+}
+
+#[derive(Clone)]
 enum Splits {
     Up,
     Down,
     Left,
     Right,
-    Vertical {
-        num: usize,
-        splits: [usize; 1024],
-    },
-    Horizontal {
-        num: usize,
-        splits: [usize; 1024],
-    },
-    Size {
-        percentage: Option<u8>, // Below or equal to 100
-        size: u32,              // In pixels
-    },
+    Vertical { num: usize, widgets: [usize; 1024] },
+    Horizontal { num: usize, widgets: [usize; 1024] },
+    Size(Size<  1024  >), // wish rust had enums inside enums. This will be the perfect situation
+}
+
+impl std::fmt::Debug for Splits {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[derive(Clone, Debug)]
+        enum DebugEnum {
+            Up,
+            Down,
+            Left,
+            Right,
+            Vertical { num: usize },
+            Horizontal { num: usize },
+            Size(Size<1024>),
+        }
+        let debug_enum = match self {
+            Splits::Up => DebugEnum::Up,
+            Splits::Down => DebugEnum::Down,
+            Splits::Left => DebugEnum::Left,
+            Splits::Right => DebugEnum::Right,
+            Splits::Vertical { num, .. } => DebugEnum::Vertical { num: *num },
+            Splits::Horizontal { num, .. } => DebugEnum::Horizontal { num: *num },
+            Splits::Size(size) => match size {
+                Size::Percentage(p) => DebugEnum::Size(Size::Percentage(*p)),
+                Size::Chars(p) => DebugEnum::Size(Size::Chars(*p)),
+            },
+        };
+
+        std::fmt::Debug::fmt(&debug_enum, f)
+    }
 }
 
 #[derive(Debug)]
@@ -38,7 +63,6 @@ pub struct Layout<'a> {
     width: u32,
     height: u32,
 }
-
 
 macro_rules! direction_method {
     ($name:ident,$dir:expr) => {
@@ -72,7 +96,7 @@ impl<'a> Layout<'a> {
     }
 
     fn add_widget(&mut self, widget: &'a dyn widgets::Widget) -> u32 {
-        use std::borrow::Borrow; 
+        use std::borrow::Borrow;
         let latest: u32 = match self.widgets.keys().max() {
             Some(n) => n + 1,
             None => 0,
@@ -81,8 +105,8 @@ impl<'a> Layout<'a> {
         latest
     }
 
-    fn extend_widgets(&mut self, widgets: Vec<&'a dyn widgets::Widget>) -> Vec<usize>  {
-        let mut ret: Vec< usize > = vec![];
+    fn extend_widgets(&mut self, widgets: Vec<&'a dyn widgets::Widget>) -> Vec<usize> {
+        let mut ret: Vec<usize> = vec![];
         for widget in widgets {
             let idx = self.add_widget(widget);
             ret.push(idx as usize);
@@ -97,12 +121,12 @@ impl<'a> Layout<'a> {
     ) -> &mut Self {
         assert!(splits == widgets.len());
         let vect: Vec<&'a dyn widgets::Widget> = widgets.iter().filter_map(|x| x.clone()).collect();
-        let vector = self.extend_widgets(vect); 
-        let mut indices: [usize;1024] = [0; 1024];
+        let vector = self.extend_widgets(vect);
+        let mut indices: [usize; 1024] = [0; 1024];
         indices[0..vector.len().min(1024)].copy_from_slice(&vector);
         self.splits.push(Splits::Vertical {
             num: splits,
-            splits: indices,
+            widgets: indices,
         });
         self
     }
@@ -114,12 +138,12 @@ impl<'a> Layout<'a> {
     ) -> &mut Self {
         assert!(splits as usize == widgets.len());
         let vect: Vec<&'a dyn widgets::Widget> = widgets.iter().filter_map(|x| x.clone()).collect();
-        let vector = self.extend_widgets(vect); 
-        let mut indices: [usize;1024] = [0; 1024];
+        let vector = self.extend_widgets(vect);
+        let mut indices: [usize; 1024] = [0; 1024];
         indices[0..vector.len().min(1024)].copy_from_slice(&vector);
         self.splits.push(Splits::Horizontal {
             num: splits,
-            splits: indices,
+            widgets: indices,
         });
         self
     }
@@ -224,16 +248,5 @@ mod tests {
             .left()
             .split(3, &[None, None, None]);
         assert_eq!((), layout.check().unwrap())
-    }
-
-    #[test]
-    fn my_test() {
-        let label_1 = super::super::label::Label::new("Hi", &[]);
-        let label_2 = super::super::label::Label::new("Hello", &[]);
-        let mut layout = Layout::new(10, 10);
-        let binding: [Option<&dyn widgets::Widget>; 2] = [None, Some(&label_1)];
-        let binding: [Option<&dyn widgets::Widget>; 2] = [None, Some(&label_2)];
-        let layout = &(*layout.vsplit(2, &binding).left().split(2, &binding));
-        let _ = render_layout(layout);
     }
 }

@@ -1,4 +1,4 @@
-use crate::renderer::window_renderer::Text;
+use crate::renderer::*;
 use crate::storage::Node;
 
 pub trait Widget: Node + std::fmt::Debug {

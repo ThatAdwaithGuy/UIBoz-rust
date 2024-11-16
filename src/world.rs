@@ -23,8 +23,8 @@ impl<V: ViewNode, C: ControllerNode> App<V, C> {
         let _ = self.storage.get_mut::<PageManager>()?;
 
         while is_running.is_running {
-            print!("{}", self.view_node.view(&self.storage).unwrap());
-            self.controller_node.update(&self.storage).unwrap();
+            print!("{}", self.view_node.view(&self.storage)?);
+            self.controller_node.update(&self.storage)?;
         }
 
         Some(())

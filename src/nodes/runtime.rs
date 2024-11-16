@@ -1,4 +1,3 @@
-use pages::Page;
 use storage::*;
 
 use crate::{pages, storage};
