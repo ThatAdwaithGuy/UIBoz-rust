@@ -1,10 +1,9 @@
 use super::*;
-use crate::renderer::*;
 
 #[derive(Clone)]
-struct Pane<'a> {
+pub struct Pane<'a> {
     val: &'a Splits,
-    widgets: [usize; 1024],
+    _widgets: [usize; 1024],
     dir: Option<&'a Splits>,
     size: Option<&'a Splits>,
 }
@@ -15,29 +14,23 @@ fn default_size<const T: usize>() -> Size<T> {
     Size::Percentage(arr)
 }
 
-fn default_dir() {}
-
 impl std::fmt::Debug for Pane<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         #[derive(Debug)]
         struct DebugStruct<'a> {
-            val: &'a Splits,
-            dir: Option<&'a Splits>,
-            size: Option<&'a Splits>,
+            _val: &'a Splits,
+            _dir: Option<&'a Splits>,
+            _size: Option<&'a Splits>,
         }
 
         let debug_struct = DebugStruct {
-            val: self.val,
-            dir: self.dir,
-            size: self.size,
+            _val: self.val,
+            _dir: self.dir,
+            _size: self.size,
         };
 
         std::fmt::Debug::fmt(&debug_struct, f)
     }
-}
-
-fn render_pane(pane: Pane) -> Result<Window, errors::TextError> {
-    Err(errors::TextError::LeftBounds("hi".to_string()))
 }
 
 fn group_split<'a>(splits: Vec<&'a Splits>) -> Vec<Pane> {
@@ -61,14 +54,14 @@ fn group_split<'a>(splits: Vec<&'a Splits>) -> Vec<Pane> {
                     chunks.push(chuck.clone());
                     *chuck = Pane {
                         val: split,
-                        widgets: *widgets,
+                        _widgets: *widgets,
                         dir: None,
                         size: None,
                     };
                 } else {
                     curr_chuck = Some(Pane {
                         val: &split,
-                        widgets: *widgets,
+                        _widgets: *widgets,
                         dir: None,
                         size: None,
                     });
@@ -84,12 +77,20 @@ fn group_split<'a>(splits: Vec<&'a Splits>) -> Vec<Pane> {
     chunks
 }
 
-pub(super) fn render_layout(layout: &Layout) {
-    let mut panes = group_split(layout.splits.iter().map(|x| x).collect());
+pub(super) fn _render_layout(layout: &Layout) {
+    let mut panes = group_split(layout.panes.iter().map(|x| x).collect());
     panes.reverse();
-    
 
-    
+    for pane in &panes {
+        match pane.val {
+            Splits::Vertical(w) => todo!(),
+            Splits::Horizontal(w) => todo!(),
+            _ => {
+                panic!("AHHHHH");
+            }
+        }
+    }
+
     dbg!(panes);
 }
 #[cfg(test)]
@@ -100,19 +101,18 @@ mod test {
     fn test_default_values() {
         let value = default_size::<2>();
         match value {
-            Size::Percentage(p) => assert_eq!(p, [50,50]),
+            Size::Percentage(p) => assert_eq!(p, [50, 50]),
             Size::Chars(_) => assert!(false),
         }
     }
+
     #[test]
     fn my_test() {
-        let label_1 = Label::new("Hi", &[]);
         let label_2 = Label::new("Hello", &[]);
         let mut layout = Layout::new(10, 10);
-        let binding: [Option<&dyn widgets::Widget>; 2] = [None, Some(&label_1)];
         let binding: [Option<&dyn widgets::Widget>; 2] = [None, Some(&label_2)];
         let layout = &(*layout.vsplit(2, &binding).left().split(2, &binding).left());
-        dbg!(&layout.splits);
-        let _ = render_layout(layout);
+        dbg!(&layout.panes);
+        let _ = _render_layout(layout);
     }
 }

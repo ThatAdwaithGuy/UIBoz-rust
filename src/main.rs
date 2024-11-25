@@ -58,12 +58,7 @@ impl ViewNode for View {
         dbg!(count.0);
 
         let bx = Window::new(
-            vec![TextType::Text(Text::new(
-                &count.0.to_string(),
-                1,
-                1,
-                &[],
-            ))],
+            vec![TextType::Text(Text::new(&count.0.to_string(), 1, 1, &[]))],
             1,
             1,
             TypeOfBorder::CurvedBorders,

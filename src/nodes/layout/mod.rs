@@ -1,4 +1,5 @@
 use super::widgets;
+use rendering::Pane;
 pub mod rendering;
 use crate::errors;
 use std::collections::HashMap;
@@ -12,53 +13,23 @@ pub struct LayoutHandler<'a> {
 
 #[derive(Debug, Clone)]
 enum Size<const T: usize> {
-    Percentage( [u8; T]),
+    Percentage([u8; T]),
     Chars([u8; T]),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Splits {
     Up,
     Down,
     Left,
     Right,
-    Vertical { num: usize, widgets: [usize; 1024] },
-    Horizontal { num: usize, widgets: [usize; 1024] },
-    Size(Size<  1024  >), // wish rust had enums inside enums. This will be the perfect situation
+    Vertical([Option<u32>; 2]),
+    Horizontal([Option<u32>; 2]),
+    Size(Size<1024>), // wish rust had enums inside enums. This will be the perfect situation
 }
-
-impl std::fmt::Debug for Splits {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        #[derive(Clone, Debug)]
-        enum DebugEnum {
-            Up,
-            Down,
-            Left,
-            Right,
-            Vertical { num: usize },
-            Horizontal { num: usize },
-            Size(Size<1024>),
-        }
-        let debug_enum = match self {
-            Splits::Up => DebugEnum::Up,
-            Splits::Down => DebugEnum::Down,
-            Splits::Left => DebugEnum::Left,
-            Splits::Right => DebugEnum::Right,
-            Splits::Vertical { num, .. } => DebugEnum::Vertical { num: *num },
-            Splits::Horizontal { num, .. } => DebugEnum::Horizontal { num: *num },
-            Splits::Size(size) => match size {
-                Size::Percentage(p) => DebugEnum::Size(Size::Percentage(*p)),
-                Size::Chars(p) => DebugEnum::Size(Size::Chars(*p)),
-            },
-        };
-
-        std::fmt::Debug::fmt(&debug_enum, f)
-    }
-}
-
 #[derive(Debug)]
 pub struct Layout<'a> {
-    splits: Vec<Splits>,
+    panes: Vec<Splits>,
     widgets: HashMap<u32, &'a dyn widgets::Widget>,
     width: u32,
     height: u32,
@@ -67,7 +38,7 @@ pub struct Layout<'a> {
 macro_rules! direction_method {
     ($name:ident,$dir:expr) => {
         pub fn $name(&mut self) -> &mut Self {
-            self.splits.push($dir);
+            self.panes.push($dir);
             self
         }
     };
@@ -88,7 +59,7 @@ fn val_to_err(split: &Splits) -> errors::LayoutErrors {
 impl<'a> Layout<'a> {
     pub fn new(width: u32, height: u32) -> Self {
         Self {
-            splits: vec![],
+            panes: vec![],
             widgets: HashMap::new(),
             width,
             height,
@@ -96,7 +67,6 @@ impl<'a> Layout<'a> {
     }
 
     fn add_widget(&mut self, widget: &'a dyn widgets::Widget) -> u32 {
-        use std::borrow::Borrow;
         let latest: u32 = match self.widgets.keys().max() {
             Some(n) => n + 1,
             None => 0,
@@ -105,53 +75,39 @@ impl<'a> Layout<'a> {
         latest
     }
 
-    fn extend_widgets(&mut self, widgets: Vec<&'a dyn widgets::Widget>) -> Vec<usize> {
-        let mut ret: Vec<usize> = vec![];
-        for widget in widgets {
-            let idx = self.add_widget(widget);
-            ret.push(idx as usize);
-        }
-        ret
-    }
+    pub fn vsplit(&mut self, widgets: [Option<&'a dyn widgets::Widget>; 2]) -> &mut Self {
+        let one = match widgets[0] {
+            Some(inner) => Some(self.add_widget(inner)),
+            None => None,
+        };
 
-    pub fn vsplit(
-        &mut self,
-        splits: usize,
-        widgets: &'a [Option<&'a dyn widgets::Widget>],
-    ) -> &mut Self {
-        assert!(splits == widgets.len());
-        let vect: Vec<&'a dyn widgets::Widget> = widgets.iter().filter_map(|x| x.clone()).collect();
-        let vector = self.extend_widgets(vect);
-        let mut indices: [usize; 1024] = [0; 1024];
-        indices[0..vector.len().min(1024)].copy_from_slice(&vector);
-        self.splits.push(Splits::Vertical {
-            num: splits,
-            widgets: indices,
-        });
+        let two = match widgets[1] {
+            Some(inner) => Some(self.add_widget(inner)),
+            None => None,
+        };
+        self.panes.push(Splits::Vertical([one, two]));
         self
     }
 
-    pub fn split(
-        &mut self,
-        splits: usize,
-        widgets: &'a [Option<&'a dyn widgets::Widget>],
-    ) -> &mut Self {
-        assert!(splits as usize == widgets.len());
-        let vect: Vec<&'a dyn widgets::Widget> = widgets.iter().filter_map(|x| x.clone()).collect();
-        let vector = self.extend_widgets(vect);
-        let mut indices: [usize; 1024] = [0; 1024];
-        indices[0..vector.len().min(1024)].copy_from_slice(&vector);
-        self.splits.push(Splits::Horizontal {
-            num: splits,
-            widgets: indices,
-        });
+    pub fn split(&mut self, widgets: [Option<&'a dyn widgets::Widget>; 2]) -> &mut Self {
+        let one = match widgets[0] {
+            Some(inner) => Some(self.add_widget(inner)),
+            None => None,
+        };
+
+        let two = match widgets[1] {
+            Some(inner) => Some(self.add_widget(inner)),
+            None => None,
+        };
+
+        self.panes.push(Splits::Horizontal([one, two]));
         self
     }
 
     pub fn check(&self) -> Result<(), errors::LayoutErrors> {
-        for idx in 0..self.splits.len() - 1 {
-            let element = &self.splits[idx];
-            let next_element = &self.splits[idx + 1];
+        for idx in 0..self.panes.len() - 1 {
+            let element = &self.panes[idx];
+            let next_element = &self.panes[idx + 1];
 
             match element {
                 Splits::Up | Splits::Down | Splits::Right | Splits::Left => match next_element {
@@ -243,10 +199,7 @@ mod tests {
     #[test]
     fn general_test() {
         let mut layout = Layout::new(10, 10);
-        let layout = layout
-            .vsplit(2, &[None, None])
-            .left()
-            .split(3, &[None, None, None]);
+        let layout = layout.vsplit([None, None]).left().split([None, None]);
         assert_eq!((), layout.check().unwrap())
     }
 }

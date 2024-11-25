@@ -54,22 +54,18 @@ fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
         for text in &texts {
             if get_column(&text) != 0 {
                 res.push(match text {
-                    TextType::SubWindow(sub_window) => {
-                        TextType::SubWindow(SubWindow::new(
-                            sub_window.window.clone(),
-                            sub_window.start_line_number,
-                            sub_window.column - 1,
-                        ))
-                    }
-                    TextType::Text(text) => {
-                        TextType::Text(Text {
-                            text: text.text.clone(),
-                            line_number: text.line_number,
-                            column: text.column - 1,
-                            style: text.style,
-                            no_of_ansi: 1,
-                        })
-                    }
+                    TextType::SubWindow(sub_window) => TextType::SubWindow(SubWindow::new(
+                        sub_window.window.clone(),
+                        sub_window.start_line_number,
+                        sub_window.column - 1,
+                    )),
+                    TextType::Text(text) => TextType::Text(Text {
+                        text: text.text.clone(),
+                        line_number: text.line_number,
+                        column: text.column - 1,
+                        style: text.style,
+                        no_of_ansi: 1,
+                    }),
                 });
             } else {
                 return None;
@@ -108,13 +104,11 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
         if (is_empty? as u32) < idx.0 {
             // BUG: They can be a bug if two texts are adjecent to each other with no spaces.
             res.extend(idx.1.clone().iter().map(|x| match x {
-                TextType::SubWindow(sub_window) => {
-                    TextType::SubWindow(SubWindow::new(
-                        sub_window.window.clone(),
-                        sub_window.start_line_number - 1,
-                        sub_window.column,
-                    ))
-                }
+                TextType::SubWindow(sub_window) => TextType::SubWindow(SubWindow::new(
+                    sub_window.window.clone(),
+                    sub_window.start_line_number - 1,
+                    sub_window.column,
+                )),
                 TextType::Text(text) => TextType::Text(Text {
                     text: text.text.clone(),
                     line_number: text.line_number - 1,
