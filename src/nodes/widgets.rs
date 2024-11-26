@@ -1,7 +1,8 @@
 use crate::renderer::*;
 use crate::storage::Node;
+use crate::nodes::flex;
 
-pub trait Widget: Node + std::fmt::Debug {
+pub trait Widget: Node + std::fmt::Debug + flex::Flex {
     fn render(&self) -> Vec<Text>;
 }
 

@@ -125,7 +125,11 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
     Some(res)
 }
 
-impl Window {
+pub trait Flex {
+    fn flex(&self, width: u32, height: u32) -> Option<Window>;
+}
+
+impl Flex for Window {
     fn flex(&self, width: u32, height: u32) -> Option<Window> {
         let width_dif = std::cmp::max(0, self.width - width);
         let height_dif = std::cmp::max(0, self.height - height);
@@ -146,9 +150,7 @@ impl Window {
 }
 #[cfg(test)]
 mod tests {
-
     use super::*;
-    use crate::renderer::*;
 
     #[test]
     fn flex_test_no_compression() {

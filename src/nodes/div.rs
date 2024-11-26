@@ -1,6 +1,7 @@
 use super::widgets;
 use crate::renderer::*;
 use crate::storage::Node;
+use crate::nodes::flex;
 use node_proc_macro::Node;
 
 #[derive(Debug, Node)]
@@ -41,7 +42,14 @@ impl Div {
         Self {
             texts,
             type_of_border,
+
         }
+    }
+}
+
+impl flex::Flex for Div {
+    fn flex(&self, width: u32, height: u32) -> Option<Window> {
+        todo!()
     }
 }
 

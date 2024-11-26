@@ -1,4 +1,5 @@
 #![feature(thin_box)]
+#![allow(dead_code)] // This will bite me later. 25-11-24
 
 mod errors;
 mod nodes;
