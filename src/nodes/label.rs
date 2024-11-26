@@ -1,6 +1,6 @@
 use super::super::style::TextStyle;
 use super::widgets;
-use crate::renderer::*;
+use crate::renderer::{self, *};
 use crate::storage::Node;
 use node_proc_macro::Node;
 #[derive(Node, Clone)]
@@ -34,15 +34,39 @@ impl Label {
     }
 }
 
+impl crate::nodes::flex::Flex for Label {
+    fn flex(&self, width: u32, height: u32) -> Option<Window> {
+        if self.text.len() as u32 >= width {
+            return None;
+        }
+
+        if height == 0 {
+            return None;
+        }
+
+        Some(Window {
+            texts: vec![TextType::Text(Text::new(&self.text, 1, 0, &self.style))],
+            width,
+            height,
+            type_of_border: TypeOfBorder::NoBorders,
+        })
+    }
+}
+
 impl widgets::Widget for Label {
-    fn render(&self) -> Vec<Text> {
-        vec![Text {
-            text: self.text.clone(),
-            line_number: 1,
-            column: 0,
-            style: self.style,
-            no_of_ansi: 0,
-        }]
+    fn render(&self) -> Window {
+        Window {
+            texts: vec![TextType::Text(Text {
+                text: self.text.clone(),
+                line_number: 1,
+                column: 0,
+                style: self.style,
+                no_of_ansi: 0,
+            })],
+            width: self.text.len() as u32,
+            height: 1,
+            type_of_border: TypeOfBorder::NoBorders,
+        }
     }
 }
 #[cfg(test)]

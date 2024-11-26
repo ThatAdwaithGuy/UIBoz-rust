@@ -1,9 +1,9 @@
+use crate::nodes::flex;
 use crate::renderer::*;
 use crate::storage::Node;
-use crate::nodes::flex;
 
 pub trait Widget: Node + std::fmt::Debug + flex::Flex {
-    fn render(&self) -> Vec<Text>;
+    fn render(&self) -> Window;
 }
 
 pub struct WidgetRenderer {

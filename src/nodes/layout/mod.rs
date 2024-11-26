@@ -12,7 +12,7 @@ impl Layout {
             widgets: HashMap::new(),
         }
     }
-    
+
     fn add_widget(&mut self, widget: impl widgets::Widget + 'static) {
         let max_id = self.widgets.keys().map(|x| *x as i32).max().unwrap_or(-1);
         self.widgets.insert((max_id + 1) as u32, Box::new(widget));
@@ -22,10 +22,7 @@ impl Layout {
     fn render_rect(&self, rect: Rect) -> Option<Window> {
         let widget = &self.widgets.get(&rect.widget_id)?;
         let texts = widget
-            .render()
-            .iter()
-            .map(|x| TextType::Text(x.clone()))
-            .collect::<Vec<TextType>>();
+            .render().texts;
         Some(Window {
             texts,
             width: rect.width,
