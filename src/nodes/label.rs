@@ -61,7 +61,7 @@ impl widgets::Widget for Label {
                 line_number: 1,
                 column: 0,
                 style: self.style,
-                no_of_ansi: 0,
+                no_of_ansi: 1,
             })],
             width: self.text.len() as u32,
             height: 1,

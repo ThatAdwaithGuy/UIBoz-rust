@@ -4,7 +4,7 @@ use super::sub_win::{self, NestedWindow, SubWindow, TextType};
 use super::window_renderer;
 use super::window_renderer::TypeOfBorder;
 use errors::TextError;
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Window {
     pub texts: Vec<TextType>,
     pub width: u32,
@@ -13,19 +13,6 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(
-        texts: Vec<TextType>,
-        width: u32,
-        height: u32,
-        type_of_border: TypeOfBorder,
-    ) -> Self {
-        Self {
-            texts,
-            width,
-            height,
-            type_of_border,
-        }
-    }
     pub fn render(&self) -> Result<String, TextError> {
         let nested_window = NestedWindow::new(
             self.texts.clone(),
@@ -42,19 +29,5 @@ impl Window {
             self.type_of_border,
         );
         Ok(window.render(false)?)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[ignore = "Stuff"]
-    #[test]
-    fn stuff() {
-        let texts: Vec<TextType> = vec![];
-        let window = Window::new(texts, 12, 56, TypeOfBorder::CurvedBorders);
-        if let Ok(string) = window.render() {
-            println!("{}", string);
-        }
     }
 }

@@ -1,4 +1,3 @@
-#![feature(thin_box)]
 #![allow(dead_code)] // This will bite me later. 25-11-24
 
 mod errors;
@@ -58,12 +57,12 @@ impl ViewNode for View {
         let count = storage.get_mut::<Counter>()?;
         dbg!(count.0);
 
-        let bx = Window::new(
-            vec![TextType::Text(Text::new(&count.0.to_string(), 1, 1, &[]))],
-            1,
-            1,
-            TypeOfBorder::CurvedBorders,
-        );
+        let bx = Window {
+            texts: vec![TextType::Text(Text::new(&count.0.to_string(), 1, 1, &[]))],
+            width: 1,
+            height: 1,
+            type_of_border: TypeOfBorder::CurvedBorders,
+        };
 
         Some(format!("\x1b[2J\x1b[H{}\n", count.0))
     }
