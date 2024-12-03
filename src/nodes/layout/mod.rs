@@ -38,7 +38,7 @@ impl Layout {
                 right,
                 height,
                 width,
-            } => {}
+            } => todo!(),
             Split::Horizontal {
                 left,
                 right,
