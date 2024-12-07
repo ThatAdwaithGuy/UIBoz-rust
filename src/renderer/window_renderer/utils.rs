@@ -59,14 +59,11 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
     let mut texts = unsorted_texts;
     texts.sort_by_key(|x| x.line_number);
     texts.sort_by(|a, b| {
-        // First, compare by the 'first' field
         let first_cmp = a.line_number.cmp(&b.line_number);
 
         if first_cmp == Ordering::Equal {
-            // If 'first' fields are equal, compare by 'second' field
             a.column.cmp(&b.column)
         } else {
-            // Otherwise, use the result of comparing 'first' fields
             first_cmp
         }
     });
@@ -88,20 +85,39 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     let result = match state {
                         None => current.column,
                         Some(prev) => {
-                            //dbg!(
-                            //    &prev,
-                            //    current.column,
-                            //    prev.column
-                            //        + (prev.text.chars().collect::<Vec<char>>().len()
-                            //            - ((prev.text.matches("\x1b").count() / 8) as u32 * 78)
-                            //                as usize) as u32
-                            //);
-
-                            current.column
-                                - (prev.column
+                            dbg!(
+                                &prev,
+                                current.column,
+                                prev.column
                                     + (prev.text.chars().collect::<Vec<char>>().len()
                                         - ((prev.text.matches("\x1b").count() / 8) as u32 * 78)
-                                            as usize) as u32)
+                                            as usize) as u32
+                            );
+                            println!();
+
+                            println!();
+                            println!();
+                            println!();
+
+                            current
+                                .column
+                                .checked_sub(
+                                    prev.column
+                                        + (prev
+                                            .text
+                                            .chars()
+                                            .collect::<Vec<char>>()
+                                            .len()
+                                            .checked_sub(
+                                                ((prev.text.matches("\x1b").count() / 8) as u32
+                                                    * 78)
+                                                    as usize,
+                                            )
+                                            .expect("WRONG")
+                                            as usize)
+                                            as u32,
+                                )
+                                .expect(&format!("curr_column: {:#?}", current.column))
                         }
                     };
                     *state = Some(current.clone());
@@ -220,7 +236,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     }
                 }
             }
-            let b = Text {
+            Text {
                 text: x.iter().map(|y| y.0.text.clone()).join(""),
                 line_number: x[0].0.line_number,
                 column: 0,
@@ -231,9 +247,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                 },
                 no_of_ansi: 0,
             }
-            .no_of_ansi(no_of_ansi as u32);
-
-            b
+            .no_of_ansi(no_of_ansi as u32)
         })
         .collect())
 }

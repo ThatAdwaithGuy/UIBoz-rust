@@ -1,5 +1,5 @@
 use super::widgets;
-use crate::{renderer::Window, TextType};
+use crate::{nodes::flex::Flex, renderer::Window, SubWindow, TextType};
 use std::collections::HashMap;
 
 pub struct Layout {
@@ -38,13 +38,99 @@ impl Layout {
                 right,
                 height,
                 width,
-            } => todo!(),
+            } => {
+                let mut texts = Vec::new();
+                let left_win = match left {
+                    Some(l) => {
+                        let rect = self.render_rect(l)?;
+                        rect.flex(width / 2, height)?
+                    }
+                    None => Window {
+                        texts: Vec::new(),
+                        width: width / 2,
+                        height,
+                        type_of_border: crate::TypeOfBorder::NoBorders,
+                    },
+                };
+
+                let right_win = match right {
+                    Some(rect) => {
+                        let rect = self.render_rect(rect)?;
+                        rect.flex(width / 2, height)?
+                    }
+                    None => Window {
+                        texts: Vec::new(),
+                        width: width / 2,
+                        height,
+                        type_of_border: crate::TypeOfBorder::NoBorders,
+                    },
+                };
+
+                dbg!(&right_win, &left_win);
+
+                let left_sub_win = SubWindow::new(left_win.into(), 1, 0);
+                let right_sub_win = SubWindow::new(right_win.into(), 1, (width / 2));
+                texts.push(TextType::SubWindow(right_sub_win));
+                texts.push(TextType::SubWindow(left_sub_win));
+
+                Some(Window {
+                    texts,
+                    width,
+                    height,
+                    type_of_border: crate::TypeOfBorder::NoBorders,
+                })
+            }
+
             Split::Horizontal {
                 left,
                 right,
                 height,
                 width,
-            } => todo!(),
+            } => {
+                let mut texts = Vec::new();
+                let left_win = match left {
+                    Some(l) => {
+                        let mut rect = self.render_rect(l)?;
+                        rect.width = width;
+                        rect.height = height / 2;
+                        rect
+                    }
+                    None => Window {
+                        texts: Vec::new(),
+                        width,
+                        height: height / 2,
+                        type_of_border: crate::TypeOfBorder::NoBorders,
+                    },
+                };
+                let left_sub_win = SubWindow::new(left_win.into(), 1, 0);
+
+                let right_win = match right {
+                    Some(rect) => {
+                        let mut rect = self.render_rect(rect)?;
+                        rect.width = width;
+                        rect.height = height / 2;
+                        rect
+                    }
+                    None => Window {
+                        texts: Vec::new(),
+                        width,
+                        height: height / 2,
+                        type_of_border: crate::TypeOfBorder::NoBorders,
+                    },
+                };
+                let right_sub_win = SubWindow::new(right_win.into(), (height / 2) + 1, width);
+
+                dbg!(&right_sub_win, &left_sub_win);
+                texts.push(TextType::SubWindow(right_sub_win));
+                texts.push(TextType::SubWindow(left_sub_win));
+
+                Some(Window {
+                    texts,
+                    width,
+                    height,
+                    type_of_border: crate::TypeOfBorder::NoBorders,
+                })
+            }
         }
     }
 }
@@ -76,7 +162,7 @@ enum Split {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{nodes::label::Label, Text};
+    use crate::{nodes::label::Label, Text, TypeOfBorder};
     #[test]
     fn rect_test_neg() {
         let rect = Rect {
@@ -106,5 +192,59 @@ mod tests {
             type_of_border: crate::TypeOfBorder::NoBorders,
         };
         assert_eq!(rend_rect, win);
+    }
+
+    #[test]
+    fn mine_test() {
+        let rect = Rect {
+            height: 1,
+            width: 3,
+            widget_id: 0,
+        };
+
+        let bect = Rect {
+            height: 1,
+            width: 3,
+            widget_id: 1,
+        };
+
+        let label = Label::new("Hi", &[]);
+        let mut layout = Layout::new();
+
+        layout.add_widget(label.clone());
+        layout.add_widget(label.clone());
+
+        let split = Split::Veritcal {
+            left: Some(rect),
+            right: Some(bect),
+            height: 12,
+            width: 56,
+        };
+
+        let mut texts: Vec<TextType> = Vec::new();
+        texts.push(TextType::SubWindow(SubWindow::new(
+            layout.render_rect(rect).unwrap().into(),
+            1,
+            0,
+        )));
+
+        texts.push(TextType::SubWindow(SubWindow::new(
+            {
+                let mut win = layout.render_rect(bect).unwrap().into();
+                dbg!(&win);
+
+                win
+            },
+            1,
+            0,
+        )));
+
+        let win = Window {
+            texts,
+            width: 56,
+            height: 12,
+            type_of_border: TypeOfBorder::CurvedBorders,
+        };
+        println!("{}", win.render().unwrap());
     }
 }
