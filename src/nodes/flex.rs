@@ -131,8 +131,8 @@ pub trait Flex {
 
 impl Flex for Window {
     fn flex(&self, width: u32, height: u32) -> Option<Window> {
-        let width_dif = std::cmp::max(0, self.width - width);
-        let height_dif = std::cmp::max(0, self.height - height);
+        let width_dif = std::cmp::max(0, self.width.checked_sub(width).unwrap_or(0));
+        let height_dif = std::cmp::max(0, self.height.checked_sub(height).unwrap_or(0));
         let mut res = self.texts.clone();
         for _ in 0..width_dif {
             res = shorten_width(res, width)?;
