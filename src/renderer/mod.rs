@@ -1,3 +1,4 @@
+mod rewrite;
 mod sub_win;
 mod window;
 mod window_renderer;
