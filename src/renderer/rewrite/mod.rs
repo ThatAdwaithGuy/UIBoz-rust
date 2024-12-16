@@ -1,9 +1,11 @@
-use std::{collections::HashSet, ops::Range};
+use std::ops::Range;
 
 use itertools::Itertools;
-
-use crate::{errors::TextError, style::{self, TextStyle}};
-
+mod util;
+use crate::{
+    errors::TextError,
+    style::{self, TextStyle},
+};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TypeOfBorder {
@@ -42,12 +44,17 @@ impl Text {
         });
     }
 
-    fn new_unchecked(text: &str, line_number: u32, column: u32, style: &[style::TextStyle]) -> Self {
-        if style.len() <= 12 {
-            panic!("Style is out of bounds");
+    fn new_unchecked(
+        text: &str,
+        line_number: u32,
+        column: u32,
+        style: &[style::TextStyle],
+    ) -> Self {
+        if style.len() <= 12 && style.len() != 0 {
+            panic!("Style is out of bounds, len: {}", style.len());
         }
         let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Bold(false); 12];
-        if new_style.len() == 12 {
+        if style.len() == 12 {
             new_style = style.try_into().expect("Rebounds error");
         } else {
             new_style[..style.len()].copy_from_slice(style);
@@ -63,7 +70,7 @@ impl Text {
     }
 
     fn len(&self) -> usize {
-        self.text.chars().try_len().unwrap_or(0)
+        self.text.chars().collect::<Vec<char>>().len()
     }
 
     pub fn text(&self) -> &str {
@@ -73,14 +80,13 @@ impl Text {
     pub fn line_number(&self) -> u32 {
         self.line_number
     }
-pub fn column(&self) -> u32 {
+    pub fn column(&self) -> u32 {
         self.column
     }
 
     pub fn style(&self) -> [TextStyle; 12] {
         self.style
     }
-
 }
 
 #[derive(Clone, Debug)]
@@ -92,25 +98,23 @@ pub(super) struct NonNestableWindow {
 }
 
 impl NonNestableWindow {
+    // TODO: Complete this function
     fn check_errors(&self) -> Result<(), TextError> {
-        self.texts.iter().chunk_by(|x| x.line_number()).into_iter().map(|x| x.1.into_iter()).map(|x| x.map(|y| dbg!(y)));
-        
+        for text in self
+            .texts
+            .iter()
+            .chunk_by(|x| x.line_number())
+            .into_iter()
+            .map(|x| {
+                x.1.map(|t| (t.column())..(t.column() + (t.len() as u32)))
+                    .collect::<Vec<Range<u32>>>()
+            })
+        {
+            dbg!(text);
+        }
+
         Ok(())
     }
 }
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn rewrite_test() {
-        let mut texts: Vec<Text> = Vec::new();
-        texts.push(Text::new_unchecked("Hi", 1, 0, &[]));
-        let window = NonNestableWindow {
-            texts,
-            height: 12,
-            width: 56, 
-            type_of_border: TypeOfBorder::CurvedBorders,
-        };
-        window.check_errors().expect("HAHA");
-    }
-}   
+mod tests {}
