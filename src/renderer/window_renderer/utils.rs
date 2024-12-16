@@ -93,11 +93,6 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                                         - ((prev.text.matches("\x1b").count() / 8) as u32 * 78)
                                             as usize) as u32
                             );
-                            println!();
-
-                            println!();
-                            println!();
-                            println!();
 
                             current
                                 .column

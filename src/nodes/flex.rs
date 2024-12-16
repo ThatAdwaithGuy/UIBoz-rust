@@ -1,5 +1,4 @@
 use crate::renderer::*;
-use crate::renderer::*;
 
 fn get_line_number(text_type: &TextType) -> u32 {
     match text_type {
