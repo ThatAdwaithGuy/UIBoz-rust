@@ -68,10 +68,17 @@ impl Text {
             no_of_ansi: 1,
         };
     }
+    
 
-    fn len(&self) -> usize {
+    // With ANSI codes, normal text.len() is wrong thats why this.
+    pub fn len(&self) -> usize {
         self.text.chars().collect::<Vec<char>>().len()
     }
+    // Length of the absolute text, without the style
+    pub(super) fn text_len(&self) -> usize {
+        self.text().matches("\x1b").count() / 8
+    }
+
 
     pub fn text(&self) -> &str {
         &self.text
