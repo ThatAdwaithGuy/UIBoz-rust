@@ -36,8 +36,22 @@ fn apply_style(texts: &Vec<Text>) -> Vec<Text> {
         .collect()
 }
 // IMPORTANT: texts should all be in one line and texts should be sorted by column
-fn column_pad(texts: &Vec<Text>) -> () {
-    let relative_columns = texts.windows(2).map(|x| dbg!(x));
+// or else this will panic
+fn column_pad(texts: &Vec<Text>) -> Vec<Text> {
+    
+    let relative_texts = texts.windows(2).map(|x| {
+        let first = &x[0];
+        // FIXME: I'm too lazy now. Please remove this clone
+        let second = &x[1];
+        let first_length = first.text_len() as u32 + first.column();
+
+         //let second = Text::new_unchecked(second.text(), second.line_number(), second.column().column.checked_sub(first_length).unwrap(), second.style());
+        [first, &second]
+    }).flatten();
+
+    dbg!(relative_texts);
+    
+    vec![]
 }
 
 #[cfg(test)]
@@ -51,6 +65,6 @@ mod test {
             Text::new_unchecked("Hi", 1, 8, &[]),
             Text::new_unchecked("Hi", 1, 10, &[]),
         ];
-        dbg!(apply_style(&texts));
+        dbg!(column_pad(&texts));
     }
 }
