@@ -28,7 +28,7 @@ impl Text {
         if style.len() <= 12 {
             return None;
         }
-        let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Bold(false); 12];
+        let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
         if new_style.len() == 12 {
             new_style = style.try_into().ok()?;
         } else {
@@ -53,7 +53,7 @@ impl Text {
         if style.len() <= 12 && style.len() != 0 {
             panic!("Style is out of bounds, len: {}", style.len());
         }
-        let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Bold(false); 12];
+        let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
         if style.len() == 12 {
             new_style = style.try_into().expect("Rebounds error");
         } else {

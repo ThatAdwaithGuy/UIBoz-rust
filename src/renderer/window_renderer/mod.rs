@@ -26,7 +26,7 @@ impl std::fmt::Debug for Text {
 }
 
 pub fn empty_styles() -> [style::TextStyle; 12] {
-    [style::TextStyle::Bold(false); 12]
+    [style::TextStyle::Blank; 12]
 }
 
 impl Text {
@@ -35,7 +35,7 @@ impl Text {
             style.len() <= 12,
             "The styles argument execded its limit of 12."
         );
-        let mut formatted_style = [style::TextStyle::Bold(false); 12];
+        let mut formatted_style = [style::TextStyle::Blank; 12];
         if style.len() == 12 {
             formatted_style = style.try_into().unwrap();
         } else {
@@ -155,10 +155,10 @@ impl NonNestableWindow {
                     let mut right_char = "│".to_string();
                     for style in text.style {
                         match style {
-                            style::TextStyle::LeftSideConnect(true) => {
+                            style::TextStyle::LeftSideConnect => {
                                 left_char = "├".to_string();
                             }
-                            style::TextStyle::RightSideConnect(true) => {
+                            style::TextStyle::RightSideConnect => {
                                 right_char = "┤".to_string();
                             }
 

@@ -93,7 +93,7 @@ impl ControllerNode for Update {
 }
 
 fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
-    let mut wow = [style::TextStyle::Bold(false); 12];
+    let mut wow = [style::TextStyle::Blank; 12];
     wow[..slice.len()].copy_from_slice(slice);
     wow
 }
