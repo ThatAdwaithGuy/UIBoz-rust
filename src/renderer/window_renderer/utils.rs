@@ -125,7 +125,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                                 style.len() <= 12,
                                 "The styles argument execded its limit of 12."
                             );
-                            let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                            let mut formatted_style = [style::TextStyle::Blank; 12];
                             if style.len() == 12 {
                                 formatted_style = style.try_into().unwrap();
                             } else {
@@ -166,7 +166,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                                 style.len() <= 12,
                                 "The styles argument execded its limit of 12."
                             );
-                            let mut formatted_style = [style::TextStyle::Bold(false); 12];
+                            let mut formatted_style = [style::TextStyle::Blank; 12];
                             if style.len() == 12 {
                                 formatted_style = style.try_into().unwrap();
                             } else {
@@ -195,8 +195,8 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                 x.len() as u32
             };
             let mut styles: [style::TextStyle; 4] = [
-                style::TextStyle::RightSideConnect(false),
-                style::TextStyle::LeftSideConnect(false),
+                style::TextStyle::Blank,
+                style::TextStyle::Blank,
                 style::TextStyle::UpSideConnect(-1),
                 style::TextStyle::DownSideConnect(-1),
             ];
@@ -205,11 +205,11 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                 let column = text.0.column as i32;
                 for s in text.0.style {
                     match s {
-                        style::TextStyle::RightSideConnect(_) => {
-                            styles[0] = style::TextStyle::RightSideConnect(true);
+                        style::TextStyle::RightSideConnect => {
+                            styles[0] = style::TextStyle::RightSideConnect;
                         }
-                        style::TextStyle::LeftSideConnect(_) => {
-                            styles[1] = style::TextStyle::LeftSideConnect(false);
+                        style::TextStyle::LeftSideConnect => {
+                            styles[1] = style::TextStyle::LeftSideConnect;
                         }
                         style::TextStyle::UpSideConnect(_) => {
                             styles[2] = style::TextStyle::UpSideConnect(column);
@@ -221,8 +221,8 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                     }
                     if styles
                         == [
-                            style::TextStyle::RightSideConnect(false),
-                            style::TextStyle::LeftSideConnect(false),
+                            style::TextStyle::RightSideConnect,
+                            style::TextStyle::LeftSideConnect,
                             style::TextStyle::UpSideConnect(-1),
                             style::TextStyle::DownSideConnect(-1),
                         ]
@@ -236,7 +236,7 @@ pub fn handle(unsorted_texts: Vec<Text>) -> Result<Vec<Text>, TextError> {
                 line_number: x[0].0.line_number,
                 column: 0,
                 style: {
-                    let mut arr = [style::TextStyle::Bold(false); 12];
+                    let mut arr = [style::TextStyle::Blank; 12];
                     arr[..4].copy_from_slice(&styles);
                     arr
                 },

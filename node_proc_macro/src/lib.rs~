@@ -1,0 +1,35 @@
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, DeriveInput};
+
+#[proc_macro_attribute]
+pub fn style(_args: TokenStream ,input: TokenStream) -> TokenStream {
+    let mut input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+
+    let variants = match input.data {
+        syn::Data::Enum(data_enum) => {data_enum.variants}
+        _ => panic!("The Style derive enum is only for enums and not else."),
+    };
+
+    let expanded = quote! {
+        impl crate::style::Style for #name {}
+    };
+
+    TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(Node)]
+pub fn node_trait_derive(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+
+    // Generate the implementation
+    let expanded = quote! {
+        impl Node for #name {}
+    };
+
+    // Convert back to token stream and return
+    TokenStream::from(expanded)
+}

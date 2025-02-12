@@ -21,7 +21,7 @@ impl Label {
             style.len() <= 12,
             "The styles argument execded its limit of 12."
         );
-        let mut formatted_style = [TextStyle::Bold(false); 12];
+        let mut formatted_style = [TextStyle::Blank; 12];
         if style.len() == 12 {
             formatted_style = style.try_into().unwrap();
         } else {

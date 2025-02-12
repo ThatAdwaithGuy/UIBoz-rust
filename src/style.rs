@@ -1,7 +1,12 @@
-use std::rc::Rc;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+
+pub trait Style: Default {}
+pub type StyleBuilder<S: Style, const SIZE: usize> = [S; SIZE];
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum Colors {
+    #[default]
     Blank,
     Red,
     Green,
@@ -24,24 +29,25 @@ pub enum Colors {
 pub enum TextStyle {
     ForeColor(Colors),
     BackGroundColor(Colors),
-    Bold(bool),
-    Dim(bool),
-    Underline(bool),
-    Blink(bool),
-    Reverse(bool),
-    Hide(bool),
-    RightSideConnect(bool),
-    LeftSideConnect(bool),
+    Blank,
+    Bold,
+    Dim,
+    Underline,
+    Blink,
+    Reverse,
+    Hide,
     // What is the use of the number. I wrote this and forgot. :)
     // Wait, is it column
     UpSideConnect(i32),
     DownSideConnect(i32),
+    RightSideConnect,
+    LeftSideConnect,
 }
 
 // BOILERPLATE
 
-pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
-    let mut copy_lst = lst.clone();
+pub fn parse_text_style(lst: Vec< TextStyle >) -> String {
+    let  copy_lst = lst.clone();
 
     let mut filter_lst: Vec<TextStyle> = Vec::new();
     let mut output_string: String = r#""#.to_string();
@@ -75,49 +81,49 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
                 is_back_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Bold(_) => {
+            TextStyle::Bold => {
                 if is_bold_seen {
                     continue;
                 }
                 is_bold_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Dim(_) => {
+            TextStyle::Dim => {
                 if is_dim_seen {
                     continue;
                 }
                 is_dim_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Underline(_) => {
+            TextStyle::Underline => {
                 if is_underline_seen {
                     continue;
                 }
                 is_underline_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Blink(_) => {
+            TextStyle::Blink => {
                 if is_blink_seen {
                     continue;
                 }
                 is_blink_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Reverse(_) => {
+            TextStyle::Reverse => {
                 if is_reverse_seen {
                     continue;
                 }
                 is_reverse_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Hide(_) => {
+            TextStyle::Hide => {
                 if is_hide_seen {
                     continue;
                 }
                 is_hide_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::RightSideConnect(_) => {
+            TextStyle::RightSideConnect => {
                 if is_right_seen {
                     continue;
                 }
@@ -126,7 +132,7 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
                 filter_lst.push(*i);
             }
 
-            TextStyle::LeftSideConnect(_) => {
+            TextStyle::LeftSideConnect => {
                 if is_left_seen {
                     continue;
                 }
@@ -152,9 +158,11 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
                 is_down_seen = true;
                 filter_lst.push(*i);
             }
+            TextStyle::Blank => {}, 
+            
         }
     }
-
+    let mut count = 0;
     if !is_fore_seen {
         filter_lst.push(TextStyle::ForeColor(Colors::Blank));
     }
@@ -164,35 +172,35 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
     }
 
     if !is_bold_seen {
-        filter_lst.push(TextStyle::Bold(false));
+        count += 1;
     }
 
     if !is_dim_seen {
-        filter_lst.push(TextStyle::Dim(false));
+        count += 1;
     }
 
     if !is_underline_seen {
-        filter_lst.push(TextStyle::Underline(false));
+        count += 1;
     }
 
     if !is_blink_seen {
-        filter_lst.push(TextStyle::Blink(false));
+        count += 1;
     }
 
     if !is_reverse_seen {
-        filter_lst.push(TextStyle::Reverse(false));
+        count += 1;
     }
 
     if !is_hide_seen {
-        filter_lst.push(TextStyle::Hide(false));
+        count += 1;
     }
 
     if !is_right_seen {
-        filter_lst.push(TextStyle::RightSideConnect(false));
+        count += 1;
     }
 
     if !is_left_seen {
-        filter_lst.push(TextStyle::LeftSideConnect(false));
+        count += 1;
     }
 
     if !is_up_seen {
@@ -252,21 +260,26 @@ pub fn parse_text_style(lst: Rc<[TextStyle]>) -> String {
                     Colors::Blank => output_string.push_str("\x1b[0000000000000022m"),
                 }
             }
-            TextStyle::Bold(true) => output_string.push_str("\x1b[001m"),
-            TextStyle::Dim(true) => output_string.push_str("\x1b[002m"), // Dim
-            TextStyle::Underline(true) => output_string.push_str("\x1b[004m"), // Underline
-            TextStyle::Blink(true) => output_string.push_str("\x1b[005m"), // Blink
-            TextStyle::Reverse(true) => output_string.push_str("\x1b[007m"), // Reverse
-            TextStyle::Hide(true) => output_string.push_str("\x1b[008m"),
+            TextStyle::Bold => output_string.push_str("\x1b[001m"),
+            TextStyle::Dim => output_string.push_str("\x1b[002m"), // Dim
+            TextStyle::Underline => output_string.push_str("\x1b[004m"), // Underline
+            TextStyle::Blink => output_string.push_str("\x1b[005m"), // Blink
+            TextStyle::Reverse => output_string.push_str("\x1b[007m"), // Reverse
+            TextStyle::Hide => output_string.push_str("\x1b[008m"),
 
-            TextStyle::Bold(false) => output_string.push_str("\x1b[022m"), // Bold
-            TextStyle::Dim(false) => output_string.push_str("\x1b[022m"),  // Dim
-            TextStyle::Underline(false) => output_string.push_str("\x1b[022m"), // Underline
-            TextStyle::Blink(false) => output_string.push_str("\x1b[022m"), // Blink
-            TextStyle::Reverse(false) => output_string.push_str("\x1b[022m"), // Reverse
-            TextStyle::Hide(false) => output_string.push_str("\x1b[022m"),
             _ => {}
+        }
+
+        for _ in 0..count {
+            output_string.push_str("\x1b[022m");
         }
     }
     output_string
+}
+#[cfg(test)]
+mod test {
+    #[test]
+    fn super_test() {
+        todo!();
+    }
 }
