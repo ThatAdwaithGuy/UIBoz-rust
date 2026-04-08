@@ -51,7 +51,7 @@ impl fmt::Debug for Text {
 
 impl Text {
     fn new(text: &str, line_number: u32, column: u32, style: &[style::TextStyle]) -> Option<Self> {
-        if style.len() <= 12 {
+        if style.len() > 12 && style.len() != 0 {
             return None;
         }
         let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
@@ -76,7 +76,7 @@ impl Text {
         column: u32,
         style: &[style::TextStyle],
     ) -> Self {
-        if style.len() <= 12 && style.len() != 0 {
+        if style.len() > 12 && style.len() != 0 {
             panic!("Style is out of bounds, len: {}", style.len());
         }
         let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
