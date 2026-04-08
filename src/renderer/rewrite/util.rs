@@ -7,7 +7,7 @@ use super::Text;
 // Chunks the input text by line number.
 // each inner vector's element have the same line number
 // and also sorts the inner vector by column
-fn chunk_texts(texts: &Vec<Text>) -> Vec<Vec<&Text>> {
+pub fn chunk_texts(texts: &Vec<Text>) -> Vec<Vec<&Text>> {
     texts
         .iter()
         .chunk_by(|x| x.line_number())
@@ -24,7 +24,7 @@ fn chunk_texts(texts: &Vec<Text>) -> Vec<Vec<&Text>> {
 }
 
 // Applies style and proper formatting to each text.
-fn apply_style(texts: &Vec<Text>) -> Vec<Text> {
+pub fn apply_style(texts: &Vec<Text>) -> Vec<Text> {
     texts
         .iter()
         .map(|x| {
@@ -35,22 +35,48 @@ fn apply_style(texts: &Vec<Text>) -> Vec<Text> {
         })
         .collect()
 }
+// The given texts should all be in one line, this should be used after find_padding_size
+pub fn apply_padding_size_and_combine(line: &Vec<Text>) -> (String, usize) {
+    if line.len() == 0 {
+        panic!("Line is empty! {:#?}", line);
+    }
+    let applied_padding = line.iter().map(|text| {
+        Text::new_unchecked(
+            &format!("{}{}", " ".repeat(text.column as usize), text.text),
+            text.line_number,
+            0,
+            &[],
+        )
+    });
+
+    let join = applied_padding.map(|text| text.text).join("");
+    (join, line[0].line_number as usize)
+}
 
 // IMPORTANT: texts should all be in one line and texts should be sorted by column
 // or else this will panic
-fn column_pad(texts: &Vec<Text>) -> Vec<Text> {
-    
-    let relative_texts = texts.windows(2).map(|x| {
-        let first = &x[0];
-        let second = &x[1];
-        let first_length = first.text_len() as u32 + first.column();
-         //let second = Text::new_unchecked(second.text(), second.line_number(), second.column().column.checked_sub(first_length).unwrap(), second.style());
-        [first, &second]
-    }).flatten().collect_vec();
-
-    dbg!(relative_texts);
-    
-    vec![]
+pub fn find_padding_size(texts: &Vec<&Text>) -> Vec<Text> {
+    if texts.len() == 1 {
+        return texts.iter().map(|x| (*x).clone()).collect();
+    }
+    texts
+        .windows(2)
+        .map(|x| {
+            let first = x[0].clone();
+            let second = &x[1];
+            // dbg!(&first, first.len(), first.text_len());
+            let first_length = first.text_len() as u32 + first.column();
+            // dbg!(&first, second, first_length,);
+            let second = Text::new_unchecked(
+                second.text(),
+                second.line_number(),
+                second.column() - first_length,
+                &second.style(),
+            );
+            [first, second]
+        })
+        .flatten()
+        .collect_vec()
 }
 
 #[cfg(test)]
@@ -65,6 +91,6 @@ mod test {
             Text::new_unchecked("Hi", 1, 8, &[]),
             Text::new_unchecked("Hi", 1, 10, &[]),
         ];
-        dbg!(column_pad(&texts));
+        dbg!(find_padding_size(&texts));
     }
 }

@@ -100,13 +100,17 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
 
 fn main() {
     let mut t = vec![];
-    t.push(TextType::Text(Text::new("Hi", 1, 1, &[])));
+    t.push(rewrite::Text::new_unchecked("Hi", 1, 10, &[]));
+    t.push(rewrite::Text::new_unchecked("Hi", 1, 1, &[]));
+    t.push(rewrite::Text::new_unchecked("Hi", 2, 1, &[]));
+    t.push(rewrite::Text::new_unchecked("Hi", 3, 1, &[]));
+    t.push(rewrite::Text::new_unchecked("Hi world", 3, 10, &[]));
 
-    let win = renderer::Window {
+    let win = rewrite::NonNestableWindow {
         texts: t,
         width: 52,
         height: 12,
-        type_of_border: TypeOfBorder::CurvedBorders,
+        type_of_border: rewrite::TypeOfBorder::CurvedBorders,
     };
     println!("{}", win.render().unwrap());
 }

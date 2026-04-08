@@ -1,9 +1,10 @@
 use core::fmt;
 use itertools::Itertools;
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::format};
 mod util;
 use crate::{
     errors::TextError,
+    renderer::rewrite::util::{apply_padding_size_and_combine, apply_style, find_padding_size},
     style::{self, TextStyle},
 };
 
@@ -50,7 +51,12 @@ impl fmt::Debug for Text {
 }
 
 impl Text {
-    fn new(text: &str, line_number: u32, column: u32, style: &[style::TextStyle]) -> Option<Self> {
+    pub fn new(
+        text: &str,
+        line_number: u32,
+        column: u32,
+        style: &[style::TextStyle],
+    ) -> Option<Self> {
         if style.len() > 12 && style.len() != 0 {
             return None;
         }
@@ -70,14 +76,14 @@ impl Text {
         });
     }
 
-    fn new_unchecked(
+    pub fn new_unchecked(
         text: &str,
         line_number: u32,
         column: u32,
         style: &[style::TextStyle],
     ) -> Self {
         if style.len() > 12 && style.len() != 0 {
-            panic!("Style is out of bounds, len: {}", style.len());
+            panic!("Style is longer than expected, len: {}", style.len());
         }
         let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
         if style.len() == 12 {
@@ -101,8 +107,8 @@ impl Text {
     }
 
     // Length of the absolute text, without the style
-    pub(super) fn text_len(&self) -> usize {
-        self.text().matches("\x1b").count() / 8
+    fn text_len(&self) -> usize {
+        self.text().chars().count() - 234 // 234 is the magic number for the size of the ANSI codes
     }
 
     pub fn text(&self) -> &str {
@@ -122,7 +128,7 @@ impl Text {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct NonNestableWindow {
+pub struct NonNestableWindow {
     pub texts: Vec<Text>,
     pub height: u32,
     pub width: u32,
@@ -130,7 +136,61 @@ pub(super) struct NonNestableWindow {
 }
 
 impl NonNestableWindow {
-    // TODO: Complete this function
+    pub fn render(&self) -> Result<String, TextError> {
+        let applied_style: Vec<Text> = apply_style(&self.texts);
+        let chunks = util::chunk_texts(&applied_style);
+        let padded: Vec<Vec<Text>> = chunks.iter().map(|line| find_padding_size(line)).collect();
+        //        Text ,  Line_no, numbers of texts in the line
+        let combined: Vec<(String, usize, usize)> = padded
+            .iter()
+            .map(|line| {
+                let (string, line_number) = apply_padding_size_and_combine(&line);
+                (string, line_number, line.len())
+            })
+            .collect();
+
+        let mut body: Vec<String> = vec![];
+
+        for line_number in 0..=self.height {
+            if let Some(line) = combined.iter().find(|line| line.1 == line_number as usize) {
+                let total_length = line.0.chars().count();
+                let ansi_length = line.2 * 234;
+                let text_length = total_length - ansi_length;
+                let left_pad: usize = self.width as usize - text_length;
+
+                let body_line = match self.type_of_border {
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                        format!("│{}{}│\n", line.0, " ".repeat(left_pad),)
+                    }
+                    TypeOfBorder::NoBorders => line.0.clone(),
+                };
+
+                body.push(body_line);
+            } else {
+                let line = match self.type_of_border {
+                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                        format!("│{}│\n", " ".repeat(self.width as usize))
+                    }
+                    TypeOfBorder::NoBorders => "\n".to_string(),
+                };
+
+                body.push(line);
+            }
+        }
+        let top_border = match self.type_of_border {
+            TypeOfBorder::NoBorders => "\n".to_string(),
+            TypeOfBorder::CurvedBorders => format!("╭{}╮\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::SquareBorders => format!("┌{}┐\n", "─".repeat(self.width as usize)),
+        };
+        let bottom_border = match self.type_of_border {
+            TypeOfBorder::NoBorders => "\n".to_string(),
+            TypeOfBorder::CurvedBorders => format!("╰{}╯\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::SquareBorders => format!("└{}┘\n", "─".repeat(self.width as usize)),
+        };
+
+        Ok([top_border, body.join(""), bottom_border].join(""))
+    }
+
     fn duplicate_check(&self) -> Result<(), TextError> {
         let binding = self.texts.iter().chunk_by(|x| x.line_number());
         let flat = binding
