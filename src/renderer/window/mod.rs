@@ -44,6 +44,6 @@ impl Window {
             self.width,
             self.type_of_border,
         );
-        Ok(window.render(false)?)
+        Ok(window.render(true)?)
     }
 }

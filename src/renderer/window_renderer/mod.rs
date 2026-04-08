@@ -126,28 +126,26 @@ impl NonNestableWindow {
                     TypeOfBorder::NoBorders => "\n".to_string(),
                 },
                 Some(text) => {
-                    if dbg_mode {
-                        let text_length = text.text.chars().count();
-                        let esc_seq_count = text.text.matches("\x1b").count() / 8;
-                        let visible_length = text_length - (78 * esc_seq_count) as usize;
-                        let _calc = self.width as i32 - visible_length as i32;
+                    let text_length = text.text.chars().count();
+                    let esc_seq_count = text.text.matches("\x1b").count() / 8;
+                    dbg!(text_length, esc_seq_count);
+                    let visible_length =
+                        (text_length - (59 * esc_seq_count)) + text.column as usize;
+                    let calc = self.width as i32 - visible_length as i32;
+                    let calc = self.width as i32 - visible_length as i32 - ((esc_seq_count / 2) as i32 );
 
+                    if dbg_mode {
                         dbg!(
                             text,
                             text_length,
                             self.width,
                             visible_length,
+                            esc_seq_count as isize,
                             78 * esc_seq_count as isize,
-                        _calc,
+                            calc,
                             self.width as i32 - (visible_length as i32)
                         );
                     }
-                    let text_length = text.text.chars().count();
-                    let esc_seq_count = text.text.matches("\x1b").count() / 8;
-                    dbg!(text_length,esc_seq_count);
-                    let visible_length = text_length - (78 * esc_seq_count) as usize;
-                    let calc = self.width as i32 - visible_length as i32;
-
                     if calc < 0 {
                         return Err(TextError::UnhandledError(calc));
                     }
