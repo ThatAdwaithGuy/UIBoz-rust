@@ -98,4 +98,15 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
     wow
 }
 
-fn main() {}
+fn main() {
+    let mut t = vec![];
+    t.push(TextType::Text(Text::new("Hi", 1, 1, &[])));
+
+    let win = renderer::Window {
+        texts: t,
+        width: 52,
+        height: 12,
+        type_of_border: TypeOfBorder::CurvedBorders,
+    };
+    println!("{}", win.render().unwrap());
+}

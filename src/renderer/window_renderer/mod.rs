@@ -132,18 +132,19 @@ impl NonNestableWindow {
                         let visible_length = text_length - (78 * esc_seq_count) as usize;
                         let _calc = self.width as i32 - visible_length as i32;
 
-                        //dbg!(
-                        //    text,
-                        //    text_length,
-                        //    self.width,
-                        //    visible_length,
-                        //    78 * esc_seq_count as isize,
-                        //    calc,
-                        //    self.width as i32 - (visible_length as i32)
-                        //);
+                        dbg!(
+                            text,
+                            text_length,
+                            self.width,
+                            visible_length,
+                            78 * esc_seq_count as isize,
+                        _calc,
+                            self.width as i32 - (visible_length as i32)
+                        );
                     }
                     let text_length = text.text.chars().count();
                     let esc_seq_count = text.text.matches("\x1b").count() / 8;
+                    dbg!(text_length,esc_seq_count);
                     let visible_length = text_length - (78 * esc_seq_count) as usize;
                     let calc = self.width as i32 - visible_length as i32;
 
