@@ -1,9 +1,3 @@
-
-
-pub trait Style: Default {}
-pub type StyleBuilder<S: Style, const SIZE: usize> = [S; SIZE];
-
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum Colors {
     #[default]
@@ -25,6 +19,7 @@ pub enum Colors {
     Gold,
     RGB { red: i32, green: i32, blue: i32 },
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TextStyle {
     ForeColor(Colors),
@@ -43,6 +38,86 @@ pub enum TextStyle {
     RightSideConnect,
     LeftSideConnect,
 }
+
+pub struct TextStyleBuilder {
+    styles: Vec<TextStyle>,
+}
+
+impl TextStyleBuilder {
+    pub fn new() -> Self {
+        Self { styles: Vec::new() }
+    }
+
+    pub fn fore_color(mut self, color: Colors) -> Self {
+        self.styles.push(TextStyle::ForeColor(color));
+        self
+    }
+
+    pub fn background_color(mut self, color: Colors) -> Self {
+        self.styles.push(TextStyle::BackGroundColor(color));
+        self
+    }
+
+    pub fn blank(mut self) -> Self {
+        self.styles.push(TextStyle::Blank);
+        self
+    }
+
+    pub fn bold(mut self) -> Self {
+        self.styles.push(TextStyle::Bold);
+        self
+    }
+
+    pub fn dim(mut self) -> Self {
+        self.styles.push(TextStyle::Dim);
+        self
+    }
+
+    pub fn underline(mut self) -> Self {
+        self.styles.push(TextStyle::Underline);
+        self
+    }
+
+    pub fn blink(mut self) -> Self {
+        self.styles.push(TextStyle::Blink);
+        self
+    }
+
+    pub fn reverse(mut self) -> Self {
+        self.styles.push(TextStyle::Reverse);
+        self
+    }
+
+    pub fn hide(mut self) -> Self {
+        self.styles.push(TextStyle::Hide);
+        self
+    }
+
+    pub fn up_side_connect(mut self, val: i32) -> Self {
+        self.styles.push(TextStyle::UpSideConnect(val));
+        self
+    }
+
+    pub fn down_side_connect(mut self, val: i32) -> Self {
+        self.styles.push(TextStyle::DownSideConnect(val));
+        self
+    }
+
+    pub fn right_side_connect(mut self) -> Self {
+        self.styles.push(TextStyle::RightSideConnect);
+        self
+    }
+
+    pub fn left_side_connect(mut self) -> Self {
+        self.styles.push(TextStyle::LeftSideConnect);
+        self
+    }
+
+    pub fn build(self) -> Vec<TextStyle> {
+        self.styles
+    }
+}
+
 
 // BOILERPLATE
 
