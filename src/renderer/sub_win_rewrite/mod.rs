@@ -68,7 +68,7 @@ impl SubWindow {
             &[],
         ));
 
-        for line_number in self.line_number+1..=(self.window.height + self.line_number-1) {
+        for line_number in self.line_number + 1..=(self.window.height + self.line_number - 1) {
             texts.push(Text::new_unchecked("│", line_number, self.column, &[]));
             texts.push(Text::new_unchecked(
                 "│",
@@ -87,14 +87,13 @@ impl SubWindow {
                     dbg!(&text);
                     texts.push(Text::new_unchecked(
                         &text.text,
-                        text.line_number + self.line_number+1,
-                        text.column + self.column+1,
+                        text.line_number + self.line_number + 1,
+                        text.column + self.column,
                         &text.style,
                     ));
                 }
             }
         }
-        dbg!(&texts);
 
         Ok(texts)
     }

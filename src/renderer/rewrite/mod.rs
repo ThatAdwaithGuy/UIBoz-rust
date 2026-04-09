@@ -107,8 +107,22 @@ impl Text {
     }
 
     // Length of the absolute text, without the style
+    // fn text_len(&self) -> usize {
+    //     self.text().chars().count() - 234 // 234 is the magic number for the size of the ANSI codes
+    // }
+
     fn text_len(&self) -> usize {
-        self.text().chars().count() - 234 // 234 is the magic number for the size of the ANSI codes
+        let mut len = 0;
+        let mut in_escape = false;
+        for c in self.text().chars() {
+            match c {
+                '\x1b' => in_escape = true,
+                'm' if in_escape => in_escape = false,
+                _ if !in_escape => len += 1,
+                _ => {}
+            }
+        }
+        len
     }
 
     pub fn text(&self) -> &str {
@@ -156,7 +170,6 @@ impl NonNestableWindow {
                 (string, line_number, line.len())
             })
             .collect();
-        dbg!(&chunks, &padded, &combined);
         let mut body: Vec<String> = vec![];
 
         for line_number in 0..=self.height {
