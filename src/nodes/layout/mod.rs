@@ -1,5 +1,9 @@
 use super::widgets;
-use crate::{nodes::flex::Flex, renderer::Window, SubWindow, TextType};
+use crate::nodes::flex::Flex;
+use crate::renderer::SubWindow;
+use crate::renderer::TextType;
+use crate::renderer::Window;
+use crate::rewrite::TypeOfBorder;
 use std::collections::HashMap;
 
 pub struct Layout {
@@ -26,7 +30,7 @@ impl Layout {
             texts,
             width: rect.width,
             height: rect.height,
-            type_of_border: crate::TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::NoBorders,
         })
     }
 
@@ -49,7 +53,7 @@ impl Layout {
                         texts: Vec::new(),
                         width: width / 2,
                         height,
-                        type_of_border: crate::TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::NoBorders,
                     },
                 };
 
@@ -62,14 +66,14 @@ impl Layout {
                         texts: Vec::new(),
                         width: width / 2,
                         height,
-                        type_of_border: crate::TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::NoBorders,
                     },
                 };
 
                 dbg!(&right_win, &left_win);
 
                 let left_sub_win = SubWindow::new(left_win.into(), 1, 0);
-                let right_sub_win = SubWindow::new(right_win.into(), 1, (width / 2));
+                let right_sub_win = SubWindow::new(right_win.into(), 1, width / 2);
                 texts.push(TextType::SubWindow(right_sub_win));
                 texts.push(TextType::SubWindow(left_sub_win));
 
@@ -77,7 +81,7 @@ impl Layout {
                     texts,
                     width,
                     height,
-                    type_of_border: crate::TypeOfBorder::NoBorders,
+                    type_of_border: TypeOfBorder::NoBorders,
                 })
             }
 
@@ -99,7 +103,7 @@ impl Layout {
                         texts: Vec::new(),
                         width,
                         height: height / 2,
-                        type_of_border: crate::TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::NoBorders,
                     },
                 };
                 let left_sub_win = SubWindow::new(left_win.into(), 1, 0);
@@ -115,7 +119,7 @@ impl Layout {
                         texts: Vec::new(),
                         width,
                         height: height / 2,
-                        type_of_border: crate::TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::NoBorders,
                     },
                 };
                 let right_sub_win = SubWindow::new(right_win.into(), (height / 2) + 1, width);
@@ -128,7 +132,7 @@ impl Layout {
                     texts,
                     width,
                     height,
-                    type_of_border: crate::TypeOfBorder::NoBorders,
+                    type_of_border: TypeOfBorder::NoBorders,
                 })
             }
         }
@@ -189,7 +193,7 @@ mod tests {
             texts: vec![TextType::Text(Text::new("Hi", 1, 0, &[]))],
             width: 3,
             height: 1,
-            type_of_border: crate::TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::NoBorders,
         };
         assert_eq!(rend_rect, win);
     }

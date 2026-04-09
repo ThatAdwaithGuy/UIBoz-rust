@@ -10,7 +10,7 @@ pub struct Runtime {
 impl Node for Runtime {}
 
 impl Runtime {
-    fn new(storage: Storage<Immutable>) -> Option<Self> {
+    fn new(_storage: Storage<Immutable>) -> Option<Self> {
         Some(Self {
             is_running: true,
             current_page: pages::PageId(0),

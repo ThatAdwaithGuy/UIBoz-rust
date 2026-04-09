@@ -9,10 +9,7 @@ mod style;
 mod world;
 
 use node_proc_macro::Node;
-use nodes::runtime::Runtime;
 use storage::*;
-use world::ControllerNode;
-use world::ViewNode;
 
 #[derive(Clone, Node)]
 struct Counter(u32);
@@ -20,11 +17,8 @@ struct Counter(u32);
 #[derive(Clone, Node)]
 struct Keyboard;
 
-use crossterm::{
-    event::{self, Event, KeyCode},
-    terminal::{disable_raw_mode, enable_raw_mode},
-};
-
+use crate::renderer::{rewrite, sub_win_rewrite};
+/*
 impl Keyboard {
     fn getch(&self) -> std::io::Result<event::KeyEvent> {
         enable_raw_mode()?;
@@ -97,14 +91,15 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
     wow[..slice.len()].copy_from_slice(slice);
     wow
 }
-
+*/
 fn main() {
     let mut t = vec![];
     t.push(rewrite::Text::new_unchecked("Hi", 1, 10, &[]));
     t.push(rewrite::Text::new_unchecked("Hi", 1, 1, &[]));
-    t.push(rewrite::Text::new_unchecked("Hi", 2, 1, &[]));
-    t.push(rewrite::Text::new_unchecked("Hi", 3, 1, &[]));
-    t.push(rewrite::Text::new_unchecked("Hi world", 3, 10, &[]));
+    t.push(rewrite::Text::new_unchecked("Hi", 1, 5, &[]));
+    // t.push(rewrite::Text::new_unchecked("Hi", 2, 1, &[]));
+    // t.push(rewrite::Text::new_unchecked("Hi", 3, 1, &[]));
+    // t.push(rewrite::Text::new_unchecked("Hi world", 3, 10, &[]));
 
     let win = rewrite::NonNestableWindow {
         texts: t,
@@ -112,5 +107,19 @@ fn main() {
         height: 12,
         type_of_border: rewrite::TypeOfBorder::CurvedBorders,
     };
-    println!("{}", win.render().unwrap());
+
+    let sub_window = sub_win_rewrite::SubWindow {
+        window: win.clone().into(),
+        line_number: 1,
+        column: 1,
+    };
+    dbg!(sub_window.convert_to_texts().unwrap());
+    let window = rewrite::NonNestableWindow {
+        texts: sub_window.convert_to_texts().unwrap(),
+        width: 100,
+        height: 24,
+        type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+    };
+    
+    println!("{}", window.render().unwrap());
 }

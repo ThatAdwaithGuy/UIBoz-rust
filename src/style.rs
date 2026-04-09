@@ -17,7 +17,11 @@ pub enum Colors {
     Brown,
     Magenta,
     Gold,
-    RGB { red: i32, green: i32, blue: i32 },
+    RGB {
+        red: i32,
+        green: i32,
+        blue: i32,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -118,11 +122,10 @@ impl TextStyleBuilder {
     }
 }
 
-
 // BOILERPLATE
 
-pub fn parse_text_style(lst: Vec< TextStyle >) -> String {
-    let  copy_lst = lst.clone();
+pub fn parse_text_style(lst: Vec<TextStyle>) -> String {
+    let copy_lst = lst.clone();
 
     let mut filter_lst: Vec<TextStyle> = Vec::new();
     let mut output_string: String = r#""#.to_string();
@@ -233,8 +236,7 @@ pub fn parse_text_style(lst: Vec< TextStyle >) -> String {
                 is_down_seen = true;
                 filter_lst.push(*i);
             }
-            TextStyle::Blank => {}, 
-            
+            TextStyle::Blank => {}
         }
     }
     let mut count = 0;

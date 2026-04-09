@@ -20,7 +20,7 @@ pub struct Storage<S = Immutable> {
 }
 
 impl Storage<Immutable> {
-    pub fn get<T: Node + 'static>(&self) -> Option<Ref<T>> {
+    pub fn get<T: Node + 'static>(&self) -> Option<Ref<'_, T>> {
         let cell = self.nodes.get(&TypeId::of::<T>())?;
 
         // Borrow the RefCell, returning a Ref<Box<dyn Any>>
@@ -30,7 +30,7 @@ impl Storage<Immutable> {
         Ref::filter_map(borrow, |boxed| boxed.downcast_ref::<T>()).ok()
     }
 
-    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<T>> {
+    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<'_, T>> {
         self.nodes.get(&TypeId::of::<T>()).map(|cell| {
             Some(RefMut::map(cell.try_borrow_mut().ok()?, |boxed| {
                 boxed.downcast_mut::<T>().expect("Downcast failed")
@@ -65,7 +65,7 @@ impl Storage<Mutable> {
             .insert(TypeId::of::<T>(), RefCell::new(Box::new(node)));
     }
 
-    pub fn get<T: Node + 'static>(&self) -> Option<Ref<T>> {
+    pub fn get<T: Node + 'static>(&self) -> Option<Ref<'_, T>> {
         let cell = self.nodes.get(&TypeId::of::<T>())?;
 
         let borrow = cell.borrow();
@@ -83,7 +83,7 @@ impl Storage<Mutable> {
             .insert(TypeId::of::<T>(), RefCell::new(Box::new(node)));
     }
 
-    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<T>> {
+    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<'_,T>> {
         // Get the node
         self.nodes.get(&TypeId::of::<T>()).map(|cell| {
             // Pass the borrow checker with this sorcery

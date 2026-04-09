@@ -1,4 +1,4 @@
-use crate::renderer::*;
+use crate::renderer::rewrite::Text;
 
 impl Text {
     pub fn left(&self) -> Self {
