@@ -1,4 +1,3 @@
-pub use crossterm::event::KeyCode;
 use crossterm::{
     event,
     event::Event,

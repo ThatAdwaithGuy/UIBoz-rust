@@ -1,10 +1,10 @@
 use core::fmt;
 use itertools::Itertools;
-use std::{collections::HashSet, fmt::format};
+use std::collections::HashSet;
 mod util;
 use crate::{
     errors::TextError,
-    renderer::rewrite::util::{apply_padding_size_and_combine, apply_style, find_padding_size},
+    renderer::rewrite::util::chunk_texts,
     style::{self, TextStyle},
 };
 
@@ -17,11 +17,11 @@ pub enum TypeOfBorder {
 
 #[derive(Clone, PartialEq)]
 pub struct Text {
-    text: String,
-    line_number: u32,
-    column: u32,
-    style: [TextStyle; 12],
-    no_of_ansi: u32,
+    pub text: String,
+    pub line_number: u32,
+    pub column: u32,
+    pub style: [TextStyle; 12],
+    pub no_of_ansi: u32,
 }
 impl fmt::Debug for Text {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -125,6 +125,11 @@ impl Text {
     pub fn style(&self) -> [TextStyle; 12] {
         self.style
     }
+
+    pub fn no_of_ansi(&mut self, no_of_ansi: u32) -> &mut Self {
+        self.no_of_ansi = no_of_ansi;
+        self
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -137,18 +142,21 @@ pub struct NonNestableWindow {
 
 impl NonNestableWindow {
     pub fn render(&self) -> Result<String, TextError> {
-        let applied_style: Vec<Text> = apply_style(&self.texts);
+        let applied_style: Vec<Text> = util::apply_style(&self.texts);
         let chunks = util::chunk_texts(&applied_style);
-        let padded: Vec<Vec<Text>> = chunks.iter().map(|line| find_padding_size(line)).collect();
+        let padded: Vec<Vec<Text>> = chunks
+            .iter()
+            .map(|line| util::find_padding_size(line))
+            .collect();
         //        Text ,  Line_no, numbers of texts in the line
         let combined: Vec<(String, usize, usize)> = padded
             .iter()
-            .map(|line| {
-                let (string, line_number) = apply_padding_size_and_combine(&line);
+            .map(|line: &Vec<Text>| {
+                let (string, line_number) = util::apply_padding_size_and_combine(&line);
                 (string, line_number, line.len())
             })
             .collect();
-
+        dbg!(&chunks, &padded, &combined);
         let mut body: Vec<String> = vec![];
 
         for line_number in 0..=self.height {
@@ -200,7 +208,6 @@ impl NonNestableWindow {
                     .collect::<Vec<Vec<u32>>>()
             })
             .collect_vec();
-        dbg!(&flat);
         for nums in flat {
             let mut set = HashSet::new();
             for (idx, num) in nums.iter().enumerate() {

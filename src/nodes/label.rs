@@ -1,8 +1,11 @@
 use super::super::style::TextStyle;
 use super::widgets;
-use crate::renderer::{self, *};
+use crate::renderer::rewrite::TypeOfBorder;
+use crate::renderer::rewrite::*;
+use crate::renderer::{TextType, Window};
 use crate::storage::Node;
 use node_proc_macro::Node;
+
 #[derive(Node, Clone)]
 pub struct Label {
     text: String,
@@ -45,7 +48,7 @@ impl crate::nodes::flex::Flex for Label {
         }
 
         Some(Window {
-            texts: vec![TextType::Text(Text::new(&self.text, 1, 0, &self.style))],
+            texts: vec![TextType::Text(Text::new(&self.text, 1, 0, &self.style)?)],
             width,
             height,
             type_of_border: TypeOfBorder::NoBorders,
