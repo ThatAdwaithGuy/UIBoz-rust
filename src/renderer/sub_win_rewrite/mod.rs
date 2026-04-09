@@ -1,9 +1,7 @@
+use crate::renderer::window;
 use crate::{
     errors::TextError,
-    renderer::{
-        rewrite::{self, Text},
-        window,
-    },
+    renderer::rewrite::{self, Text},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -19,11 +17,18 @@ pub enum TextType {
     Text(rewrite::Text),
 }
 
-fn is_nested(text: &Vec<TextType>) -> bool {
+pub fn is_nested(text: &Vec<TextType>) -> bool {
     text.iter().any(|x| match x {
         TextType::Text(_) => false,
         TextType::SubWindow(_) => true,
     })
+}
+pub fn is_one_deep(texts: &Vec<TextType>) -> bool {
+    is_nested(texts)
+        && !texts.iter().any(|text_type| match text_type {
+            TextType::SubWindow(sub_window) => is_nested(&sub_window.window.texts),
+            TextType::Text(_) => false,
+        })
 }
 
 impl SubWindow {
@@ -80,10 +85,10 @@ impl SubWindow {
 
         for text in self.window.texts.clone() {
             match text {
-                crate::renderer::TextType::SubWindow(_) => {
+                TextType::SubWindow(_) => {
                     return Err(TextError::UnhandledError(-1));
                 }
-                crate::renderer::TextType::Text(text) => {
+                TextType::Text(text) => {
                     dbg!(&text);
                     texts.push(Text::new_unchecked(
                         &text.text,
@@ -98,3 +103,29 @@ impl SubWindow {
         Ok(texts)
     }
 }
+
+const DEPTH_LIMIT: u32 = 16;
+
+pub fn collapse_window(text_types: Vec<TextType>, depth: u32) -> Result<Vec<Text>, TextError> {
+    if depth > DEPTH_LIMIT {
+        return Err(TextError::DepthLimitExceeded());
+    }
+    let mut texts: Vec<Text> = vec![];
+    for text_type in text_types {
+        match text_type {
+            TextType::SubWindow(sub_window) => {
+                if is_nested(&sub_window.window.texts) {
+                    let collapsed = sub_window.convert_to_texts()?;
+                    texts.extend(collapsed);
+                } else {
+                    let win = collapse_window(sub_window.window.texts, depth + 1)?;
+                    texts.extend(win);
+                }
+            }
+            TextType::Text(text) => texts.push(text),
+        }
+    }
+
+    Ok(texts)
+}
+

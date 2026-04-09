@@ -2,7 +2,7 @@ use crate::renderer::*;
 
 fn get_line_number(text_type: &TextType) -> u32 {
     match text_type {
-        TextType::SubWindow(sub_window) => sub_window.start_line_number,
+        TextType::SubWindow(sub_window) => sub_window.line_number,
         TextType::Text(text) => text.line_number,
     }
 }
@@ -55,7 +55,7 @@ fn shorten_width(texts: Vec<TextType>, width: u32) -> Option<Vec<TextType>> {
                 res.push(match text {
                     TextType::SubWindow(sub_window) => TextType::SubWindow(SubWindow::new(
                         sub_window.window.clone(),
-                        sub_window.start_line_number,
+                        sub_window.line_number,
                         sub_window.column - 1,
                     )),
                     TextType::Text(text) => TextType::Text(rewrite::Text {
@@ -105,7 +105,7 @@ fn shorten_height(texts: Vec<TextType>) -> Option<Vec<TextType>> {
             res.extend(idx.1.clone().iter().map(|x| match x {
                 TextType::SubWindow(sub_window) => TextType::SubWindow(SubWindow::new(
                     sub_window.window.clone(),
-                    sub_window.start_line_number - 1,
+                    sub_window.line_number - 1,
                     sub_window.column,
                 )),
                 TextType::Text(text) => TextType::Text(rewrite::Text {
