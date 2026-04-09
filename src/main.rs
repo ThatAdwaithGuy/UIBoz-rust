@@ -95,8 +95,8 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
 fn main() {
     let mut t = vec![];
     t.push(rewrite::Text::new_unchecked("Hi", 1, 10, &[]));
-    t.push(rewrite::Text::new_unchecked("Hi", 1, 1, &[]));
-    t.push(rewrite::Text::new_unchecked("Hi", 1, 5, &[]));
+     t.push(rewrite::Text::new_unchecked("Hi", 1, 1, &[]));
+     t.push(rewrite::Text::new_unchecked("Hi", 1, 5, &[]));
     // t.push(rewrite::Text::new_unchecked("Hi", 2, 1, &[]));
     // t.push(rewrite::Text::new_unchecked("Hi", 3, 1, &[]));
     // t.push(rewrite::Text::new_unchecked("Hi world", 3, 10, &[]));
@@ -113,7 +113,6 @@ fn main() {
         line_number: 1,
         column: 1,
     };
-    dbg!(sub_window.convert_to_texts().unwrap());
     let window = rewrite::NonNestableWindow {
         texts: sub_window.convert_to_texts().unwrap(),
         width: 100,
