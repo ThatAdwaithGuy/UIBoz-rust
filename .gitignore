@@ -1,4 +1,5 @@
 target/
+.idea/
 find_size.sh
 frontend/
 rules.txt

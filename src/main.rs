@@ -17,7 +17,9 @@ struct Counter(u32);
 #[derive(Clone, Node)]
 struct Keyboard;
 
-use crate::renderer::{rewrite, sub_win_rewrite};
+use crate::renderer::{
+    SubWindow, TextType, Window, rewrite::{self, Text}, sub_win_rewrite::{self, collapse_window, is_one_deep}
+};
 /*
 impl Keyboard {
     fn getch(&self) -> std::io::Result<event::KeyEvent> {
@@ -94,14 +96,35 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
 */
 fn main() {
     let mut t = vec![];
-    t.push(rewrite::Text::new_unchecked("Hi", 1, 10, &[]));
-     t.push(rewrite::Text::new_unchecked("Hi", 1, 1, &[]));
-     t.push(rewrite::Text::new_unchecked("Hi", 1, 5, &[]));
-    // t.push(rewrite::Text::new_unchecked("Hi", 2, 1, &[]));
-    // t.push(rewrite::Text::new_unchecked("Hi", 3, 1, &[]));
-    // t.push(rewrite::Text::new_unchecked("Hi world", 3, 10, &[]));
-
-    let win = rewrite::NonNestableWindow {
+    // t.push(TextType::Text(rewrite::Text::new_unchecked(
+    //     "Hi",
+    //     1,
+    //     10,
+    //     &[],
+    // )));
+    // t.push(TextType::Text(rewrite::Text::new_unchecked(
+    //     "Hi",
+    //     2,
+    //     1,
+    //     &[],
+    // )));
+    // t.push(TextType::Text(rewrite::Text::new_unchecked(
+    //     "Hi",
+    //     3,
+    //     5,
+    //     &[],
+    // )));
+    t.push(TextType::SubWindow(SubWindow::new(
+        Window {
+            texts: vec![TextType::Text(Text::new_unchecked("H", 0, 0, &[]))],
+            width: 5,
+            height: 5,
+            type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+        },
+        10,
+        0,
+    )));
+    let win = Window {
         texts: t,
         width: 52,
         height: 12,
@@ -109,16 +132,17 @@ fn main() {
     };
 
     let sub_window = sub_win_rewrite::SubWindow {
-        window: win.clone().into(),
-        line_number: 1,
-        column: 1,
+        window: win.clone(),
+        line_number: 0,
+        column: 0,
     };
-    let window = rewrite::NonNestableWindow {
-        texts: sub_window.convert_to_texts().unwrap(),
+
+    let window = Window {
+        texts: vec![TextType::SubWindow(sub_window)],
         width: 100,
         height: 24,
         type_of_border: rewrite::TypeOfBorder::CurvedBorders,
     };
-    
-    println!("{}", window.render().unwrap());
+    dbg!(is_one_deep(&window.texts));
+    println!("{}", win.render().unwrap());
 }
