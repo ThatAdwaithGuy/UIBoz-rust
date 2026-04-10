@@ -18,7 +18,7 @@ struct Counter(u32);
 struct Keyboard;
 
 use crate::renderer::{
-    SubWindow, TextType, Window, rewrite::{self, Text}, sub_win_rewrite::{self, collapse_window, is_one_deep}
+    SubWindow, TextType, Window, rewrite::{self, Text}, sub_win_rewrite::{self, collapse_window, is_nested, is_one_deep}
 };
 /*
 impl Keyboard {
@@ -116,7 +116,7 @@ fn main() {
     // )));
     t.push(TextType::SubWindow(SubWindow::new(
         Window {
-            texts: vec![TextType::Text(Text::new_unchecked("H", 0, 0, &[]))],
+            texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
             width: 5,
             height: 5,
             type_of_border: rewrite::TypeOfBorder::CurvedBorders,
@@ -132,10 +132,21 @@ fn main() {
     };
 
     let sub_window = sub_win_rewrite::SubWindow {
-        window: win.clone(),
+        window: win,
         line_number: 0,
         column: 0,
     };
+
+    let te = SubWindow::new(
+        Window {
+            texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
+            width: 5,
+            height: 5,
+            type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+        },
+        0,
+        0,
+    );
 
     let window = Window {
         texts: vec![TextType::SubWindow(sub_window)],
@@ -144,5 +155,5 @@ fn main() {
         type_of_border: rewrite::TypeOfBorder::CurvedBorders,
     };
     dbg!(is_one_deep(&window.texts));
-    println!("{}", win.render().unwrap());
+    println!("{}", window.render().unwrap());
 }

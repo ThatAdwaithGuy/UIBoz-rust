@@ -1,4 +1,4 @@
-use crate::renderer::window;
+use crate::renderer::{sub_win_rewrite, window};
 use crate::{
     errors::TextError,
     renderer::rewrite::{self, Text},
@@ -89,11 +89,11 @@ impl SubWindow {
                     return Err(TextError::UnhandledError(-1));
                 }
                 TextType::Text(text) => {
-                    dbg!(&text);
+                    dbg!(&text, self.column);
                     texts.push(Text::new_unchecked(
                         &text.text,
                         text.line_number + self.line_number + 1,
-                        text.column + self.column,
+                        text.column + self.column + 1,
                         &text.style,
                     ));
                 }
@@ -115,11 +115,11 @@ pub fn collapse_window(text_types: Vec<TextType>, depth: u32) -> Result<Vec<Text
         match text_type {
             TextType::SubWindow(sub_window) => {
                 if is_nested(&sub_window.window.texts) {
-                    let collapsed = sub_window.convert_to_texts()?;
-                    texts.extend(collapsed);
-                } else {
                     let win = collapse_window(sub_window.window.texts, depth + 1)?;
                     texts.extend(win);
+                } else {
+                    let collapsed = sub_window.convert_to_texts()?;
+                    texts.extend(collapsed);
                 }
             }
             TextType::Text(text) => texts.push(text),
@@ -128,4 +128,3 @@ pub fn collapse_window(text_types: Vec<TextType>, depth: u32) -> Result<Vec<Text
 
     Ok(texts)
 }
-
