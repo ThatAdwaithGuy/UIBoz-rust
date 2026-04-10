@@ -51,7 +51,7 @@ impl crate::nodes::flex::Flex for Label {
             texts: vec![TextType::Text(Text::new(&self.text, 1, 0, &self.style)?)],
             width,
             height,
-            type_of_border: TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::No,
         })
     }
 }
@@ -68,7 +68,7 @@ impl widgets::Widget for Label {
             })],
             width: self.text.len() as u32,
             height: 1,
-            type_of_border: TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::No,
         }
     }
 }

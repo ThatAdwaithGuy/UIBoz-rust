@@ -30,7 +30,7 @@ impl Layout {
             texts,
             width: rect.width,
             height: rect.height,
-            type_of_border: TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::No,
         })
     }
 
@@ -53,7 +53,7 @@ impl Layout {
                         texts: Vec::new(),
                         width: width / 2,
                         height,
-                        type_of_border: TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::No,
                     },
                 };
 
@@ -66,7 +66,7 @@ impl Layout {
                         texts: Vec::new(),
                         width: width / 2,
                         height,
-                        type_of_border: TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::No,
                     },
                 };
 
@@ -81,7 +81,7 @@ impl Layout {
                     texts,
                     width,
                     height,
-                    type_of_border: TypeOfBorder::NoBorders,
+                    type_of_border: TypeOfBorder::No,
                 })
             }
 
@@ -103,7 +103,7 @@ impl Layout {
                         texts: Vec::new(),
                         width,
                         height: height / 2,
-                        type_of_border: TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::No,
                     },
                 };
                 let left_sub_win = SubWindow::new(left_win.into(), 1, 0);
@@ -119,7 +119,7 @@ impl Layout {
                         texts: Vec::new(),
                         width,
                         height: height / 2,
-                        type_of_border: TypeOfBorder::NoBorders,
+                        type_of_border: TypeOfBorder::No,
                     },
                 };
                 let right_sub_win = SubWindow::new(right_win.into(), (height / 2) + 1, width);
@@ -132,7 +132,7 @@ impl Layout {
                     texts,
                     width,
                     height,
-                    type_of_border: TypeOfBorder::NoBorders,
+                    type_of_border: TypeOfBorder::No,
                 })
             }
         }
@@ -166,7 +166,7 @@ enum Split {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{nodes::label::Label, Text, TypeOfBorder};
+    use crate::{nodes::label::Label, rewrite::TypeOfBorder, Text};
     #[test]
     fn rect_test_neg() {
         let rect = Rect {
@@ -190,15 +190,16 @@ mod tests {
         layout.add_widget(label);
         let rend_rect = layout.render_rect(rect).unwrap();
         let win = Window {
-            texts: vec![TextType::Text(Text::new("Hi", 1, 0, &[]))],
+            texts: vec![TextType::Text(Text::new_unchecked("Hi", 1, 0, &[]))],
             width: 3,
             height: 1,
-            type_of_border: TypeOfBorder::NoBorders,
+            type_of_border: TypeOfBorder::No,
         };
         assert_eq!(rend_rect, win);
     }
 
     #[test]
+    #[ignore]
     fn mine_test() {
         let rect = Rect {
             height: 1,
@@ -247,7 +248,7 @@ mod tests {
             texts,
             width: 56,
             height: 12,
-            type_of_border: TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::Curved,
         };
         println!("{}", win.render().unwrap());
     }

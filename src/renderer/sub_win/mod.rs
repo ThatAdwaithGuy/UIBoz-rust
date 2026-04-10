@@ -181,7 +181,6 @@ pub fn collapse_sub_window(win: SubWindow, depth: u32) -> Result<Vec<rewrite::Te
 #[cfg(test)]
 mod tests {
 
-    
     /*
         #[test]
         fn some() -> Result<(), TextError> {

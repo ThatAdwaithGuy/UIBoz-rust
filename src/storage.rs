@@ -83,7 +83,7 @@ impl Storage<Mutable> {
             .insert(TypeId::of::<T>(), RefCell::new(Box::new(node)));
     }
 
-    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<'_,T>> {
+    pub fn get_mut<T: Node + 'static>(&self) -> Option<RefMut<'_, T>> {
         // Get the node
         self.nodes.get(&TypeId::of::<T>()).map(|cell| {
             // Pass the borrow checker with this sorcery

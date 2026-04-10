@@ -37,17 +37,17 @@ mod tests {
     use super::*;
     #[test]
     fn left_test() {
-        let text: Text = Text::new("@", 1, 0, &[]).left();
+        let text: Text = Text::new_unchecked("@", 1, 0, &[]).left();
         assert_eq!(text.column, 0);
     }
     #[test]
     fn center_test() {
-        let text: Text = Text::new("@", 1, 0, &[]).center(10);
+        let text: Text = Text::new_unchecked("@", 1, 0, &[]).center(10);
         dbg!(text);
     }
     #[test]
     fn right_test() {
-        let text: Text = Text::new("@", 1, 0, &[]).right(10);
+        let text: Text = Text::new_unchecked("@", 1, 0, &[]).right(10);
         assert_eq!(text.column, 9);
     }
 }
