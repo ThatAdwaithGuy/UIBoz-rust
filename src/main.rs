@@ -1,5 +1,4 @@
 #![allow(dead_code)] // This will bite me later. 25-11-24
-
 mod errors;
 mod nodes;
 mod pages;
@@ -18,7 +17,9 @@ struct Counter(u32);
 struct Keyboard;
 
 use crate::renderer::{
-    SubWindow, TextType, Window, rewrite::{self, Text}, sub_win_rewrite::{self, collapse_window, is_nested, is_one_deep}
+    rewrite::{self, Text},
+    sub_win_rewrite::{self, is_one_deep},
+    SubWindow, TextType, Window,
 };
 /*
 impl Keyboard {
@@ -119,7 +120,7 @@ fn main() {
             texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
             width: 5,
             height: 5,
-            type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+            type_of_border: rewrite::TypeOfBorder::Curved,
         },
         5,
         0,
@@ -128,7 +129,7 @@ fn main() {
         texts: t,
         width: 52,
         height: 12,
-        type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+        type_of_border: rewrite::TypeOfBorder::Curved,
     };
 
     let sub_window = sub_win_rewrite::SubWindow {
@@ -137,12 +138,12 @@ fn main() {
         column: 0,
     };
 
-    let te = SubWindow::new(
+    let _te = SubWindow::new(
         Window {
             texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
             width: 5,
             height: 5,
-            type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+            type_of_border: rewrite::TypeOfBorder::Curved,
         },
         0,
         0,
@@ -152,7 +153,7 @@ fn main() {
         texts: vec![TextType::SubWindow(sub_window)],
         width: 100,
         height: 24,
-        type_of_border: rewrite::TypeOfBorder::CurvedBorders,
+        type_of_border: rewrite::TypeOfBorder::Curved,
     };
     dbg!(is_one_deep(&window.texts));
     println!("{}", window.render().unwrap());

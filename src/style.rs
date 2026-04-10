@@ -353,10 +353,3 @@ pub fn parse_text_style(lst: Vec<TextStyle>) -> String {
     }
     output_string
 }
-#[cfg(test)]
-mod test {
-    #[test]
-    fn super_test() {
-        todo!();
-    }
-}

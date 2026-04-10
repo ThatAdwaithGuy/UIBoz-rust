@@ -150,7 +150,7 @@ impl Flex for Window {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use crate::rewrite::TypeOfBorder;
     #[test]
     fn flex_test_no_compression() {
         let texts = vec![TextType::Text(rewrite::Text::new_unchecked(
@@ -163,7 +163,7 @@ mod tests {
             texts,
             width: 56,
             height: 12,
-            type_of_border: TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::Curved,
         };
 
         let flexed = window.flex(24, 12);
@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn flex_test_compression() {
-        let texts = vec![TextType::Text(rewrite::Text::new(
+        let texts = vec![TextType::Text(rewrite::Text::new_unchecked(
             "@, hello world hehe",
             1,
             5,
@@ -183,7 +183,7 @@ mod tests {
             texts,
             width: 56,
             height: 12,
-            type_of_border: TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::Curved,
         };
 
         let flexed = window.flex(24, 12);
@@ -193,28 +193,28 @@ mod tests {
     #[test]
     fn shorten_height_test_1() {
         let vector: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: TypeOfBorder::Curved,
+                },
                 3,
                 1,
             )),
         ];
 
         let correct_answer: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: TypeOfBorder::Curved,
+                },
                 2,
                 1,
             )),
@@ -226,14 +226,14 @@ mod tests {
     #[test]
     fn shorten_height_test_2() {
         let vector: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: TypeOfBorder::Curved,
+                },
                 2,
                 1,
             )),
@@ -246,33 +246,33 @@ mod tests {
     #[test]
     fn shorten_height_test_3() {
         let vector: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: TypeOfBorder::Curved,
+                },
                 3,
                 1,
             )),
-            TextType::Text(rewrite::Text::new("!@#$", 5, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 5, 0, &[])),
         ];
 
         let correct_answer: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: TypeOfBorder::Curved,
+                },
                 3,
                 1,
             )),
-            TextType::Text(rewrite::Text::new("!@#$", 4, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 4, 0, &[])),
         ];
         let shorten_height = shorten_height(vector);
         assert_eq!(shorten_height, Some(correct_answer))
@@ -281,32 +281,32 @@ mod tests {
     #[test]
     fn shorten_width_test() {
         let vector: Vec<TextType> = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: rewrite::TypeOfBorder::Curved,
+                },
                 3,
                 1,
             )),
-            TextType::Text(rewrite::Text::new("!@#$", 5, 4, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 5, 4, &[])),
         ];
         let answer = vec![
-            TextType::Text(rewrite::Text::new("!@#$", 1, 0, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 1, 0, &[])),
             TextType::SubWindow(SubWindow::new(
-                NestedWindow::new(
-                    vec![TextType::Text(rewrite::Text::new("@", 1, 0, &[]))],
-                    1,
-                    1,
-                    TypeOfBorder::CurvedBorders,
-                ),
+                Window {
+                    texts: vec![TextType::Text(rewrite::Text::new_unchecked("@", 1, 0, &[]))],
+                    width: 1,
+                    height: 1,
+                    type_of_border: rewrite::TypeOfBorder::Curved,
+                },
                 3,
                 1,
             )),
-            TextType::Text(rewrite::Text::new("!@#$", 5, 4, &[])),
+            TextType::Text(rewrite::Text::new_unchecked("!@#$", 5, 4, &[])),
         ];
 
         let shorten = shorten_width(vector, 10);

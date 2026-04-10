@@ -45,7 +45,6 @@ impl Window {
     pub fn render(&self) -> Result<String, TextError> {
         let collapsed: Vec<rewrite::Text> =
             sub_win_rewrite::collapse_window(self.texts.clone(), 0)?;
-        dbg!(&collapsed);
         let window = rewrite::NonNestableWindow {
             texts: collapsed,
             height: self.height,

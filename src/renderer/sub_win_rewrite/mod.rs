@@ -1,4 +1,4 @@
-use crate::renderer::{sub_win_rewrite, window};
+use crate::renderer::window;
 use crate::{
     errors::TextError,
     renderer::rewrite::{self, Text},
@@ -43,11 +43,11 @@ impl SubWindow {
     pub fn convert_to_texts(&self) -> Result<Vec<rewrite::Text>, TextError> {
         let mut texts: Vec<rewrite::Text> = vec![];
         let top_border = match self.window.type_of_border {
-            rewrite::TypeOfBorder::NoBorders => "".to_string(),
-            rewrite::TypeOfBorder::CurvedBorders => {
+            rewrite::TypeOfBorder::No => "".to_string(),
+            rewrite::TypeOfBorder::Curved => {
                 format!("╭{}╮", "─".repeat(self.window.width as usize))
             }
-            rewrite::TypeOfBorder::SquareBorders => {
+            rewrite::TypeOfBorder::Square => {
                 format!("┌{}┐", "─".repeat(self.window.width as usize))
             }
         };
@@ -58,11 +58,11 @@ impl SubWindow {
             &[],
         ));
         let bottom_border = match self.window.type_of_border {
-            rewrite::TypeOfBorder::NoBorders => "".to_string(),
-            rewrite::TypeOfBorder::CurvedBorders => {
+            rewrite::TypeOfBorder::No => "".to_string(),
+            rewrite::TypeOfBorder::Curved => {
                 format!("╰{}╯", "─".repeat(self.window.width as usize))
             }
-            rewrite::TypeOfBorder::SquareBorders => {
+            rewrite::TypeOfBorder::Square => {
                 format!("└{}┘", "─".repeat(self.window.width as usize))
             }
         };

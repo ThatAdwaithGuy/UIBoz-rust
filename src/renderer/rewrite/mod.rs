@@ -4,25 +4,31 @@ use std::collections::HashSet;
 mod util;
 use crate::{
     errors::TextError,
-    renderer::rewrite::util::chunk_texts,
     style::{self, TextStyle},
 };
 
+// Describes the type of border for a window.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TypeOfBorder {
-    NoBorders,
-    CurvedBorders,
-    SquareBorders,
+    No,
+    Curved,
+    Square,
 }
 
+// Text is the most primitive part of a window, it contains the data for the individual text and
+// lines that is rendered to the final terminal.
 #[derive(Clone, PartialEq)]
 pub struct Text {
     pub text: String,
     pub line_number: u32,
     pub column: u32,
     pub style: [TextStyle; 12],
+    // NOTE: This is deprecated, Please refactor the code to remove this.
     pub no_of_ansi: u32,
 }
+
+// Implemented this custom debug because the text styles display unnessasary data, which culters
+// the screen for me.
 impl fmt::Debug for Text {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Start the struct formatting
@@ -51,6 +57,7 @@ impl fmt::Debug for Text {
 }
 
 impl Text {
+    // Creates a new Text, and returns None if error.
     pub fn new(
         text: &str,
         line_number: u32,
@@ -76,6 +83,7 @@ impl Text {
         });
     }
 
+    // Creates a new Text, and panics if a error is detected.
     pub fn new_unchecked(
         text: &str,
         line_number: u32,
@@ -106,11 +114,7 @@ impl Text {
         self.text.chars().collect::<Vec<char>>().len()
     }
 
-    // Length of the absolute text, without the style
-    // fn text_len(&self) -> usize {
-    //     self.text().chars().count() - 234 // 234 is the magic number for the size of the ANSI codes
-    // }
-
+    // Finds the length of the visible part of the text, if the text contains ANSI codes.
     fn text_len(&self) -> usize {
         let mut len = 0;
         let mut in_escape = false;
@@ -146,6 +150,7 @@ impl Text {
     }
 }
 
+// Window containing only texts, which can be rendered to the terminal.
 #[derive(Clone, Debug)]
 pub struct NonNestableWindow {
     pub texts: Vec<Text>,
@@ -156,12 +161,16 @@ pub struct NonNestableWindow {
 
 impl NonNestableWindow {
     pub fn render(&self) -> Result<String, TextError> {
+        // Checks any invalid input and exits early.
+        Self::check_errors(&self)?;
+        // Applies ANSI styles to the text.
         let applied_style: Vec<Text> = util::apply_style(&self.texts);
+        // Chunks the text according to line number
         let chunks = util::chunk_texts(&applied_style);
-        let padded: Vec<Vec<Text>> = chunks
-            .iter()
-            .map(|line| util::find_padding_size(line))
-            .collect();
+        // Adds the whitespace between text in the same, line. So if the joined like String1 +
+        // String2 + String3 = the expected string.
+        let padded: Vec<Vec<Text>> = chunks.iter().map(util::find_padding_size).collect();
+        // This combines the lines in the window into a single string.
         //        Text ,  Line_no, numbers of texts in the line
         let combined: Vec<(String, usize, usize)> = padded
             .iter()
@@ -170,75 +179,94 @@ impl NonNestableWindow {
                 (string, line_number, line.len())
             })
             .collect();
+        // The body of the entire window, split to lines
         let mut body: Vec<String> = vec![];
 
         for line_number in 0..=self.height {
             if let Some(line) = combined.iter().find(|line| line.1 == line_number as usize) {
+                // This part calculates the white space between the last text of the line to the
+                // right border character.
                 let total_length = line.0.chars().count();
                 let ansi_length = line.2 * 234;
                 let text_length = total_length - ansi_length;
                 let left_pad: usize = self.width as usize - text_length;
 
                 let body_line = match self.type_of_border {
-                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                    TypeOfBorder::Curved | TypeOfBorder::Square => {
                         format!("│{}{}│\n", line.0, " ".repeat(left_pad),)
                     }
-                    TypeOfBorder::NoBorders => line.0.clone(),
+                    TypeOfBorder::No => line.0.clone(),
                 };
 
                 body.push(body_line);
             } else {
                 let line = match self.type_of_border {
-                    TypeOfBorder::CurvedBorders | TypeOfBorder::SquareBorders => {
+                    TypeOfBorder::Curved | TypeOfBorder::Square => {
                         format!("│{}│\n", " ".repeat(self.width as usize))
                     }
-                    TypeOfBorder::NoBorders => "\n".to_string(),
+                    TypeOfBorder::No => "\n".to_string(),
                 };
 
                 body.push(line);
             }
         }
         let top_border = match self.type_of_border {
-            TypeOfBorder::NoBorders => "\n".to_string(),
-            TypeOfBorder::CurvedBorders => format!("╭{}╮\n", "─".repeat(self.width as usize)),
-            TypeOfBorder::SquareBorders => format!("┌{}┐\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::No => "\n".to_string(),
+            TypeOfBorder::Curved => format!("╭{}╮\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::Square => format!("┌{}┐\n", "─".repeat(self.width as usize)),
         };
         let bottom_border = match self.type_of_border {
-            TypeOfBorder::NoBorders => "\n".to_string(),
-            TypeOfBorder::CurvedBorders => format!("╰{}╯\n", "─".repeat(self.width as usize)),
-            TypeOfBorder::SquareBorders => format!("└{}┘\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::No => "\n".to_string(),
+            TypeOfBorder::Curved => format!("╰{}╯\n", "─".repeat(self.width as usize)),
+            TypeOfBorder::Square => format!("└{}┘\n", "─".repeat(self.width as usize)),
         };
 
         Ok([top_border, body.join(""), bottom_border].join(""))
     }
 
-    fn duplicate_check(&self) -> Result<(), TextError> {
-        let binding = self.texts.iter().chunk_by(|x| x.line_number());
-        let flat = binding
-            .into_iter()
-            .map(|x| {
-                x.1.map(|t| ((t.column())..(t.column() + (t.len() as u32))).collect_vec())
-                    .collect::<Vec<Vec<u32>>>()
-            })
-            .collect_vec();
-        for nums in flat {
-            let mut set = HashSet::new();
-            for (idx, num) in nums.iter().enumerate() {
-                if !set.insert(num) {
-                    return Err(TextError::DuplicateText(format!(
-                        "duplicate overlaps at line {} and values {:#?}",
-                        idx, num
-                    )));
+    fn overlaps(a: &Text, b: &Text) -> bool {
+        if a.line_number != b.line_number {
+            return false;
+        }
+
+        let a_start = a.column;
+        let a_end = a.column + a.text_len() as u32;
+
+        let b_start = b.column;
+        let b_end = b.column + b.text_len() as u32;
+
+        a_start < b_end && b_start < a_end
+    }
+
+    fn overlap_check(&self) -> Result<(), TextError> {
+        let chunked = util::chunk_texts(&self.texts);
+        for line in chunked {
+            for pair in line.windows(2) {
+                let a = pair[0];
+                let b = pair[1];
+
+                dbg!(&line, &pair, Self::overlaps(a, b));
+                if Self::overlaps(a, b) {
+                    return Err(TextError::TextOverlaid(a.text.clone(), b.text.clone()));
                 }
             }
         }
-
         Ok(())
     }
-    fn check_errors(&self) -> Result<(), TextError> {
-        if let Err(err) = self.duplicate_check() {
-            return Err(err);
+
+    fn bounds_check(&self) -> Result<(), TextError> {
+        for text in &self.texts {
+            let end = text.text_len() + text.column as usize;
+            if end > self.width as usize {
+                return Err(TextError::LeftBounds(text.text.clone()));
+            }
         }
+        Ok(())
+    }
+
+    fn check_errors(&self) -> Result<(), TextError> {
+        self.overlap_check()?;
+        self.bounds_check()?;
         Ok(())
     }
 }
@@ -260,12 +288,19 @@ mod tests {
             texts,
             height: 12,
             width: 56,
-            type_of_border: TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::Curved,
         };
         if let Err(err) = window.check_errors() {
             assert!(false, "err {:#?}", err);
         }
         assert!(true);
+    }
+
+    #[test]
+    fn error_check_overlaps_function() {
+        let a = Text::new_unchecked("hi", 1, 0, &TextStyleBuilder::new().build());
+        let b = Text::new_unchecked("bye", 1, 1, &TextStyleBuilder::new().build());
+        assert!(NonNestableWindow::overlaps(&a, &b));
     }
 
     #[test]
@@ -280,11 +315,37 @@ mod tests {
             texts,
             height: 12,
             width: 56,
-            type_of_border: TypeOfBorder::CurvedBorders,
+            type_of_border: TypeOfBorder::Curved,
         };
-        if let Err(_) = window.check_errors() {
-            assert!(true);
-        }
-        assert!(false);
+        let err = window.check_errors();
+        assert!(err.is_err(), "Expected error but got Ok");
+    }
+
+    #[test]
+    fn check_for_bounds_overlap() {
+        let texts = vec![Text::new_unchecked("hi you idiot", 0, 50, &[])];
+        let window = NonNestableWindow {
+            texts,
+            height: 12,
+            width: 56,
+            type_of_border: TypeOfBorder::Curved,
+        };
+        let err = window.check_errors();
+
+        assert!(err.is_err(), "Expected error but got Ok");
+    }
+
+    #[test]
+    fn error_check_for_bounds_overlap() {
+        let texts = vec![Text::new_unchecked("hi you idiot", 0, 40, &[])];
+        let window = NonNestableWindow {
+            texts,
+            height: 12,
+            width: 56,
+            type_of_border: TypeOfBorder::Curved,
+        };
+        let err = window.check_errors();
+
+        assert!(err.is_ok(), "Expected Ok but got Err");
     }
 }
