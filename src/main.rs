@@ -121,7 +121,7 @@ fn main() {
             height: 5,
             type_of_border: rewrite::TypeOfBorder::CurvedBorders,
         },
-        10,
+        5,
         0,
     )));
     let win = Window {
