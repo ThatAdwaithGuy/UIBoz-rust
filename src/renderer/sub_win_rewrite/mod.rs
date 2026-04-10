@@ -89,7 +89,6 @@ impl SubWindow {
                     return Err(TextError::UnhandledError(-1));
                 }
                 TextType::Text(text) => {
-                    dbg!(&text, self.column);
                     texts.push(Text::new_unchecked(
                         &text.text,
                         text.line_number + self.line_number + 1,
@@ -105,22 +104,25 @@ impl SubWindow {
 }
 
 const DEPTH_LIMIT: u32 = 16;
-
 pub fn collapse_window(text_types: Vec<TextType>, depth: u32) -> Result<Vec<Text>, TextError> {
     if depth > DEPTH_LIMIT {
         return Err(TextError::DepthLimitExceeded());
     }
+
     let mut texts: Vec<Text> = vec![];
+
     for text_type in text_types {
         match text_type {
-            TextType::SubWindow(sub_window) => {
+            TextType::SubWindow(mut sub_window) => {
                 if is_nested(&sub_window.window.texts) {
-                    let win = collapse_window(sub_window.window.texts, depth + 1)?;
-                    texts.extend(win);
-                } else {
-                    let collapsed = sub_window.convert_to_texts()?;
-                    texts.extend(collapsed);
+                    // Collapse the inner contents first, replacing them with flat Texts
+                    let collapsed_inner = collapse_window(sub_window.window.texts, depth + 1)?;
+                    sub_window.window.texts =
+                        collapsed_inner.into_iter().map(TextType::Text).collect();
                 }
+                // Now the sub_window is guaranteed to be leaf — safe to convert
+                let collapsed = sub_window.convert_to_texts()?;
+                texts.extend(collapsed);
             }
             TextType::Text(text) => texts.push(text),
         }
