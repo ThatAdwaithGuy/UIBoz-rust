@@ -7,12 +7,13 @@ use std::{
 
 pub trait Node {}
 
+#[derive(Debug)]
 pub struct Mutable;
-#[derive(Debug)]
 
+#[derive(Debug)]
 pub struct Immutable;
-#[derive(Debug)]
 
+#[derive(Debug)]
 pub struct Storage<S = Immutable> {
     //nodes: HashMap<TypeId, Box<dyn Any>>,
     nodes: HashMap<TypeId, RefCell<Box<dyn Any>>>,
