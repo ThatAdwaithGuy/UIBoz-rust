@@ -3,8 +3,7 @@ use crate::{errors, renderer::sub_win_rewrite};
 // use crate::renderer::sub_win_rewrite::TextType;
 
 use super::rewrite;
-use super::sub_win_rewrite::{SubWindow, TextType};
-use crate::renderer::sub_win;
+use super::sub_win_rewrite::{ TextType};
 use errors::TextError;
 
 #[derive(Debug, Clone, PartialEq)]
