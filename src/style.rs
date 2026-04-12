@@ -287,6 +287,23 @@ pub fn parse_text_style(lst: Vec<TextStyle>) -> String {
     if !is_down_seen {
         filter_lst.push(TextStyle::DownSideConnect(-1));
     }
+
+    dbg!(
+        is_fore_seen,
+        is_back_seen,
+        is_bold_seen,
+        is_dim_seen,
+        is_underline_seen,
+        is_blink_seen,
+        is_reverse_seen,
+        is_hide_seen,
+        is_right_seen,
+        is_left_seen,
+        is_up_seen,
+        is_down_seen,
+        count,
+    );
+
     for i in filter_lst {
         match i {
             TextStyle::ForeColor(color) => {
@@ -315,7 +332,7 @@ pub fn parse_text_style(lst: Vec<TextStyle>) -> String {
             }
             TextStyle::BackGroundColor(color) => {
                 match color {
-                    Colors::Red => output_string.push_str("\x1b[48;2;255;000;000"),
+                    Colors::Red => output_string.push_str("\x1b[48;2;255;000;000m"),
                     Colors::Green => output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
                     Colors::Blue => output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
                     Colors::Orange => output_string.push_str("\x1b[48;2;255;165;000m"), // Orange (true color background)
@@ -337,18 +354,18 @@ pub fn parse_text_style(lst: Vec<TextStyle>) -> String {
                     Colors::Blank => output_string.push_str("\x1b[0000000000000022m"),
                 }
             }
-            TextStyle::Bold => output_string.push_str("\x1b[001m"),
-            TextStyle::Dim => output_string.push_str("\x1b[002m"), // Dim
-            TextStyle::Underline => output_string.push_str("\x1b[004m"), // Underline
-            TextStyle::Blink => output_string.push_str("\x1b[005m"), // Blink
-            TextStyle::Reverse => output_string.push_str("\x1b[007m"), // Reverse
-            TextStyle::Hide => output_string.push_str("\x1b[008m"),
+            TextStyle::Bold => output_string.push_str("\x1b[0000000000000001m"),
+            TextStyle::Dim => output_string.push_str("\x1b[0000000000000002m"), // Dim
+            TextStyle::Underline => output_string.push_str("\x1b[0000000000000004m"), // Underline
+            TextStyle::Blink => output_string.push_str("\x1b[0000000000000005m"), // Blink
+            TextStyle::Reverse => output_string.push_str("\x1b[0000000000000007m"), // Reverse
+            TextStyle::Hide => output_string.push_str("\x1b[0000000000000008m"),
 
             _ => {}
         }
 
         for _ in 0..count {
-            output_string.push_str("\x1b[022m");
+            output_string.push_str("\x1b[0000000000000022m");
         }
     }
     output_string

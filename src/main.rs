@@ -14,10 +14,13 @@ struct Counter(u32);
 #[derive(Clone, Node)]
 struct Keyboard;
 
-use crate::renderer::{
-    rewrite::{self, Text},
-    sub_win_rewrite::{self, is_one_deep},
-    SubWindow, TextType, Window,
+use crate::{
+    renderer::{
+        rewrite::{self, Text},
+        sub_win_rewrite::{self, is_one_deep},
+        SubWindow, TextType, Window,
+    },
+    style::TextStyle,
 };
 /*
 impl Keyboard {
@@ -94,65 +97,39 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
 }
 */
 fn main() {
-    let mut t = vec![];
-    // t.push(TextType::Text(rewrite::Text::new_unchecked(
-    //     "Hi",
-    //     1,
+    let win_example = |text: &str| Window {
+        texts: vec![TextType::Text(Text::new_unchecked(text, 0, 0, &[TextStyle::Bold]))],
+        width: 6,
+        height: 5,
+        type_of_border: rewrite::TypeOfBorder::Curved,
+    };
+
+    let mut text_types = vec![];
+    // text_types.push(TextType::SubWindow(SubWindow::new(
+    //     win_example("Text1"),
+    //     0,
+    //     0,
+    // )));
+    // text_types.push(TextType::SubWindow(SubWindow::new(
+    //     win_example("Text2"),
+    //     0,
     //     10,
-    //     &[],
     // )));
-    // t.push(TextType::Text(rewrite::Text::new_unchecked(
-    //     "Hi",
-    //     2,
-    //     1,
-    //     &[],
+    // text_types.push(TextType::SubWindow(SubWindow::new(
+    //     win_example("Text3"),
+    //     0,
+    //     20,
     // )));
-    // t.push(TextType::Text(rewrite::Text::new_unchecked(
-    //     "Hi",
-    //     3,
-    //     5,
-    //     &[],
-    // )));
-    t.push(TextType::SubWindow(SubWindow::new(
-        Window {
-            texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
-            width: 5,
-            height: 5,
-            type_of_border: rewrite::TypeOfBorder::Curved,
-        },
-        5,
-        0,
-    )));
-    let win = Window {
-        texts: t,
+
+    text_types.push(TextType::Text(Text::new("Why no work??",0 , 0, &[TextStyle::Bold]).unwrap()));
+    text_types.push(TextType::Text(Text::new("Why so work??",1 , 0, &[]).unwrap()));
+
+    let window = Window {
+        texts: text_types,
         width: 52,
         height: 12,
         type_of_border: rewrite::TypeOfBorder::Curved,
     };
 
-    let sub_window = sub_win_rewrite::SubWindow {
-        window: win,
-        line_number: 0,
-        column: 0,
-    };
-
-    let _te = SubWindow::new(
-        Window {
-            texts: vec![TextType::Text(Text::new_unchecked("Hi", 0, 0, &[]))],
-            width: 5,
-            height: 5,
-            type_of_border: rewrite::TypeOfBorder::Curved,
-        },
-        0,
-        0,
-    );
-
-    let window = Window {
-        texts: vec![TextType::SubWindow(sub_window)],
-        width: 100,
-        height: 24,
-        type_of_border: rewrite::TypeOfBorder::Curved,
-    };
-    dbg!(is_one_deep(&window.texts));
     println!("{}", window.render().unwrap());
 }

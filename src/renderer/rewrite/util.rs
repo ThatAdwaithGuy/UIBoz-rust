@@ -71,7 +71,7 @@ pub fn find_padding_size(texts: &Vec<&Text>) -> Vec<Text> {
             let prev = &texts[i - 1];
             let curr = texts[i];
             let prev_end = prev.text_len() as u32 + prev.column();
-            // dbg!(i, prev, curr, curr.column,prev.text_len(), prev_end);
+            dbg!(i, prev, curr, curr.column,prev.text_len(), prev_end);
             let adjusted = Text::new_unchecked(
                 curr.text(),
                 curr.line_number(),
