@@ -1,0 +1,42 @@
+output_string.push_str("\x1b[48;2;255;000;000m"),
+output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
+output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
+output_string.push_str("\x1b[48;2;255;165;000m"), // Orange (true color background)
+output_string.push_str("\x1b[48;2;138;043;226m"), // Violet (true color background)
+output_string.push_str("\x1b[48;2;000;000;000m"), // Black (true color background)
+output_string.push_str("\x1b[48;2;255;255;255m"), // White (true color background)
+output_string.push_str("\x1b[48;2;255;255;000m"), // Yellow (true color background)
+output_string.push_str("\x1b[48;2;000;255;255m"), // Cyan (true color background)
+output_string.push_str("\x1b[48;2;128;000;128m"), // Purple (true color background)
+output_string.push_str("\x1b[48;2;169;169;169m"), // Grey (true color background)
+output_string.push_str("\x1b[48;2;255;182;193m"), // Pink (true color background)
+output_string.push_str("\x1b[48;2;165;042;042m"), // Brown (true color background)
+output_string.push_str("\x1b[48;2;255;000;255m"), // Magenta (true color background)
+output_string.push_str("\x1b[48;2;255;215;000m"), // Gold (true color background)
+output_string.push_str("\x1b[48;2;255;000;000m"),
+output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
+output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
+output_string.push_str("\x1b[48;2;255;165;000m"), // Orange (true color background)
+output_string.push_str("\x1b[48;2;138;043;226m"), // Violet (true color background)
+output_string.push_str("\x1b[48;2;000;000;000m"), // Black (true color background)
+output_string.push_str("\x1b[48;2;255;255;255m"), // White (true color background)
+output_string.push_str("\x1b[48;2;255;255;000m"), // Yellow (true color background)
+output_string.push_str("\x1b[48;2;000;255;255m"), // Cyan (true color background)
+output_string.push_str("\x1b[48;2;128;000;128m"), // Purple (true color background)
+output_string.push_str("\x1b[48;2;169;169;169m"), // Grey (true color background)
+output_string.push_str("\x1b[48;2;255;182;193m"), // Pink (true color background)
+output_string.push_str("\x1b[48;2;165;042;042m"), // Brown (true color background)
+output_string.push_str("\x1b[48;2;255;000;255m"), // Magenta (true color background)
+output_string.push_str("\x1b[48;2;255;215;000m"), // Gold (true color background)
+output_string.push_str("\x1b[0000000000000001m"),
+output_string.push_str("\x1b[0000000000000002m"), // Dim
+output_string.push_str("\x1b[0000000000000004m"), // Underline
+output_string.push_str("\x1b[0000000000000005m"), // Blink
+output_string.push_str("\x1b[0000000000000007m"), // Reverse
+output_string.push_str("\x1b[0000000000000008m"),
+output_string.push_str("\x1b[0000000000000022m");
+output_string.push_str("\x1b[0000000000000022m");
+output_string.push_str("\x1b[0000000000000022m");
+
+
+

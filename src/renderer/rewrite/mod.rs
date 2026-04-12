@@ -1,6 +1,4 @@
 use core::fmt;
-use itertools::Itertools;
-use std::collections::HashSet;
 mod util;
 use crate::{
     errors::TextError,
@@ -64,11 +62,12 @@ impl Text {
         column: u32,
         style: &[style::TextStyle],
     ) -> Option<Self> {
+        dbg!(style, style.len());
         if style.len() > 12 && style.len() != 0 {
             return None;
         }
         let mut new_style: [style::TextStyle; 12] = [style::TextStyle::Blank; 12];
-        if new_style.len() == 12 {
+        if style.len() == 12 {
             new_style = style.try_into().ok()?;
         } else {
             new_style[..style.len()].copy_from_slice(style);
@@ -165,6 +164,7 @@ impl NonNestableWindow {
         Self::check_errors(&self)?;
         // Applies ANSI styles to the text.
         let applied_style: Vec<Text> = util::apply_style(&self.texts);
+        dbg!(&applied_style);
         // Chunks the text according to line number
         let chunks = util::chunk_texts(&applied_style);
         // Adds the whitespace between text in the same, line. So if the joined like String1 +
@@ -187,7 +187,8 @@ impl NonNestableWindow {
                 // This part calculates the white space between the last text of the line to the
                 // right border character.
                 let total_length = line.0.chars().count();
-                let ansi_length = line.2 * 234;
+                let ansi_length = line.2 * 194;
+                dbg!(total_length, line, ansi_length);
                 let text_length = total_length - ansi_length;
                 let left_pad: usize = self.width as usize - text_length;
 
@@ -210,6 +211,7 @@ impl NonNestableWindow {
                 body.push(line);
             }
         }
+        
         let top_border = match self.type_of_border {
             TypeOfBorder::No => "\n".to_string(),
             TypeOfBorder::Curved => format!("╭{}╮\n", "─".repeat(self.width as usize)),
@@ -245,7 +247,7 @@ impl NonNestableWindow {
                 let a = pair[0];
                 let b = pair[1];
 
-                dbg!(&line, &pair, Self::overlaps(a, b));
+                // dbg!(&line, &pair, Self::overlaps(a, b));
                 if Self::overlaps(a, b) {
                     return Err(TextError::TextOverlaid(a.text.clone(), b.text.clone()));
                 }

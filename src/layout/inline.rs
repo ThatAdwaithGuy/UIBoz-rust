@@ -1,7 +1,7 @@
 use crate::{
     errors::{self, LayoutErrors},
     layout::{self, ElementType},
-    renderer::{self, SubWindow, Text, TextType, Window},
+    renderer::{self, SubWindow, Text, TextType, TypeOfBorder, Window},
 };
 
 fn inline_render_same_height(
@@ -32,15 +32,19 @@ fn inline_render_same_height(
             ElementType::SubWindow(sub_window) => {
                 let window_column = previous_column + element.left_padding;
                 let window_width = sub_window.window.width;
+                let type_of_border = sub_window.window.type_of_border;
 
                 elements.push(ElementType::SubWindow(SubWindow::new(
                     sub_window.window,
                     line_number,
                     window_column,
                 )));
-
-                // The +2 is to account for the borders
-                previous_column += window_column + window_width + 2;
+                if let TypeOfBorder::No = type_of_border {
+                    previous_column += window_column + window_width;
+                } else {
+                    // The +2 is to account for the borders
+                    previous_column += window_column + window_width + 2;
+                }
             }
         };
     }
@@ -74,10 +78,11 @@ pub fn inline_render(layout: layout::Layout) -> Result<Vec<ElementType>, errors:
         match element.element {
             ElementType::Text(text) => {
                 let text_len: u32 = text.text_len() as u32;
+                let text_column = previous_column + element.left_padding;
                 let win = Window {
                     texts: vec![TextType::Text(Text::new_unchecked(
                         &text.text,
-                        line_number,
+                        0,
                         0,
                         &text.style,
                     ))],
@@ -86,9 +91,15 @@ pub fn inline_render(layout: layout::Layout) -> Result<Vec<ElementType>, errors:
                     type_of_border: renderer::TypeOfBorder::No,
                 };
 
+                elements.push(ElementType::SubWindow(SubWindow::new(
+                    win,
+                    line_number,
+                    previous_column,
+                )));
 
+                previous_column += text_column + text_len;
             }
-            ElementType::SubWindow(sub_window) => todo!(),
+            ElementType::SubWindow(_) => {}
         }
     }
 
