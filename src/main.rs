@@ -17,8 +17,7 @@ struct Keyboard;
 use crate::{
     renderer::{
         rewrite::{self, Text},
-        sub_win_rewrite::{self, is_one_deep},
-        SubWindow, TextType, Window,
+        TextType, Window,
     },
     style::TextStyle,
 };
@@ -98,7 +97,12 @@ fn fill(slice: &[style::TextStyle]) -> [style::TextStyle; 12] {
 */
 fn main() {
     let win_example = |text: &str| Window {
-        texts: vec![TextType::Text(Text::new_unchecked(text, 0, 0, &[TextStyle::Bold]))],
+        texts: vec![TextType::Text(Text::new_unchecked(
+            text,
+            0,
+            0,
+            &[TextStyle::Bold],
+        ))],
         width: 6,
         height: 5,
         type_of_border: rewrite::TypeOfBorder::Curved,
@@ -121,8 +125,12 @@ fn main() {
     //     20,
     // )));
 
-    text_types.push(TextType::Text(Text::new("Why no work??",0 , 0, &[TextStyle::Bold]).unwrap()));
-    text_types.push(TextType::Text(Text::new("Why so work??",1 , 0, &[]).unwrap()));
+    text_types.push(TextType::Text(
+        Text::new("Why no work??", 0, 0, &[TextStyle::Bold]).unwrap(),
+    ));
+    text_types.push(TextType::Text(
+        Text::new("Why so work??", 1, 0, &[]).unwrap(),
+    ));
 
     let window = Window {
         texts: text_types,

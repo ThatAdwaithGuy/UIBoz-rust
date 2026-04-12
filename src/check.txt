@@ -1,4 +1,3 @@
-
 output_string.push_str("\x1b[48;2;255;000;000m"),
 output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
 output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
@@ -14,7 +13,6 @@ output_string.push_str("\x1b[48;2;255;182;193m"), // Pink (true color background
 output_string.push_str("\x1b[48;2;165;042;042m"), // Brown (true color background)
 output_string.push_str("\x1b[48;2;255;000;255m"), // Magenta (true color background)
 output_string.push_str("\x1b[48;2;255;215;000m"), // Gold (true color background)
-
 output_string.push_str("\x1b[48;2;255;000;000m"),
 output_string.push_str("\x1b[48;2;000;255;000m"), // Green (true color background)
 output_string.push_str("\x1b[48;2;000;000;255m"), // Blue (true color background)
@@ -30,4 +28,15 @@ output_string.push_str("\x1b[48;2;255;182;193m"), // Pink (true color background
 output_string.push_str("\x1b[48;2;165;042;042m"), // Brown (true color background)
 output_string.push_str("\x1b[48;2;255;000;255m"), // Magenta (true color background)
 output_string.push_str("\x1b[48;2;255;215;000m"), // Gold (true color background)
+output_string.push_str("\x1b[0000000000000001m"),
+output_string.push_str("\x1b[0000000000000002m"), // Dim
+output_string.push_str("\x1b[0000000000000004m"), // Underline
+output_string.push_str("\x1b[0000000000000005m"), // Blink
+output_string.push_str("\x1b[0000000000000007m"), // Reverse
+output_string.push_str("\x1b[0000000000000008m"),
+output_string.push_str("\x1b[0000000000000022m");
+output_string.push_str("\x1b[0000000000000022m");
+output_string.push_str("\x1b[0000000000000022m");
+
+
 

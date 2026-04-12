@@ -187,7 +187,7 @@ impl NonNestableWindow {
                 // This part calculates the white space between the last text of the line to the
                 // right border character.
                 let total_length = line.0.chars().count();
-                let ansi_length = line.2 * 702;
+                let ansi_length = line.2 * 194;
                 dbg!(total_length, line, ansi_length);
                 let text_length = total_length - ansi_length;
                 let left_pad: usize = self.width as usize - text_length;
