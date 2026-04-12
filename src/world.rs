@@ -1,4 +1,4 @@
-use crate::nodes;
+use crate::layout;
 use crate::pages::PageManager;
 pub use crate::storage::Node;
 pub use crate::storage::{Immutable, Storage};
@@ -19,7 +19,7 @@ impl<V: ViewNode, C: ControllerNode> App<V, C> {
     }
 
     pub fn run(&mut self) -> Option<()> {
-        let is_running = self.storage.get_mut::<nodes::runtime::Runtime>()?;
+        let is_running = self.storage.get_mut::<layout::runtime::Runtime>()?;
         let _ = self.storage.get_mut::<PageManager>()?;
 
         while is_running.is_running {

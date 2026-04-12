@@ -1,0 +1,18 @@
+use crate::layout;
+use crate::renderer;
+
+pub fn inline_render(layout: layout::Layout) {
+    let max_height = layout 
+        .elements
+        .iter()
+        .map(|element| match element.element {
+            renderer::TextType::Window(window) => window.height,
+            renderer::TextType::Text(_) => 1,
+        })
+        .collect::<Vec<u32>>();
+
+    if max_height.iter().any(|height| height == &max_height[0]) {
+
+         
+    }
+}

@@ -1,19 +1,9 @@
 use thiserror::Error;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum LayoutErrors {
-    #[error("\x1b[91mERROR\x1b[0m, Looks like you use the down() method wrong")]
-    Down,
-    #[error("\x1b[91mERROR\x1b[0m, Looks like you use the up() method wrong")]
-    Up,
-    #[error("\x1b[91mERROR\x1b[0m, Looks like you use the left() method wrong")]
-    Left,
-    #[error("\x1b[91mERROR\x1b[0m, Looks like you use the right() method wrong ")]
-    Right,
-    #[error("\x1b[91mERROR\x1b[0m, You used the vsplit() method wrong")]
-    Vsplit,
-
-    #[error("\x1b[91mERROR\x1b[0m, You used the split() method wrong")]
-    Split,
+    #[error("\x1b[91mERROR\x1b[0m: The elements cannot fit inside the window, with the given width\n, If you are seeing this error, there is a bug in the layout code.")]
+    InlineTooManyElementsForWidth(),
 }
 
 #[derive(Error, Debug)]
