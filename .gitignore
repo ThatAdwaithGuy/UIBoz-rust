@@ -1,5 +1,6 @@
 target/
 .idea/
+Cargo.lock
 find_size.sh
 frontend/
 rules.txt
