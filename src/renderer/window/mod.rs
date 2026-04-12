@@ -41,6 +41,9 @@ impl From<NonNestableWindow> for Window {
 }
 
 impl Window {
+    pub fn window_width(&self) -> u32 {
+        self.width + 2
+    }
     pub fn render(&self) -> Result<String, TextError> {
         let collapsed: Vec<rewrite::Text> =
             sub_win_rewrite::collapse_window(self.texts.clone(), 0)?;

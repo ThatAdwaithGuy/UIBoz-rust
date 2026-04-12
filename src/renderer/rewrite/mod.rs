@@ -115,7 +115,7 @@ impl Text {
     }
 
     // Finds the length of the visible part of the text, if the text contains ANSI codes.
-    fn text_len(&self) -> usize {
+    pub fn text_len(&self) -> usize {
         let mut len = 0;
         let mut in_escape = false;
         for c in self.text().chars() {

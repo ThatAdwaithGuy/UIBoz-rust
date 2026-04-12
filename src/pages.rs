@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 pub trait Page {
     fn name(&self) -> String;
-    fn layout(&self) -> crate::nodes::layout::Layout;
+    fn layout(&self) -> crate::layout::layout::Layout;
 }
 
 #[derive(PartialEq, Eq, Hash)]
